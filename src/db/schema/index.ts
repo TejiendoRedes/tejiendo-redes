@@ -12,3 +12,4 @@ export * from './abordajes';
 export * from './medicos';
 export * from './consultas';
 export * from './relations';
+export * from './aspirantes'; 

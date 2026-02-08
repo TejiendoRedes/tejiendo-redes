@@ -4,14 +4,10 @@ import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
 export default defineConfig({
-    schema: './src/db/schema/index.ts',
-    out: './drizzle',
-    dialect: 'mysql',
-    dbCredentials: {
-        host: process.env.DATABASE_HOST || 'localhost',
-        port: parseInt(process.env.DATABASE_PORT || '3306'),
-        user: process.env.DATABASE_USER || 'root',
-        password: process.env.DATABASE_PASSWORD || '',
-        database: process.env.DATABASE_NAME || 'bd_sistema_abordajes',
-    },
+  schema: './src/db/schema/index.ts',
+  out: './drizzle',
+  dialect: 'mysql',
+  dbCredentials: {
+    url: 'mysql://root:@127.0.0.1:3306/bd_sistema_abordajes',
+  },
 });
