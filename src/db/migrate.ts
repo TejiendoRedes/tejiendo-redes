@@ -1,30 +1,43 @@
-import { loadEnvConfig } from '@next/env';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { migrate } from 'drizzle-orm/mysql2/migrator';
+import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Load environment variables configuration
-const projectDir = process.cwd();
-loadEnvConfig(projectDir);
+dotenv.config({ path: '.env.local' });
 
 /**
- * Script to run database migrations
- * Usage: tsx src/db/migrate.ts
+ * Script para aplicar migraciones a la base de datos
+ * Este es el enfoque profesional - usa archivos de migración versionados
  */
 async function runMigrations() {
-    console.log('⏳ Running database migrations...');
+    console.log('🚀 Iniciando proceso de migraciones...\n');
+
+    const connection = await mysql.createConnection({
+        host: process.env.DATABASE_HOST!,
+        user: process.env.DATABASE_USER!,
+        password: process.env.DATABASE_PASSWORD!,
+        database: process.env.DATABASE_NAME!,
+        port: Number(process.env.DATABASE_PORT),
+        multipleStatements: true,
+    });
+
+    const db = drizzle(connection);
 
     try {
-        // Dynamically import client to ensure env vars are loaded before the module is evaluated
-        const { connection } = await import('./client');
+        console.log('📝 Aplicando migraciones...');
 
-        const db = drizzle(connection);
-        await migrate(db, { migrationsFolder: './drizzle' });
+        // Aplica todas las migraciones pendientes desde la carpeta ./drizzle
+        await migrate(db, {
+            migrationsFolder: path.join(process.cwd(), 'drizzle'),
+        });
 
-        console.log('✅ Migrations completed successfully!');
-        process.exit(0);
+        console.log('✅ Migraciones aplicadas exitosamente!\n');
     } catch (error) {
-        console.error('❌ Migration failed:', error);
+        console.error('❌ Error al aplicar migraciones:', error);
         process.exit(1);
+    } finally {
+        await connection.end();
     }
 }
 

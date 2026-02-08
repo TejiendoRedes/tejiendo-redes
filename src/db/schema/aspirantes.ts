@@ -15,7 +15,7 @@ export const aspirantes = mysqlTable('aspirantes', {
     profesionAspirante: varchar('profesion_aspirante', { length: 50 }).notNull(),
     fechaPostulacion: date('fecha_postulacion', { mode: 'date' }).notNull(),
     // 'Pendiente', 'Aprobado', 'Rechazado'
-    estadoAspirante: varchar('estado_aspirante', { length: 20 }).notNull().default('Pendiente'), 
+    estadoAspirante: varchar('estado_aspirante', { length: 20 }).notNull().default('Pendiente'),
 });
 
 export type Aspirante = typeof aspirantes.$inferSelect;

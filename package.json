@@ -10,10 +10,14 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
-    "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
-    "db:reset": "tsx src/db/reset.ts"
+    "db:reset": "tsx src/db/reset.ts",
+    "db:hard-reset": "tsx src/db/hard-reset.ts",
+    "db:refresh": "npm run db:generate && npm run db:migrate",
+    "db:soft-refresh": "tsx src/db/soft-refresh.ts",
+    "db:drop-bridge": "tsx src/db/drop-bridge-tables.ts",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
