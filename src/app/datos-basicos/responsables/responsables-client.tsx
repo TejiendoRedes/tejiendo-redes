@@ -135,6 +135,18 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
             )
         },
         {
+            key: 'direccionResponsable',
+            label: 'Dirección',
+            render: (r) => (
+                <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-600 max-w-xs truncate" title={r.direccionResponsable}>
+                        {r.direccionResponsable}
+                    </span>
+                </div>
+            ),
+        },
+        {
             key: 'telefonoResponsable',
             label: 'Teléfono',
             render: (r) => <span className="text-gray-600">{r.telefonoResponsable}</span>

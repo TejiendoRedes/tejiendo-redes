@@ -6,6 +6,7 @@ import { mysqlTable, varchar, date, time, text } from 'drizzle-orm/mysql-core';
  */
 export const abordaje = mysqlTable('abordaje', {
     codigoAbordaje: varchar('codigo_abordaje', { length: 10 }).primaryKey().notNull(), // ABD-001...
+    codigoComunidad: varchar('codigo_comunidad', { length: 10 }).notNull(), // COM-001...
     fechaAbordaje: date('fecha_abordaje', { mode: 'date' }).notNull(),
     horaInicio: time('hora_inicio').notNull(),
     horaFin: time('hora_fin').notNull(),

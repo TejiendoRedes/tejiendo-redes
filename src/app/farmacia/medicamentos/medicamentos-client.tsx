@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, AlertCircle, Plus, Package } from 'lucide-react';
 import { Medicamento } from '@/db/schema/medicamentos';
-import { createMedicamento, deleteMedicamento, updateMedicamento } from '@/actions/medicamentos-actions';
+import { createMedicamento, deleteMedicamento, updateMedicamento, getMedicamentosEntregados } from '@/actions/medicamentos-actions';
 import {
     Dialog,
     DialogContent,
@@ -29,6 +29,18 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingMedicamento, setEditingMedicamento] = React.useState<Medicamento | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [solicitudesData, setSolicitudesData] = React.useState<any>(null);
+
+    // Cargar datos de solicitudes al montar el componente
+    useEffect(() => {
+        const loadSolicitudes = async () => {
+            const result = await getMedicamentosEntregados();
+            if (result.success) {
+                setSolicitudesData(result.data);
+            }
+        };
+        loadSolicitudes();
+    }, []);
 
     const [formData, setFormData] = React.useState({
         codigoMedicamento: '',
@@ -239,6 +251,28 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                         </div>
                     </div>
                 </div>
+
+                {/* Resumen de Medicamentos Solicitados */}
+                {solicitudesData && (
+                    <div className="bg-white border-l-4 border-l-blue-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-1">Medicamentos Solicitados</p>
+                                <div className="space-y-1">
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        {solicitudesData.totales.totalUnidades.toLocaleString('es-VE')}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                        {solicitudesData.totales.totalMedicamentos} tipos de medicamentos
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="bg-blue-50 p-3 rounded-lg">
+                                <Package className="w-6 h-6 text-blue-600" />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <DataTable
                     data={initialData}

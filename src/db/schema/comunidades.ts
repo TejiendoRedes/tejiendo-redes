@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, mediumint, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, mediumint, index, boolean } from 'drizzle-orm/mysql-core';
 import { responsable } from './responsable';
 
 /**
@@ -11,6 +11,7 @@ export const comunidades = mysqlTable('comunidades', {
     tipoComunidad: varchar('tipo_comunidad', { length: 2 }).notNull(), // '1': Urbana, '2': Rural, '3': Indígena, '4': Base de Misiones
     estado: varchar('estado', { length: 25 }).notNull(),
     municipio: varchar('municipio', { length: 50 }).notNull(),
+    parroquia: varchar('parroquia', { length: 50 }).notNull(),
     direccion: varchar('direccion', { length: 150 }).notNull(),
     ubicacionFisica: text('ubicacion_fisica').notNull(),
     cedulaResponsable: varchar('cedula_responsable', { length: 12 }).notNull().references(() => responsable.cedulaResponsable, {
@@ -19,7 +20,17 @@ export const comunidades = mysqlTable('comunidades', {
     }),
     cantidadHabitantes: int('cantidad_habitantes').notNull(),
     cantidadFamilias: mediumint('cantidad_familias').notNull(),
+    cantidadNinos: int('cantidad_ninos').notNull(),
+    cantidadAdolescentes: int('cantidad_adolescentes').notNull(),
+    cantidadMayores: int('cantidad_mayores').notNull(),
     telefonoComunidad: varchar('telefono_comunidad', { length: 15 }).notNull(),
+    // Campos de logística
+    tieneTransporte: boolean('tiene_transporte').notNull().default(false),
+    tieneRefrigerios: boolean('tiene_refrigerios').notNull().default(false),
+    tieneAgua: boolean('tiene_agua').notNull().default(false),
+    tieneEspacioCubierto: boolean('tiene_espacio_cubierto').notNull().default(false),
+    tieneMaterialEducativo: boolean('tiene_material_educativo').notNull().default(false),
+    notasLogistica: text('notas_logistica'),
 }, (table) => ({
     cedulaResponsableIdx: index('idx_cedula_responsable').on(table.cedulaResponsable),
 }));

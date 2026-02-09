@@ -15,6 +15,9 @@ export const pacientes = mysqlTable('pacientes', {
     apellidoPaciente: varchar('apellido_paciente', { length: 50 }).notNull(),
     sexo: char('sexo', { length: 1 }).notNull(), // M=Masculino, F=Femenino
     fechaNacimiento: date('fecha_nacimiento', { mode: 'date' }).notNull(),
+    estado: varchar('estado', { length: 2 }).notNull(),
+    municipio: varchar('municipio', { length: 2 }).notNull(),
+    parroquia: varchar('parroquia', { length: 2 }).notNull(),
     direccionPaciente: varchar('direccion_paciente', { length: 150 }).notNull(),
     telefonoPaciente: varchar('telefono_paciente', { length: 15 }).notNull(),
     correoPaciente: varchar('correo_paciente', { length: 100 }).notNull(),

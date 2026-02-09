@@ -6,6 +6,32 @@ import { responsable as responsables, type NewResponsable, type Responsable } fr
 import { eq } from 'drizzle-orm';
 
 /**
+ * Manejar errores de base de datos de forma específica
+ */
+const handleDatabaseError = (error: any) => {
+    console.error('Database error details:', {
+        code: error.code,
+        errno: error.errno,
+        sqlMessage: error.sqlMessage,
+        sql: error.sql
+    });
+
+    if (error.code === 'ER_CON_COUNT_ERROR' || error.errno === 1040) {
+        return 'Error: Demasiadas conexiones a la base de datos. Por favor, espere un momento e inténtelo de nuevo.';
+    }
+    
+    if (error.code === 'ECONNREFUSED') {
+        return 'Error: No se puede conectar a la base de datos. Verifique la configuración.';
+    }
+    
+    if (error.code === 'ENOTFOUND') {
+        return 'Error: Servidor de base de datos no encontrado. Verifique la configuración.';
+    }
+    
+    return 'Error de base de datos. Contacte al administrador del sistema.';
+};
+
+/**
  * Obtener todos los responsables
  */
 export async function getResponsables() {
@@ -14,7 +40,7 @@ export async function getResponsables() {
         return { success: true, data };
     } catch (error) {
         console.error('Error fetching responsables:', error);
-        return { success: false, error: 'Error al obtener los responsables' };
+        return { success: false, error: handleDatabaseError(error) };
     }
 }
 
@@ -28,7 +54,7 @@ export async function createResponsable(data: NewResponsable) {
         return { success: true, message: 'Responsable creado correctamente' };
     } catch (error) {
         console.error('Error creating responsable:', error);
-        return { success: false, error: 'Error al crear el responsable' };
+        return { success: false, error: handleDatabaseError(error) };
     }
 }
 
@@ -44,7 +70,7 @@ export async function updateResponsable(cedula: string, data: Partial<NewRespons
         return { success: true, message: 'Responsable actualizado correctamente' };
     } catch (error) {
         console.error('Error updating responsable:', error);
-        return { success: false, error: 'Error al actualizar el responsable' };
+        return { success: false, error: handleDatabaseError(error) };
     }
 }
 
@@ -59,6 +85,6 @@ export async function deleteResponsable(cedula: string) {
         return { success: true, message: 'Responsable eliminado correctamente' };
     } catch (error) {
         console.error('Error deleting responsable:', error);
-        return { success: false, error: 'Error al eliminar el responsable' };
+        return { success: false, error: handleDatabaseError(error) };
     }
 }

@@ -20,6 +20,8 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  CheckCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/components/ui/utils';
@@ -46,21 +48,33 @@ const menuItems: MenuItem[] = [
     // roles: ['ADMIN', 'REGISTRO'],
     children: [
       { label: 'Tejedores', path: '/datos-basicos/tejedores', icon: <Users className="w-4 h-4" /> },
+      { label: 'Aspirantes', path: '/datos-basicos/aspirantes', icon: <Users className="w-4 h-4" /> },
       { label: 'Médicos', path: '/datos-basicos/medicos', icon: <Stethoscope className="w-4 h-4" /> },
       { label: 'Especialidades', path: '/datos-basicos/especialidades', icon: <GraduationCap className="w-4 h-4" /> },
       { label: 'Responsables', path: '/datos-basicos/responsables', icon: <UserCheck className="w-4 h-4" /> },
       { label: 'Comunidades', path: '/datos-basicos/comunidades', icon: <MapPin className="w-4 h-4" /> },
-      { label: 'Organismos', path: '/datos-basicos/organismos', icon: <Building2 className="w-4 h-4" /> },
+      { label: 'Instituciones', path: '/datos-basicos/organismos', icon: <Building2 className="w-4 h-4" /> },
       { label: 'Pacientes', path: '/datos-basicos/pacientes', icon: <Heart className="w-4 h-4" /> },
       { label: 'Enfermedades', path: '/datos-basicos/enfermedades', icon: <Activity className="w-4 h-4" /> },
-      { label: 'Medicamentos', path: '/datos-basicos/medicamentos', icon: <Pill className="w-4 h-4" /> },
     ],
   },
   {
     label: 'Abordajes',
     path: '/abordajes',
     icon: <Activity className="w-5 h-5" />,
+    children: [
+      { label: 'Solicitudes', path: '/abordajes/solicitudes-abordajes', icon: <Clock className="w-4 h-4" /> },
+      { label: 'Abordajes Confirmados', path: '/abordajes', icon: <CheckCircle className="w-4 h-4" /> },
+    ],
     // roles: ['ADMIN', 'REGISTRO', 'MEDICO'],
+  },
+  { label: 'Farmacia', 
+    path: '/farmacia', 
+    icon: <Pill className="w-4 h-4" /> ,
+    children: [
+      { label: 'Medicamentos', path: '/farmacia/medicamentos', icon: <Heart className="w-4 h-4" /> },
+      { label: 'Peticiones', path: '/farmacia/peticiones', icon: <Activity className="w-4 h-4" /> },
+    ],
   },
   {
     label: 'Reportes',

@@ -12,7 +12,13 @@ export class AbordajesService {
      * Obtener todos los abordajes
      */
     static async getAll() {
-        return await db.select().from(abordaje);
+        return await db.select({
+            abordaje,
+            comunidad: comunidades
+        })
+            .from(abordaje)
+            .leftJoin(comunidades, eq(abordaje.codigoComunidad, comunidades.codigoComunidad))
+            .orderBy(abordaje.fechaAbordaje);
     }
 
     /**

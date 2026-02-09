@@ -30,45 +30,58 @@ export default async function AbordajesPage() {
 
                 {abordajes && abordajes.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {abordajes.map((abordaje) => (
-                            <Link href={`/abordajes/${abordaje.codigoAbordaje}`} key={abordaje.codigoAbordaje}>
-                                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                                    <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                                        <div className="space-y-1">
-                                            <CardTitle className="text-base font-medium">
-                                                {abordaje.descripcion}
-                                            </CardTitle>
-                                            <p className="text-xs text-muted-foreground">{abordaje.codigoAbordaje}</p>
-                                        </div>
-                                        <Badge
-                                            variant={
-                                                abordaje.estado === 'Finalizado'
-                                                    ? 'default'
-                                                    : abordaje.estado === 'En Curso'
-                                                        ? 'secondary'
-                                                        : 'outline'
-                                            }
-                                        >
-                                            {abordaje.estado}
-                                        </Badge>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-2 text-sm text-gray-600 mt-4">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="w-4 h-4" />
-                                                <span>{new Date(abordaje.fechaAbordaje).toLocaleDateString('es-VE')}</span>
+                        {abordajes.map((item) => {
+                            const abordaje = item.abordaje;
+                            const comunidad = item.comunidad;
+                            return (
+                                <Link href={`/abordajes/${abordaje.codigoAbordaje}`} key={abordaje.codigoAbordaje}>
+                                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                                        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                                            <div className="space-y-1">
+                                                <CardTitle className="text-base font-medium">
+                                                    {abordaje.descripcion}
+                                                </CardTitle>
+                                                <p className="text-xs text-muted-foreground">{abordaje.codigoAbordaje}</p>
+                                                <p className="text-xs text-blue-600 font-medium">
+                                                    {comunidad?.nombreComunidad || 'Sin comunidad asignada'}
+                                                </p>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-4 h-4" />
-                                                <span>
-                                                    {abordaje.horaInicio} - {abordaje.horaFin}
-                                                </span>
+                                            <Badge
+                                                variant={
+                                                    abordaje.estado === 'Finalizado'
+                                                        ? 'default'
+                                                        : abordaje.estado === 'En Curso'
+                                                            ? 'secondary'
+                                                            : 'outline'
+                                                }
+                                            >
+                                                {abordaje.estado}
+                                            </Badge>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-2 text-sm text-gray-600 mt-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="w-4 h-4" />
+                                                    <span>{new Date(abordaje.fechaAbordaje).toLocaleDateString('es-VE')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span>
+                                                        {abordaje.horaInicio} - {abordaje.horaFin}
+                                                    </span>
+                                                </div>
+                                                {comunidad && (
+                                                    <div className="flex items-center gap-2">
+                                                        <MapPin className="w-4 h-4" />
+                                                        <span>{comunidad.estado}, {comunidad.municipio}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            );
+                        })}
                     </div>
                 ) : (
                     <EmptyState

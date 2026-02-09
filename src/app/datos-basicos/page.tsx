@@ -34,6 +34,13 @@ export default function DatosBasicosPage() {
             color: 'bg-blue-500',
         },
         {
+            title: 'Aspirantes',
+            count: 0,
+            icon: <Users className="w-8 h-8" />,
+            path: '/datos-basicos/aspirantes',
+            color: 'bg-blue-500',
+        },
+        {
             title: 'Médicos',
             count: 0,
             icon: <Stethoscope className="w-8 h-8" />,
@@ -62,7 +69,7 @@ export default function DatosBasicosPage() {
             color: 'bg-red-500',
         },
         {
-            title: 'Organismos',
+            title: 'Instituciones',
             count: 0,
             icon: <Building2 className="w-8 h-8" />,
             path: '/datos-basicos/organismos',
@@ -82,13 +89,7 @@ export default function DatosBasicosPage() {
             path: '/datos-basicos/enfermedades',
             color: 'bg-orange-500',
         },
-        {
-            title: 'Medicamentos',
-            count: 0,
-            icon: <Pill className="w-8 h-8" />,
-            path: '/datos-basicos/medicamentos',
-            color: 'bg-teal-500',
-        },
+       
         {
             title: 'Consultas',
             count: 0,

@@ -12,4 +12,6 @@ export * from './abordajes';
 export * from './medicos';
 export * from './consultas';
 export * from './relations';
-export * from './aspirantes'; 
+export * from './aspirantes';
+export * from './peticiones';
+export * from './solicitudes-abordajes';

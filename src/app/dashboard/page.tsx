@@ -105,7 +105,7 @@ export default function DashboardPage() {
                             <Button
                                 variant="outline"
                                 className="w-full mt-4"
-                                onClick={() => router.push('/datos-basicos/medicamentos')}
+                                onClick={() => router.push('/farmacia/medicamentos')}
                             >
                                 Gestionar Inventario
                             </Button>

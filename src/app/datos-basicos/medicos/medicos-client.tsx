@@ -165,6 +165,17 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
             render: (m) => m.tejedor ? m.tejedor.correoTejedor : '-'
         },
         {
+            key: 'ubicacion', // Virtual column
+            label: 'Ubicación',
+            render: (m) => m.tejedor ? (
+                <div className="text-sm">
+                    <div className="font-medium">{m.tejedor.estadoTejedor || '-'}</div>
+                    <div className="text-gray-500">{m.tejedor.municipioTejedor || '-'}</div>
+                    <div className="text-gray-400">{m.tejedor.parroquiaTejedor || '-'}</div>
+                </div>
+            ) : '-'
+        },
+        {
             key: 'acciones',
             label: 'Acciones',
             render: (m) => (

@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Heart, UserPlus } from 'lucide-react';
+import { Edit, Trash2, Eye, Heart, UserPlus, MapPin } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
 
 interface PacienteWithComunidad extends Paciente {
     comunidad: Comunidad | null;
@@ -44,6 +45,11 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
     const [editingPaciente, setEditingPaciente] = React.useState<PacienteWithComunidad | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
+    // Estados para selectores dependientes
+    const estados = getEstados();
+    const [municipios, setMunicipios] = React.useState<any[]>([]);
+    const [parroquias, setParroquias] = React.useState<any[]>([]);
+
     const [formData, setFormData] = React.useState({
         cedulaPaciente: '',
         nombrePaciente: '',
@@ -51,6 +57,9 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         sexo: 'M' as 'M' | 'F',
         fechaNacimiento: '',
         codigoComunidad: '',
+        estado: '',
+        municipio: '',
+        parroquia: '',
         direccionPaciente: '',
         telefonoPaciente: '',
         correoPaciente: '',
@@ -78,11 +87,17 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             sexo: 'M',
             fechaNacimiento: '',
             codigoComunidad: '',
+            estado: '',
+            municipio: '',
+            parroquia: '',
             direccionPaciente: '',
             telefonoPaciente: '',
             correoPaciente: '',
             nota: '',
         });
+        // Resetear selectores dependientes
+        setMunicipios([]);
+        setParroquias([]);
         setIsModalOpen(true);
     };
 
@@ -97,11 +112,23 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                 ? paciente.fechaNacimiento.toISOString().split('T')[0]
                 : typeof paciente.fechaNacimiento === 'string' ? paciente.fechaNacimiento : '',
             codigoComunidad: paciente.codigoComunidad,
+            estado: (paciente as any).estado || '',
+            municipio: (paciente as any).municipio || '',
+            parroquia: (paciente as any).parroquia || '',
             direccionPaciente: paciente.direccionPaciente,
             telefonoPaciente: paciente.telefonoPaciente,
             correoPaciente: paciente.correoPaciente,
             nota: paciente.nota || '',
         });
+        
+        // Cargar municipios y parroquias para el estado y municipio seleccionados
+        if ((paciente as any).estado) {
+            setMunicipios(getMunicipiosByEstado((paciente as any).estado));
+            if ((paciente as any).municipio) {
+                setParroquias(getParroquiasByMunicipio((paciente as any).estado, (paciente as any).municipio));
+            }
+        }
+        
         setIsModalOpen(true);
     };
 
@@ -115,6 +142,34 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                 toast.error(res.error);
             }
         }
+    };
+
+    // Manejadores para selectores dependientes
+    const handleEstadoChange = (estadoId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            estado: estadoId,
+            municipio: '',
+            parroquia: ''
+        }));
+        setMunicipios(getMunicipiosByEstado(estadoId));
+        setParroquias([]);
+    };
+
+    const handleMunicipioChange = (municipioId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            municipio: municipioId,
+            parroquia: ''
+        }));
+        setParroquias(getParroquiasByMunicipio(formData.estado, municipioId));
+    };
+
+    const handleParroquiaChange = (parroquiaId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            parroquia: parroquiaId
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -152,6 +207,21 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         }
     };
 
+    // Función para obtener nombres de ubicación
+    const getLocationNames = (paciente: PacienteWithComunidad) => {
+        const estadoId = (paciente as any).estado;
+        const municipioId = (paciente as any).municipio;
+        const parroquiaId = (paciente as any).parroquia;
+        
+        if (!estadoId || !municipioId || !parroquiaId) return '-';
+        
+        const estado = estados.find(e => e.id === estadoId);
+        const municipio = getMunicipiosByEstado(estadoId).find(m => m.id === municipioId);
+        const parroquia = getParroquiasByMunicipio(estadoId, municipioId).find(p => p.id === parroquiaId);
+        
+        return `${parroquia?.nombre || ''}, ${municipio?.nombre || ''}, ${estado?.nombre || ''}`;
+    };
+
     const columns: Column<PacienteWithComunidad>[] = [
         {
             key: 'cedulaPaciente',
@@ -185,6 +255,16 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             label: 'Comunidad',
             render: (p) => p.comunidad?.nombreComunidad || p.codigoComunidad || '-',
             sortable: true,
+        },
+        {
+            key: 'ubicacion',
+            label: 'Ubicación',
+            render: (p) => (
+                <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm">{getLocationNames(p)}</span>
+                </div>
+            ),
         },
         {
             key: 'telefonoPaciente',
@@ -379,6 +459,67 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                         required
                                         className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                     />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="estado">Estado *</Label>
+                                        <Select
+                                            value={formData.estado}
+                                            onValueChange={handleEstadoChange}
+                                        >
+                                            <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                <SelectValue placeholder="Seleccione un estado" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {estados.map(estado => (
+                                                    <SelectItem key={estado.id} value={estado.id}>
+                                                        {estado.nombre}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="municipio">Municipio *</Label>
+                                        <Select
+                                            value={formData.municipio}
+                                            onValueChange={handleMunicipioChange}
+                                            disabled={!formData.estado}
+                                        >
+                                            <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                <SelectValue placeholder={formData.estado ? "Seleccione un municipio" : "Seleccione primero el estado"} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {municipios.map(municipio => (
+                                                    <SelectItem key={municipio.id} value={municipio.id}>
+                                                        {municipio.nombre}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="parroquia">Parroquia *</Label>
+                                        <Select
+                                            value={formData.parroquia}
+                                            onValueChange={handleParroquiaChange}
+                                            disabled={!formData.municipio}
+                                        >
+                                            <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                <SelectValue placeholder={formData.municipio ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {parroquias.map(parroquia => (
+                                                    <SelectItem key={parroquia.id} value={parroquia.id}>
+                                                        {parroquia.nombre}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
 
                                 <div className="col-span-1 md:col-span-2 space-y-2">

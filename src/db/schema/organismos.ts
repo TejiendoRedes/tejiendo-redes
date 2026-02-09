@@ -12,6 +12,7 @@ export const organismos = mysqlTable('organismos', {
         onUpdate: 'cascade'
     }),
     nombreOrganismo: varchar('nombre_organismo', { length: 100 }).notNull(),
+    tipoInstitucion: varchar('tipo_institucion', { length: 50 }).notNull(),
     paisOrganismo: varchar('pais_organismo', { length: 50 }).notNull(),
     estadoOrganismo: varchar('estado_organismo', { length: 25 }).notNull(),
     municipioOrganismo: varchar('municipio_organismo', { length: 50 }).notNull(),

@@ -4,20 +4,35 @@ import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Users } from 'lucide-react';
-import { Tejedor } from '@/db/schema/tejedores'; // Use DB type instead of model
-import { createTejedor, updateTejedor, deleteTejedor } from '@/actions/tejedores-actions';
+import { Edit, Trash2, User, MapPin, Phone, Mail, Calendar, Briefcase, Users } from 'lucide-react';
+import { Tejedor } from '@/db/schema/tejedores';
+import { createTejedor, deleteTejedor, updateTejedor } from '@/actions/tejedores-actions';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { Badge } from '@/components/ui/badge';
 
 interface TejedoresClientProps {
     initialData: Tejedor[];
@@ -36,18 +51,27 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
         apellidoTejedor: '',
         fechaNacimiento: '',
         direccionTejedor: '',
+        municipioTejedor: '',
+        estadoTejedor: '',
+        parroquiaTejedor: '',
         telefonoTejedor: '',
         correoTejedor: '',
         profesionTejedor: '',
         fechaIngreso: '',
-        tipoVoluntario: '',
+        tipodeVoluntario: '',
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
 
+    const [estados] = React.useState(getEstados());
+    const [municipios, setMunicipios] = React.useState<any[]>([]);
+    const [parroquias, setParroquias] = React.useState<any[]>([]);
+
     const handleAdd = () => {
         setEditingTejedor(null);
         setFormData(initialFormState);
+        setMunicipios([]);
+        setParroquias([]);
         setIsModalOpen(true);
     };
 
@@ -59,13 +83,38 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
             apellidoTejedor: tejedor.apellidoTejedor,
             fechaNacimiento: new Date(tejedor.fechaNacimiento).toISOString().split('T')[0],
             direccionTejedor: tejedor.direccionTejedor,
+            municipioTejedor: tejedor.municipioTejedor || '',
+            estadoTejedor: tejedor.estadoTejedor || '',
+            parroquiaTejedor: tejedor.parroquiaTejedor || '',
             telefonoTejedor: tejedor.telefonoTejedor,
             correoTejedor: tejedor.correoTejedor,
             profesionTejedor: tejedor.profesionTejedor,
             fechaIngreso: new Date(tejedor.fechaIngreso).toISOString().split('T')[0],
-            tipoVoluntario: tejedor.tipoVoluntario,
+            tipodeVoluntario: tejedor.tipodeVoluntario,
         });
+        // Cargar municipios y parroquias para el estado y municipio seleccionados
+        if (tejedor.estadoTejedor) {
+            setMunicipios(getMunicipiosByEstado(tejedor.estadoTejedor));
+            if (tejedor.municipioTejedor) {
+                setParroquias(getParroquiasByMunicipio(tejedor.estadoTejedor, tejedor.municipioTejedor));
+            }
+        }
         setIsModalOpen(true);
+    };
+
+    const handleEstadoChange = (estadoId: string) => {
+        setFormData({ ...formData, estadoTejedor: estadoId, municipioTejedor: '', parroquiaTejedor: '' });
+        setMunicipios(getMunicipiosByEstado(estadoId));
+        setParroquias([]);
+    };
+
+    const handleMunicipioChange = (municipioId: string) => {
+        setFormData({ ...formData, municipioTejedor: municipioId, parroquiaTejedor: '' });
+        setParroquias(getParroquiasByMunicipio(formData.estadoTejedor, municipioId));
+    };
+
+    const handleParroquiaChange = (parroquiaId: string) => {
+        setFormData({ ...formData, parroquiaTejedor: parroquiaId });
     };
 
     const handleDelete = async (cedula: string) => {
@@ -132,11 +181,22 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
             sortable: true,
         },
         {
+            key: 'ubicacion',
+            label: 'Ubicación',
+            render: (tejedor) => (
+                <div className="text-sm">
+                    <div className="font-medium">{tejedor.estadoTejedor || '-'}</div>
+                    <div className="text-gray-500">{tejedor.municipioTejedor || '-'}</div>
+                    <div className="text-gray-400">{tejedor.parroquiaTejedor || '-'}</div>
+                </div>
+            ),
+        },
+        {
             key: 'tipoVoluntario',
             label: 'Tipo',
             render: (tejedor) => (
                 <Badge variant="outline">
-                    {tejedor.tipoVoluntario}
+                    {tejedor.tipodeVoluntario}
                 </Badge>
             ),
         },
@@ -271,9 +331,9 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                                     <Label htmlFor="tipoVoluntario">Tipo Voluntario *</Label>
                                     <Input
                                         id="tipoVoluntario"
-                                        value={formData.tipoVoluntario}
+                                        value={formData.tipodeVoluntario}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, tipoVoluntario: e.target.value })
+                                            setFormData({ ...formData, tipodeVoluntario: e.target.value })
                                         }
                                         required
                                         className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
@@ -332,6 +392,65 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                                         required
                                         className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="estado">Estado *</Label>
+                                    <Select
+                                        value={formData.estadoTejedor}
+                                        onValueChange={handleEstadoChange}
+                                    >
+                                        <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                            <SelectValue placeholder="Seleccione un estado" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {estados.map(estado => (
+                                                <SelectItem key={estado.id} value={estado.id}>
+                                                    {estado.nombre}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="municipio">Municipio *</Label>
+                                    <Select
+                                        value={formData.municipioTejedor}
+                                        onValueChange={handleMunicipioChange}
+                                        disabled={!formData.estadoTejedor}
+                                    >
+                                        <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                            <SelectValue placeholder={formData.estadoTejedor ? "Seleccione un municipio" : "Seleccione primero el estado"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {municipios.map(municipio => (
+                                                <SelectItem key={municipio.id} value={municipio.id}>
+                                                    {municipio.nombre}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="parroquia">Parroquia *</Label>
+                                    <Select
+                                        value={formData.parroquiaTejedor}
+                                        onValueChange={handleParroquiaChange}
+                                        disabled={!formData.municipioTejedor}
+                                    >
+                                        <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                            <SelectValue placeholder={formData.municipioTejedor ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {parroquias.map(parroquia => (
+                                                <SelectItem key={parroquia.id} value={parroquia.id}>
+                                                    {parroquia.nombre}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 

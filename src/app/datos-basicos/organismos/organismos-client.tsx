@@ -33,6 +33,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
 
 interface OrganismoWithTejedor extends Organismo {
     tejedor: Tejedor | null;
@@ -54,14 +55,20 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         codigoOrganismo: '',
         cedulaTejedor: '',
         nombreOrganismo: '',
+        tipoInstitucion: '',
         paisOrganismo: 'Venezuela',
         estadoOrganismo: '',
         municipioOrganismo: '',
+        parroquiaOrganismo: '',
         direccionOrganismo: '',
         ubicacionFisica: '',
         correoOrganismo: '',
         telefonoOrganismo: '',
     });
+
+    const [estados] = React.useState(getEstados());
+    const [municipios, setMunicipios] = React.useState<any[]>([]);
+    const [parroquias, setParroquias] = React.useState<any[]>([]);
 
     const generarCodigo = (prefix: string, length: number) => {
         return `${prefix}-${(length + 1).toString().padStart(3, '0')}`;
@@ -73,14 +80,18 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             codigoOrganismo: nuevoCodigo,
             cedulaTejedor: '',
             nombreOrganismo: '',
+            tipoInstitucion: '',
             paisOrganismo: 'Venezuela',
             estadoOrganismo: '',
             municipioOrganismo: '',
+            parroquiaOrganismo: '',
             direccionOrganismo: '',
             ubicacionFisica: '',
             correoOrganismo: '',
             telefonoOrganismo: '',
         });
+        setMunicipios([]);
+        setParroquias([]);
         setIsEditing(false);
         setActiveTab('basico');
         setIsModalOpen(true);
@@ -91,21 +102,45 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             codigoOrganismo: organismo.codigoOrganismo,
             cedulaTejedor: organismo.cedulaTejedor,
             nombreOrganismo: organismo.nombreOrganismo,
+            tipoInstitucion: organismo.tipoInstitucion || '',
             paisOrganismo: organismo.paisOrganismo,
             estadoOrganismo: organismo.estadoOrganismo,
             municipioOrganismo: organismo.municipioOrganismo,
+            parroquiaOrganismo: (organismo as any).parroquiaOrganismo || '',
             direccionOrganismo: organismo.direccionOrganismo,
             ubicacionFisica: organismo.ubicacionFisica,
             correoOrganismo: organismo.correoOrganismo,
             telefonoOrganismo: organismo.telefonoOrganismo,
         });
+        // Cargar municipios y parroquias para el estado y municipio seleccionados
+        if (organismo.estadoOrganismo) {
+            setMunicipios(getMunicipiosByEstado(organismo.estadoOrganismo));
+            if (organismo.municipioOrganismo) {
+                setParroquias(getParroquiasByMunicipio(organismo.estadoOrganismo, organismo.municipioOrganismo));
+            }
+        }
         setIsEditing(true);
         setActiveTab('basico');
         setIsModalOpen(true);
     };
 
+    const handleEstadoChange = (estadoId: string) => {
+        setFormData({ ...formData, estadoOrganismo: estadoId, municipioOrganismo: '', parroquiaOrganismo: '' });
+        setMunicipios(getMunicipiosByEstado(estadoId));
+        setParroquias([]);
+    };
+
+    const handleMunicipioChange = (municipioId: string) => {
+        setFormData({ ...formData, municipioOrganismo: municipioId, parroquiaOrganismo: '' });
+        setParroquias(getParroquiasByMunicipio(formData.estadoOrganismo, municipioId));
+    };
+
+    const handleParroquiaChange = (parroquiaId: string) => {
+        setFormData({ ...formData, parroquiaOrganismo: parroquiaId });
+    };
+
     const handleDelete = async (codigo: string) => {
-        if (confirm('¿Está seguro de eliminar este organismo?')) {
+        if (confirm('¿Está seguro de eliminar esta institución?')) {
             const res = await deleteOrganismo(codigo);
             if (res.success) {
                 toast.success(res.message);
@@ -156,8 +191,17 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         },
         {
             key: 'nombreOrganismo',
-            label: 'Nombre Organismo',
+            label: 'Nombre Institución',
             sortable: true,
+        },
+        {
+            key: 'tipoInstitucion',
+            label: 'Tipo',
+            render: (o) => (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    {o.tipoInstitucion || 'No especificado'}
+                </span>
+            ),
         },
         {
             key: 'tejedor',
@@ -179,6 +223,17 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             key: 'telefonoOrganismo',
             label: 'Teléfono',
             render: (o) => o.telefonoOrganismo || '-'
+        },
+        {
+            key: 'ubicacion',
+            label: 'Ubicación',
+            render: (o) => (
+                <div className="text-sm">
+                    <div className="font-medium">{o.estadoOrganismo || '-'}</div>
+                    <div className="text-gray-500">{o.municipioOrganismo || '-'}</div>
+                    <div className="text-gray-400">{o.paisOrganismo || '-'}</div>
+                </div>
+            )
         },
         {
             key: 'acciones',
@@ -212,9 +267,9 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             <div className="space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Organismos</h1>
+                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Instituciones</h1>
                         <p className="text-gray-600">
-                            Gestión de organismos y entes asociados con la organización
+                            Gestión de instituciones y entes asociados con la organización
                         </p>
                     </div>
                 </div>
@@ -222,9 +277,9 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                 <DataTable
                     data={initialData}
                     columns={columns}
-                    searchPlaceholder="Buscar organismo..."
+                    searchPlaceholder="Buscar institución..."
                     onAdd={handleAdd}
-                    addLabel="Agregar Organismo"
+                    addLabel="Agregar Institución"
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -232,10 +287,10 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
                                 <Building2 className="w-6 h-6 text-blue-600" />
-                                {isEditing ? 'Editar Organismo' : 'Registrar Nuevo Organismo'}
+                                {isEditing ? 'Editar Institución' : 'Registrar Nueva Institución'}
                             </DialogTitle>
                             <DialogDescription>
-                                Complete la información institucional y de contacto del organismo.
+                                Complete la información institucional y de contacto de la institución.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -268,7 +323,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="nombre">Nombre del Organismo *</Label>
+                                            <Label htmlFor="nombre">Nombre de la Institución *</Label>
                                             <Input
                                                 id="nombre"
                                                 placeholder="Ej. Ministerio de Salud"
@@ -278,6 +333,27 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                                 className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                             />
                                         </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="tipo">Tipo de Institución *</Label>
+                                        <Select
+                                            value={formData.tipoInstitucion}
+                                            onValueChange={(val) => setFormData({ ...formData, tipoInstitucion: val })}
+                                        >
+                                            <SelectTrigger id="tipo" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                <SelectValue placeholder="Seleccione un tipo" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Gubernamental">Gubernamental</SelectItem>
+                                                <SelectItem value="Privada">Privada</SelectItem>
+                                                <SelectItem value="ONG">ONG</SelectItem>
+                                                <SelectItem value="Educacional">Educacional</SelectItem>
+                                                <SelectItem value="Salud">Salud</SelectItem>
+                                                <SelectItem value="Comunitaria">Comunitaria</SelectItem>
+                                                <SelectItem value="Religiosa">Religiosa</SelectItem>
+                                                <SelectItem value="Otra">Otra</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="tejedor" className="flex items-center gap-2">
@@ -308,7 +384,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                 </TabsContent>
 
                                 <TabsContent value="ubicacion" className="space-y-4 py-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="pais">País</Label>
                                             <Input
@@ -319,24 +395,59 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="estado">Estado *</Label>
-                                            <Input
-                                                id="estado"
-                                                placeholder="Ej. Distrito Capital"
+                                            <Select
                                                 value={formData.estadoOrganismo}
-                                                onChange={(e) => setFormData({ ...formData, estadoOrganismo: e.target.value })}
-                                                required
-                                                className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                            />
+                                                onValueChange={handleEstadoChange}
+                                            >
+                                                <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                    <SelectValue placeholder="Seleccione un estado" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {estados.map(estado => (
+                                                        <SelectItem key={estado.id} value={estado.id}>
+                                                            {estado.nombre}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="municipio">Municipio</Label>
-                                            <Input
-                                                id="municipio"
-                                                placeholder="Ej. Libertador"
+                                            <Label htmlFor="municipio">Municipio *</Label>
+                                            <Select
                                                 value={formData.municipioOrganismo}
-                                                onChange={(e) => setFormData({ ...formData, municipioOrganismo: e.target.value })}
-                                                className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                            />
+                                                onValueChange={handleMunicipioChange}
+                                                disabled={!formData.estadoOrganismo}
+                                            >
+                                                <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                    <SelectValue placeholder={formData.estadoOrganismo ? "Seleccione un municipio" : "Seleccione primero el estado"} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {municipios.map(municipio => (
+                                                        <SelectItem key={municipio.id} value={municipio.id}>
+                                                            {municipio.nombre}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="parroquia">Parroquia *</Label>
+                                            <Select
+                                                value={formData.parroquiaOrganismo}
+                                                onValueChange={handleParroquiaChange}
+                                                disabled={!formData.municipioOrganismo}
+                                            >
+                                                <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                                    <SelectValue placeholder={formData.municipioOrganismo ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {parroquias.map(parroquia => (
+                                                        <SelectItem key={parroquia.id} value={parroquia.id}>
+                                                            {parroquia.nombre}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -414,7 +525,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                             className="bg-blue-600 hover:bg-blue-700 text-white px-8 shadow-lg shadow-blue-100 transition-all active:scale-95"
                                             disabled={isLoading}
                                         >
-                                            {isLoading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Registrar Organismo')}
+                                            {isLoading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Registrar Institución')}
                                         </Button>
                                     </div>
                                 </TabsContent>
