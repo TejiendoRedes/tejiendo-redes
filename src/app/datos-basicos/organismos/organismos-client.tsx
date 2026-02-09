@@ -33,7 +33,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 
 interface OrganismoWithTejedor extends Organismo {
     tejedor: Tejedor | null;
@@ -227,13 +227,18 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         {
             key: 'ubicacion',
             label: 'Ubicación',
-            render: (o) => (
-                <div className="text-sm">
-                    <div className="font-medium">{o.estadoOrganismo || '-'}</div>
-                    <div className="text-gray-500">{o.municipioOrganismo || '-'}</div>
-                    <div className="text-gray-400">{o.paisOrganismo || '-'}</div>
-                </div>
-            )
+            render: (o) => {
+                const estadoNombre = getEstadoNombre(o.estadoOrganismo);
+                const municipioNombre = getMunicipioNombre(o.estadoOrganismo, o.municipioOrganismo);
+                
+                return (
+                    <div className="text-sm">
+                        <div className="font-medium">{estadoNombre || '-'}</div>
+                        <div className="text-gray-500">{municipioNombre || '-'}</div>
+                        <div className="text-gray-400">{o.paisOrganismo || '-'}</div>
+                    </div>
+                );
+            },
         },
         {
             key: 'acciones',

@@ -2029,3 +2029,41 @@ export const getParroquiasByMunicipio = (estadoId: string, municipioId: string):
   const municipio = estado.municipios.find(m => m.id === municipioId);
   return municipio ? municipio.parroquias : [];
 };
+
+// Funciones para obtener nombres completos en lugar de códigos
+export const getEstadoNombre = (estadoId: string): string => {
+  const estado = VENEZUELA_DATA.find(e => e.id === estadoId);
+  return estado ? estado.nombre : estadoId;
+};
+
+export const getMunicipioNombre = (estadoId: string, municipioId: string): string => {
+  const estado = VENEZUELA_DATA.find(e => e.id === estadoId);
+  if (!estado) return municipioId;
+  
+  const municipio = estado.municipios.find(m => m.id === municipioId);
+  return municipio ? municipio.nombre : municipioId;
+};
+
+export const getParroquiaNombre = (estadoId: string, municipioId: string, parroquiaId: string): string => {
+  const estado = VENEZUELA_DATA.find(e => e.id === estadoId);
+  if (!estado) return parroquiaId;
+  
+  const municipio = estado.municipios.find(m => m.id === municipioId);
+  if (!municipio) return parroquiaId;
+  
+  const parroquia = municipio.parroquias.find(p => p.id === parroquiaId);
+  return parroquia ? parroquia.nombre : parroquiaId;
+};
+
+// Función para obtener la ubicación completa formateada
+export const getUbicacionCompleta = (estadoId: string, municipioId: string, parroquiaId?: string): string => {
+  const estadoNombre = getEstadoNombre(estadoId);
+  const municipioNombre = getMunicipioNombre(estadoId, municipioId);
+  
+  if (parroquiaId) {
+    const parroquiaNombre = getParroquiaNombre(estadoId, municipioId, parroquiaId);
+    return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
+  }
+  
+  return `${estadoNombre}, ${municipioNombre}`;
+};

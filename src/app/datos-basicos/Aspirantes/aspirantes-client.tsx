@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, User, MapPin, Phone, Mail, Calendar, Briefcase, Users, Clock } from 'lucide-react';
 import { Aspirante } from '@/db/schema/aspirantes';
 import { createAspirante, deleteAspirante, updateAspirante } from '@/actions/aspirantes-actions';
+import { promoteAspiranteToTejedor } from '@/actions/promote-aspirante';
 import {
     Dialog,
     DialogContent,
@@ -31,7 +32,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, UserPlus, Clipboard } from 'lucide-react';
 
@@ -69,14 +70,19 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
     const [parroquias, setParroquias] = React.useState<any[]>([]);
 
     const handlePromote = async (aspirante: Aspirante) => {
-        if (!confirm(`¿Deseas promover a ${aspirante.nombreAspirante} a Tejedor oficial?`)) return;
+        if (!confirm(`¿Deseas promover a ${aspirante.nombreAspirante} ${aspirante.apellidoAspirante} a Tejedor Oficial?`)) return;
         setIsPromoting(aspirante.cedulaAspirante);
         try {
-            // TODO: Implement promote to tejedor functionality
-            toast.success('Función de promoción en desarrollo');
-            router.refresh();
+            const res = await promoteAspiranteToTejedor(aspirante.cedulaAspirante);
+            if (res.success) {
+                toast.success(res.message);
+                router.refresh();
+            } else {
+                toast.error(res.error);
+            }
         } catch (error) {
-            toast.error('Error de red');
+            console.error('Error promoting aspirante:', error);
+            toast.error('Error al promover aspirante');
         } finally {
             setIsPromoting(null);
         }
@@ -185,12 +191,28 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
         { 
             key: 'direccionCompleta',
             label: 'Dirección',
-            render: (asp) => (
-                <div className="text-sm">
-                    <div>{asp.direccionAspirante}</div>
-                    <div className="text-gray-600">
-                        {asp.parroquiaAspirante}, {asp.municipioAspirante}, {asp.estadoDireccionAspirante}
+            render: (asp) => {
+                const estadoNombre = getEstadoNombre(asp.estadoDireccionAspirante);
+                const municipioNombre = getMunicipioNombre(asp.estadoDireccionAspirante, asp.municipioAspirante);
+                const parroquiaNombre = getParroquiaNombre(asp.estadoDireccionAspirante, asp.municipioAspirante, asp.parroquiaAspirante);
+                
+                return (
+                    <div className="text-sm">
+                        <div>{asp.direccionAspirante}</div>
+                        <div className="text-gray-600">
+                            {parroquiaNombre}, {municipioNombre}, {estadoNombre}
+                        </div>
                     </div>
+                );
+            },
+        },
+        { 
+            key: 'telefonoAspirante',
+            label: 'Teléfono',
+            render: (asp) => (
+                <div className="flex items-center gap-1">
+                    <Phone className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm">{asp.telefonoAspirante}</span>
                 </div>
             ),
         },

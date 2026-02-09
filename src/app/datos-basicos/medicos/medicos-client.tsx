@@ -8,6 +8,7 @@ import { Edit, Trash2, Stethoscope, User, ClipboardList } from 'lucide-react';
 import { Tejedor } from '@/db/schema/tejedores';
 import { Especialidad } from '@/db/schema/especialidades';
 import { createMedico, deleteMedico, updateMedico } from '@/actions/medicos-actions';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import {
     Dialog,
     DialogContent,
@@ -168,11 +169,19 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
             key: 'ubicacion', // Virtual column
             label: 'Ubicación',
             render: (m) => m.tejedor ? (
-                <div className="text-sm">
-                    <div className="font-medium">{m.tejedor.estadoTejedor || '-'}</div>
-                    <div className="text-gray-500">{m.tejedor.municipioTejedor || '-'}</div>
-                    <div className="text-gray-400">{m.tejedor.parroquiaTejedor || '-'}</div>
-                </div>
+                (() => {
+                    const estadoNombre = getEstadoNombre(m.tejedor.estadoTejedor);
+                    const municipioNombre = getMunicipioNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor);
+                    const parroquiaNombre = getParroquiaNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor, m.tejedor.parroquiaTejedor);
+                    
+                    return (
+                        <div className="text-sm">
+                            <div className="font-medium">{estadoNombre || '-'}</div>
+                            <div className="text-gray-500">{municipioNombre || '-'}</div>
+                            <div className="text-gray-400">{parroquiaNombre || '-'}</div>
+                        </div>
+                    );
+                })()
             ) : '-'
         },
         {

@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { Badge } from '@/components/ui/badge';
 
 interface TejedoresClientProps {
@@ -181,15 +181,33 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
             sortable: true,
         },
         {
-            key: 'ubicacion',
-            label: 'Ubicación',
+            key: 'direccionCompleta',
+            label: 'Dirección',
             render: (tejedor) => (
                 <div className="text-sm">
-                    <div className="font-medium">{tejedor.estadoTejedor || '-'}</div>
-                    <div className="text-gray-500">{tejedor.municipioTejedor || '-'}</div>
-                    <div className="text-gray-400">{tejedor.parroquiaTejedor || '-'}</div>
+                    <div>{tejedor.direccionTejedor}</div>
+                    <div className="text-gray-600">
+                        {getParroquiaNombre(tejedor.estadoTejedor, tejedor.municipioTejedor, tejedor.parroquiaTejedor)}, {getMunicipioNombre(tejedor.estadoTejedor, tejedor.municipioTejedor)}, {getEstadoNombre(tejedor.estadoTejedor)}
+                    </div>
                 </div>
             ),
+        },
+        {
+            key: 'ubicacion',
+            label: 'Ubicación',
+            render: (tejedor) => {
+                const estadoNombre = getEstadoNombre(tejedor.estadoTejedor);
+                const municipioNombre = getMunicipioNombre(tejedor.estadoTejedor, tejedor.municipioTejedor);
+                const parroquiaNombre = getParroquiaNombre(tejedor.estadoTejedor, tejedor.municipioTejedor, tejedor.parroquiaTejedor);
+                
+                return (
+                    <div className="text-sm">
+                        <div className="font-medium">{estadoNombre || '-'}</div>
+                        <div className="text-gray-500">{municipioNombre || '-'}</div>
+                        <div className="text-gray-400">{parroquiaNombre || '-'}</div>
+                    </div>
+                );
+            },
         },
         {
             key: 'tipoVoluntario',

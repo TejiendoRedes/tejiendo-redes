@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 
 interface PacienteWithComunidad extends Paciente {
     comunidad: Comunidad | null;
@@ -209,17 +209,20 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
     // Función para obtener nombres de ubicación
     const getLocationNames = (paciente: PacienteWithComunidad) => {
-        const estadoId = (paciente as any).estado;
-        const municipioId = (paciente as any).municipio;
-        const parroquiaId = (paciente as any).parroquia;
+        const estado = (paciente as any).estado;
+        const municipio = (paciente as any).municipio;
+        const parroquia = (paciente as any).parroquia;
         
-        if (!estadoId || !municipioId || !parroquiaId) return '-';
+        if (!estado || !municipio || !parroquia) return '-';
         
-        const estado = estados.find(e => e.id === estadoId);
-        const municipio = getMunicipiosByEstado(estadoId).find(m => m.id === municipioId);
-        const parroquia = getParroquiasByMunicipio(estadoId, municipioId).find(p => p.id === parroquiaId);
+        const estadoNombre = getEstadoNombre(estado);
+        const municipioNombre = getMunicipioNombre(estado, municipio);
+        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
         
-        return `${parroquia?.nombre || ''}, ${municipio?.nombre || ''}, ${estado?.nombre || ''}`;
+        if (parroquia) {
+            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
+        }
+        return `${estadoNombre}, ${municipioNombre}`;
     };
 
     const columns: Column<PacienteWithComunidad>[] = [
