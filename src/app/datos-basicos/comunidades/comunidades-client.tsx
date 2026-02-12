@@ -4,7 +4,7 @@ import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, MapPin, Users, Phone, Info, UserCheck, Truck, Coffee, Droplets, Home, BookOpen } from 'lucide-react';
+import { Edit, Trash2, MapPin, Users, Phone, Info, UserCheck } from 'lucide-react';
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { createComunidad, deleteComunidad, updateComunidad } from '@/actions/comunidades-actions';
@@ -68,14 +68,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
         cantidadNinos: 0,
         cantidadAdolescentes: 0,
         cantidadMayores: 0,
+        cantidadMayores60: 0,
         telefonoComunidad: '',
-        // Campos de logística
-        tieneTransporte: false,
-        tieneRefrigerios: false,
-        tieneAgua: false,
-        tieneEspacioCubierto: false,
-        tieneMaterialEducativo: false,
-        notasLogistica: '',
     });
 
     const [estados] = React.useState(getEstados());
@@ -103,14 +97,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
             cantidadNinos: 0,
             cantidadAdolescentes: 0,
             cantidadMayores: 0,
+            cantidadMayores60: 0,
             telefonoComunidad: '',
-            // Campos de logística
-            tieneTransporte: false,
-            tieneRefrigerios: false,
-            tieneAgua: false,
-            tieneEspacioCubierto: false,
-            tieneMaterialEducativo: false,
-            notasLogistica: '',
         });
         setMunicipios([]);
         setParroquias([]);
@@ -124,8 +112,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
             codigoComunidad: comunidad.codigoComunidad,
             nombreComunidad: comunidad.nombreComunidad,
             tipoComunidad: comunidad.tipoComunidad,
-            estado: comunidad.estado,
-            municipio: comunidad.municipio,
+            estado: comunidad.estado || '',
+            municipio: comunidad.municipio || '',
             parroquia: comunidad.parroquia || '',
             direccion: comunidad.direccion,
             ubicacionFisica: comunidad.ubicacionFisica,
@@ -135,14 +123,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
             cantidadNinos: comunidad.cantidadNinos || 0,
             cantidadAdolescentes: comunidad.cantidadAdolescentes || 0,
             cantidadMayores: comunidad.cantidadMayores || 0,
+            cantidadMayores60: comunidad.cantidadMayores60 || 0,
             telefonoComunidad: comunidad.telefonoComunidad,
-            // Campos de logística
-            tieneTransporte: (comunidad as any).tieneTransporte || false,
-            tieneRefrigerios: (comunidad as any).tieneRefrigerios || false,
-            tieneAgua: (comunidad as any).tieneAgua || false,
-            tieneEspacioCubierto: (comunidad as any).tieneEspacioCubierto || false,
-            tieneMaterialEducativo: (comunidad as any).tieneMaterialEducativo || false,
-            notasLogistica: (comunidad as any).notasLogistica || '',
         });
         // Cargar municipios y parroquias para el estado y municipio seleccionados
         if (comunidad.estado) {
@@ -258,7 +240,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                 <div className="text-sm space-y-1">
                     <div>Niños: {c.cantidadNinos?.toLocaleString() || '0'}</div>
                     <div>Adolescentes: {c.cantidadAdolescentes?.toLocaleString() || '0'}</div>
-                    <div>Mayores: {c.cantidadMayores?.toLocaleString() || '0'}</div>
+                    <div>Mayores 18+: {c.cantidadMayores?.toLocaleString() || '0'}</div>
+                    <div>Mayores 60+: {c.cantidadMayores60?.toLocaleString() || '0'}</div>
                 </div>
             ),
         },
@@ -328,7 +311,7 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="grid w-full grid-cols-4">
+                                <TabsList className="grid w-full grid-cols-3">
                                     <TabsTrigger value="basico" className="flex items-center gap-2">
                                         <Info className="w-4 h-4" />
                                         Básico
@@ -340,10 +323,6 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                                     <TabsTrigger value="social" className="flex items-center gap-2">
                                         <Users className="w-4 h-4" />
                                         Social
-                                    </TabsTrigger>
-                                    <TabsTrigger value="logistica" className="flex items-center gap-2">
-                                        <Truck className="w-4 h-4" />
-                                        Logística
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -495,7 +474,7 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                                 </TabsContent>
 
                                 <TabsContent value="social" className="space-y-4 mt-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="habitantes">Cantidad de Habitantes</Label>
                                             <Input
@@ -527,6 +506,16 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                                             />
                                         </div>
                                         <div className="space-y-2">
+                                            <Label htmlFor="mayores">Mayores de Edad (18+ años)</Label>
+                                            <Input
+                                                id="mayores"
+                                                type="number"
+                                                value={formData.cantidadMayores}
+                                                className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                onChange={(e) => setFormData({ ...formData, cantidadMayores: parseInt(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
                                             <Label htmlFor="adolescentes">Adolescentes (13-17 años)</Label>
                                             <Input
                                                 id="adolescentes"
@@ -537,13 +526,13 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="mayores">Mayores de Edad (18+ años)</Label>
+                                            <Label htmlFor="mayores60">Adultos Mayores (60+ años)</Label>
                                             <Input
-                                                id="mayores"
+                                                id="mayores60"
                                                 type="number"
-                                                value={formData.cantidadMayores}
+                                                value={formData.cantidadMayores60}
                                                 className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                onChange={(e) => setFormData({ ...formData, cantidadMayores: parseInt(e.target.value) || 0 })}
+                                                onChange={(e) => setFormData({ ...formData, cantidadMayores60: parseInt(e.target.value) || 0 })}
                                             />
                                         </div>
                                     </div>
@@ -570,112 +559,6 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                                     </div>
                                     <div className="flex justify-between pt-6">
                                         <Button type="button" variant="outline" onClick={() => setActiveTab('ubicacion')}>
-                                            Atrás
-                                        </Button>
-                                        <Button type="button" onClick={() => setActiveTab('logistica')} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
-                                            Siguiente: Logística
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-
-                                <TabsContent value="logistica" className="space-y-4 mt-6">
-                                    <div className="space-y-6">
-                                        <div>
-                                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                                <Truck className="w-5 h-5 text-blue-600" />
-                                                Recursos Logísticos Disponibles
-                                            </h3>
-                                            <p className="text-gray-600 mb-4">
-                                                Marque los recursos logísticos que tiene disponibles esta comunidad para abordajes
-                                            </p>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                                                    <Checkbox
-                                                        id="tieneTransporte"
-                                                        checked={formData.tieneTransporte}
-                                                        onCheckedChange={(checked) => 
-                                                            setFormData({ ...formData, tieneTransporte: checked as boolean })
-                                                        }
-                                                    />
-                                                    <Label htmlFor="tieneTransporte" className="flex items-center gap-2 cursor-pointer">
-                                                        <Truck className="w-4 h-4 text-green-600" />
-                                                        <span>Transporte disponible</span>
-                                                    </Label>
-                                                </div>
-
-                                                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                                                    <Checkbox
-                                                        id="tieneRefrigerios"
-                                                        checked={formData.tieneRefrigerios}
-                                                        onCheckedChange={(checked) => 
-                                                            setFormData({ ...formData, tieneRefrigerios: checked as boolean })
-                                                        }
-                                                    />
-                                                    <Label htmlFor="tieneRefrigerios" className="flex items-center gap-2 cursor-pointer">
-                                                        <Coffee className="w-4 h-4 text-blue-600" />
-                                                        <span>Refrigerios disponibles</span>
-                                                    </Label>
-                                                </div>
-
-                                                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                                                    <Checkbox
-                                                        id="tieneAgua"
-                                                        checked={formData.tieneAgua}
-                                                        onCheckedChange={(checked) => 
-                                                            setFormData({ ...formData, tieneAgua: checked as boolean })
-                                                        }
-                                                    />
-                                                    <Label htmlFor="tieneAgua" className="flex items-center gap-2 cursor-pointer">
-                                                        <Droplets className="w-4 h-4 text-cyan-600" />
-                                                        <span>Agua disponible</span>
-                                                    </Label>
-                                                </div>
-
-                                                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                                                    <Checkbox
-                                                        id="tieneEspacioCubierto"
-                                                        checked={formData.tieneEspacioCubierto}
-                                                        onCheckedChange={(checked) => 
-                                                            setFormData({ ...formData, tieneEspacioCubierto: checked as boolean })
-                                                        }
-                                                    />
-                                                    <Label htmlFor="tieneEspacioCubierto" className="flex items-center gap-2 cursor-pointer">
-                                                        <Home className="w-4 h-4 text-purple-600" />
-                                                        <span>Espacio cubierto</span>
-                                                    </Label>
-                                                </div>
-
-                                                <div className="flex items-center space-x-2 p-3 border rounded-lg">
-                                                    <Checkbox
-                                                        id="tieneMaterialEducativo"
-                                                        checked={formData.tieneMaterialEducativo}
-                                                        onCheckedChange={(checked) => 
-                                                            setFormData({ ...formData, tieneMaterialEducativo: checked as boolean })
-                                                        }
-                                                    />
-                                                    <Label htmlFor="tieneMaterialEducativo" className="flex items-center gap-2 cursor-pointer">
-                                                        <BookOpen className="w-4 h-4 text-orange-600" />
-                                                        <span>Material educativo</span>
-                                                    </Label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="notasLogistica">Notas Adicionales de Logística</Label>
-                                            <Textarea
-                                                id="notasLogistica"
-                                                value={formData.notasLogistica}
-                                                onChange={(e) => setFormData({ ...formData, notasLogistica: e.target.value })}
-                                                placeholder="Describe cualquier recurso logístico adicional o información relevante..."
-                                                rows={3}
-                                                className="mt-2"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between pt-6">
-                                        <Button type="button" variant="outline" onClick={() => setActiveTab('social')}>
                                             Atrás
                                         </Button>
                                         <Button

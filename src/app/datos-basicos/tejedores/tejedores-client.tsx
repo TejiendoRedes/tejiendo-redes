@@ -219,6 +219,28 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
             ),
         },
         {
+            key: 'fechaPromocion',
+            label: 'Fecha Promoción',
+            render: (tejedor) => (
+                <div className="text-sm">
+                    {tejedor.fechaPromocion ? (
+                        <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <span>
+                                {new Date(tejedor.fechaPromocion).toLocaleDateString('es-VE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                })}
+                            </span>
+                        </div>
+                    ) : (
+                        <span className="text-gray-400">-</span>
+                    )}
+                </div>
+            ),
+        },
+        {
             key: 'telefonoTejedor',
             label: 'Teléfono',
         },

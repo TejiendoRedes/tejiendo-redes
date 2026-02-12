@@ -5,8 +5,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill } from 'lucide-react';
-import { createPeticion, deletePeticion, marcarComoEntregada, getPacientesForSelect, getMedicamentosForSelect, getPeticiones } from '@/actions/peticiones-actions';
+import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar } from 'lucide-react';
+import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado, getPacientesForSelect, getMedicamentosForSelect, getPeticiones } from '@/actions/peticiones-actions';
 import {
     Dialog,
     DialogContent,
@@ -26,6 +26,8 @@ interface Peticion {
     codigoMedicamento: string;
     cantidad: number;
     fechaPeticion: Date;
+    fechaEntrega?: Date | null;
+    horaEntrega?: string | null;
     estado: string;
     notas?: string | null;
     nombrePaciente: string | null;
@@ -102,8 +104,10 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     };
 
     const handleDelete = async (codigo: string) => {
-        if (confirm('¿Está seguro de eliminar esta petición? El stock será devuelto al medicamento.')) {
-            const res = await deletePeticion(codigo);
+        if (confirm('¿Está seguro de eliminar esta petición? La existencia será devuelta al medicamento.')) {
+            // Extraer el ID numérico del código de petición
+            const id = parseInt(codigo);
+            const res = await deletePeticion(id);
             if (res.success) {
                 toast.success(res.message);
                 router.refresh();
@@ -116,20 +120,46 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     };
 
     const handleMarcarEntregada = async (codigo: string) => {
-        const res = await marcarComoEntregada(codigo);
+        // Extraer el ID numérico del código de petición
+        const id = parseInt(codigo);
+        const res = await updatePeticionEstado(id, 'entregado');
         if (res.success) {
             toast.success(res.message);
             router.refresh();
-            // Actualizar la lista local
+            // Actualizar la lista local con estado, fecha y hora de entrega
+            const ahora = new Date();
+            const horaActual = ahora.toTimeString().slice(0, 8);
             setPeticiones(prev => 
                 prev.map(p => 
                     p.codigoPeticion === codigo 
-                        ? { ...p, estado: 'entregado' }
+                        ? { ...p, estado: 'entregado', fechaEntrega: ahora, horaEntrega: horaActual }
                         : p
                 )
             );
         } else {
             toast.error(res.error);
+        }
+    };
+
+    const handleCancelarEntrega = async (codigo: string) => {
+        if (confirm('¿Está seguro de cancelar esta entrega? Los medicamentos serán devueltos al inventario.')) {
+            // Extraer el ID numérico del código de petición
+            const id = parseInt(codigo);
+            const res = await updatePeticionEstado(id, 'cancelado');
+            if (res.success) {
+                toast.success(res.message);
+                router.refresh();
+                // Actualizar la lista local limpiando fecha y hora de entrega
+                setPeticiones(prev => 
+                    prev.map(p => 
+                        p.codigoPeticion === codigo 
+                            ? { ...p, estado: 'cancelado', fechaEntrega: null, horaEntrega: null }
+                            : p
+                    )
+                );
+            } else {
+                toast.error(res.error);
+            }
         }
     };
 
@@ -202,7 +232,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     // Obtener información del medicamento
     const getMedicamentoInfo = (codigo: string) => {
         const medicamento = medicamentos.find(m => m.codigoMedicamento === codigo);
-        return medicamento ? `${medicamento.nombreMedicamento} (${medicamento.presentacion}) - Stock: ${medicamento.existencia}` : '';
+        return medicamento ? `${medicamento.nombreMedicamento} (${medicamento.presentacion}) - Existencia: ${medicamento.existencia}` : '';
     };
 
     const getEstadoBadge = (estado: string) => {
@@ -256,8 +286,36 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         },
         {
             key: 'fechaPeticion',
-            label: 'Fecha',
+            label: 'Fecha Solicitud',
             render: (row: Peticion) => new Date(row.fechaPeticion).toLocaleDateString(),
+        },
+        {
+            key: 'fechaEntrega',
+            label: 'Fecha y Hora Entrega',
+            render: (row: Peticion) => (
+                row.fechaEntrega && row.horaEntrega ? (
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4 text-green-500" />
+                            <span className="text-sm">
+                                {new Date(row.fechaEntrega).toLocaleDateString('es-VE', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                })}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm font-medium">
+                                {row.horaEntrega.slice(0, 5)} {/* HH:MM */}
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <span className="text-gray-400">-</span>
+                )
+            ),
         },
         {
             key: 'estado',
@@ -276,6 +334,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                 variant="outline"
                                 onClick={() => handleMarcarEntregada(row.codigoPeticion)}
                                 className="text-green-600 hover:text-green-700"
+                                title="Marcar como entregado"
                             >
                                 <CheckCircle className="w-4 h-4" />
                             </Button>
@@ -284,10 +343,22 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                 variant="outline"
                                 onClick={() => handleDelete(row.codigoPeticion)}
                                 className="text-red-600 hover:text-red-700"
+                                title="Eliminar petición"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </Button>
                         </>
+                    )}
+                    {row.estado === 'entregado' && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCancelarEntrega(row.codigoPeticion)}
+                            className="text-orange-600 hover:text-orange-700"
+                            title="Cancelar entrega y devolver medicamentos"
+                        >
+                            <XCircle className="w-4 h-4" />
+                        </Button>
                     )}
                 </div>
             ),
@@ -348,7 +419,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                         <SelectContent>
                                             {medicamentos.map((medicamento) => (
                                                 <SelectItem key={medicamento.codigoMedicamento} value={medicamento.codigoMedicamento}>
-                                                    {medicamento.nombreMedicamento} - Stock: {medicamento.existencia}
+                                                    {medicamento.nombreMedicamento} - Existencia: {medicamento.existencia}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -369,7 +440,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                     />
                                     {selectedMedicamento && (
                                         <p className="text-sm text-gray-500">
-                                            Stock disponible: {medicamentos.find(m => m.codigoMedicamento === selectedMedicamento)?.existencia || 0}
+                                            Existencia disponible: {medicamentos.find(m => m.codigoMedicamento === selectedMedicamento)?.existencia || 0}
                                         </p>
                                     )}
                                 </div>

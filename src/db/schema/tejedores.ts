@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, date } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, date, datetime } from 'drizzle-orm/mysql-core';
 
 /**
  * Tabla: tejedores
@@ -17,6 +17,7 @@ export const tejedores = mysqlTable('tejedores', {
     correoTejedor: varchar('correo_tejedor', { length: 100 }).notNull(),
     profesionTejedor: varchar('profesion_tejedor', { length: 50 }).notNull(),
     fechaIngreso: date('fecha_ingreso', { mode: 'date' }).notNull(),
+    fechaPromocion: datetime('fecha_promocion'), // Fecha en que fue promovido de aspirante a tejedor
     tipodeVoluntario: varchar('tipo_voluntario', { length: 50 }).notNull(),
 });
 

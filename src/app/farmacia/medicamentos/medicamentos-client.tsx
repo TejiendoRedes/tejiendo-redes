@@ -108,15 +108,15 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
         }
     };
 
-    const getStockBadge = (existencia: number) => {
+    const getExistenciaBadge = (existencia: number) => {
         if (existencia === 0) {
-            return <Badge variant="destructive" className="bg-red-600">Sin Stock</Badge>;
+            return <Badge variant="destructive" className="bg-red-600">Sin Existencia</Badge>;
         } else if (existencia < 20) {
-            return <Badge variant="destructive" className="bg-orange-500 border-orange-600">Stock Bajo</Badge>;
+            return <Badge variant="destructive" className="bg-orange-500 border-orange-600">Existencia Baja</Badge>;
         } else if (existencia < 50) {
-            return <Badge className="bg-yellow-500 text-yellow-950">Stock Medio</Badge>;
+            return <Badge className="bg-yellow-500 text-yellow-950">Existencia Media</Badge>;
         } else {
-            return <Badge variant="default" className="bg-green-600 hover:bg-green-700">Stock Bueno</Badge>;
+            return <Badge variant="default" className="bg-green-600 hover:bg-green-700">Existencia Buena</Badge>;
         }
     };
 
@@ -150,7 +150,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
         },
         {
             key: 'existencia',
-            label: 'Stock',
+            label: 'Existencia',
             render: (med) => (
                 <div className="flex items-center gap-2">
                     <span className="font-semibold tabular-nums">
@@ -162,9 +162,9 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
             sortable: true,
         },
         {
-            key: 'estado_stock', // Clave virtual
+            key: 'estado_existencia', // Clave virtual
             label: 'Estado',
-            render: (med) => getStockBadge(med.existencia),
+            render: (med) => getExistenciaBadge(med.existencia),
         },
         {
             key: 'acciones',
@@ -212,7 +212,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     <div className="bg-white border-l-4 border-l-red-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-red-500 mb-1">Stock Crítico / Agotado</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-red-500 mb-1">Existencia Crítica / Agotada</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {initialData.filter((m) => m.existencia < 20).length}
                                 </p>
@@ -226,7 +226,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     <div className="bg-white border-l-4 border-l-yellow-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-yellow-600 mb-1">Stock Bajo / Medio</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-yellow-600 mb-1">Existencia Baja / Media</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {initialData.filter((m) => m.existencia >= 20 && m.existencia < 50).length}
                                 </p>
@@ -240,7 +240,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     <div className="bg-white border-l-4 border-l-green-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-green-600 mb-1">Stock Óptimo</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-green-600 mb-1">Existencia Óptima</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {initialData.filter((m) => m.existencia >= 50).length}
                                 </p>
@@ -343,7 +343,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="existencia" className="text-sm font-semibold text-gray-700">Cantidad en Stock (Existencia) *</Label>
+                                    <Label htmlFor="existencia" className="text-sm font-semibold text-gray-700">Cantidad en Existencia *</Label>
                                     <Input
                                         id="existencia"
                                         type="number"

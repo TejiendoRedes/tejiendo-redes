@@ -18,6 +18,8 @@ export async function getPeticiones() {
             codigoMedicamento: peticiones.codigoMedicamento,
             cantidad: peticiones.cantidad, // Mapear cantidad correctamente
             fechaPeticion: peticiones.fechaPeticion,
+            fechaEntrega: peticiones.fechaEntrega, // Agregar fecha de entrega
+            horaEntrega: peticiones.horaEntrega, // Agregar hora de entrega
             estado: peticiones.estado,
             notas: peticiones.notas, // Mapear notas correctamente
             nombrePaciente: pacientes.nombrePaciente,
@@ -115,7 +117,7 @@ export async function getMedicamentosForSelect() {
 }
 
 /**
- * Crear una nueva petición y actualizar existencia del medicamento
+ * Crear una nueva petición (sin restar existencias hasta aprobación)
  */
 export async function createPeticion(data: NewPeticion) {
     try {
@@ -130,7 +132,7 @@ export async function createPeticion(data: NewPeticion) {
             return { success: false, error: 'La cantidad debe ser mayor a 0' };
         }
 
-        // Verificar que el medicamento tenga suficiente existencia
+        // Verificar que el medicamento exista (sin validar existencia por ahora)
         const medicamento = await db.select()
             .from(medicamentos)
             .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento))
@@ -138,13 +140,6 @@ export async function createPeticion(data: NewPeticion) {
 
         if (!medicamento[0]) {
             return { success: false, error: 'Medicamento no encontrado' };
-        }
-
-        if (medicamento[0].existencia < data.cantidad) {
-            return { 
-                success: false, 
-                error: `Existencia insuficiente. Disponible: ${medicamento[0].existencia}, Solicitado: ${data.cantidad}` 
-            };
         }
 
         // Preparar datos para inserción
@@ -156,21 +151,10 @@ export async function createPeticion(data: NewPeticion) {
             notas: data.notas || null,
         };
 
-        // Iniciar transacción
-        await db.transaction(async (tx) => {
-            // Crear la petición
-            await tx.insert(peticiones).values(peticionData);
-            
-            // Restar la existencia del medicamento
-            await tx.update(medicamentos)
-                .set({ 
-                    existencia: medicamento[0].existencia - data.cantidad 
-                })
-                .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento));
-        });
+        // Crear la petición (sin modificar existencias)
+        await db.insert(peticiones).values(peticionData);
 
         revalidatePath('/farmacia/peticiones');
-        revalidatePath('/farmacia/medicamentos');
         return { success: true, message: 'Petición creada correctamente' };
     } catch (error) {
         console.error('Error creating peticion:', error);
@@ -179,15 +163,103 @@ export async function createPeticion(data: NewPeticion) {
 }
 
 /**
- * Actualizar estado de una petición
+ * Actualizar estado de una petición (restar existencias solo cuando se aprueba/entrega, devolver cuando se cancela)
  */
 export async function updatePeticionEstado(id: number, estado: string) {
     try {
-        await db.update(peticiones)
-            .set({ estado })
-            .where(eq(peticiones.id, id));
+        // Obtener la petición actual
+        const peticion = await db.select()
+            .from(peticiones)
+            .where(eq(peticiones.id, id))
+            .limit(1);
+
+        if (!peticion[0]) {
+            return { success: false, error: 'Petición no encontrada' };
+        }
+
+        // Si se está aprobando/entregando y antes estaba pendiente
+        if (estado === 'entregado' && peticion[0].estado === 'pendiente') {
+            // Obtener el medicamento para verificar existencia
+            const medicamento = await db.select()
+                .from(medicamentos)
+                .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento))
+                .limit(1);
+
+            if (!medicamento[0]) {
+                return { success: false, error: 'Medicamento no encontrado' };
+            }
+
+            // Verificar que haya suficiente existencia
+            if (medicamento[0].existencia < peticion[0].cantidad) {
+                return { 
+                    success: false, 
+                    error: `Existencia insuficiente. Disponible: ${medicamento[0].existencia}, Solicitado: ${peticion[0].cantidad}` 
+                };
+            }
+
+            // Obtener hora actual
+            const ahora = new Date();
+            const horaActual = ahora.toTimeString().slice(0, 8); // HH:MM:SS
+
+            // Iniciar transacción
+            await db.transaction(async (tx) => {
+                // Actualizar la petición con estado, fecha y hora de entrega
+                await tx.update(peticiones)
+                    .set({ 
+                        estado: 'entregado',
+                        fechaEntrega: ahora,
+                        horaEntrega: horaActual
+                    })
+                    .where(eq(peticiones.id, id));
+                
+                // Restar la existencia del medicamento
+                await tx.update(medicamentos)
+                    .set({ 
+                        existencia: medicamento[0].existencia - peticion[0].cantidad 
+                    })
+                    .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento));
+            });
+        } 
+        // Si se está cancelando una entrega ya aprobada
+        else if (estado === 'cancelado' && peticion[0].estado === 'entregado') {
+            // Obtener el medicamento para devolver la existencia
+            const medicamento = await db.select()
+                .from(medicamentos)
+                .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento))
+                .limit(1);
+
+            if (!medicamento[0]) {
+                return { success: false, error: 'Medicamento no encontrado' };
+            }
+
+            // Iniciar transacción
+            await db.transaction(async (tx) => {
+                // Actualizar la petición a cancelado
+                await tx.update(peticiones)
+                    .set({ 
+                        estado: 'cancelado',
+                        fechaEntrega: null, // Limpiar fecha de entrega
+                        horaEntrega: null   // Limpiar hora de entrega
+                    })
+                    .where(eq(peticiones.id, id));
+                
+                // Devolver la existencia al medicamento
+                await tx.update(medicamentos)
+                    .set({ 
+                        existencia: medicamento[0].existencia + peticion[0].cantidad 
+                    })
+                    .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento));
+            });
+        } 
+        // Para otros cambios de estado (cancelar petición pendiente, etc.)
+        else {
+            await db.update(peticiones)
+                .set({ estado })
+                .where(eq(peticiones.id, id));
+        }
             
         revalidatePath('/farmacia/peticiones');
+        revalidatePath('/farmacia/medicamentos');
         return { success: true, message: 'Estado actualizado correctamente' };
     } catch (error) {
         console.error('Error updating peticion estado:', error);

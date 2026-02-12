@@ -23,6 +23,7 @@ export const comunidades = mysqlTable('comunidades', {
     cantidadNinos: int('cantidad_ninos').notNull(),
     cantidadAdolescentes: int('cantidad_adolescentes').notNull(),
     cantidadMayores: int('cantidad_mayores').notNull(),
+    cantidadMayores60: int('cantidad_mayores_60').notNull(),
     telefonoComunidad: varchar('telefono_comunidad', { length: 15 }).notNull(),
     // Campos de logística
     tieneTransporte: boolean('tiene_transporte').notNull().default(false),

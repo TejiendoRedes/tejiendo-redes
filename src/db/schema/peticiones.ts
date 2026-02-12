@@ -18,6 +18,8 @@ export const peticiones = mysqlTable('peticiones', {
     }),
     cantidad: int('cantidad').notNull(),
     fechaPeticion: datetime('fecha_peticion').notNull().default(new Date()),
+    fechaEntrega: datetime('fecha_entrega'), // Fecha de entrega/aprobación
+    horaEntrega: varchar('hora_entrega', { length: 8 }), // Hora de entrega HH:MM:SS
     estado: varchar('estado', { length: 20 }).notNull().default('pendiente'), // pendiente, entregado, cancelado
     notas: varchar('notas', { length: 255 }),
 }, (table) => ({

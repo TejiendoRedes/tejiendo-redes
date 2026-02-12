@@ -30,8 +30,8 @@ export default function DashboardPage() {
     const consultasEsteMes = 0;
     const medicamentosEntregadosEsteMes = 0;
 
-    // Medicamentos con stock bajo (Placeholder)
-    const medicamentosStockBajo: any[] = [];
+    // Medicamentos con existencia baja (Placeholder)
+    const medicamentosExistenciaBaja: any[] = [];
 
     // Datos para gráficas (Placeholders)
     const abordajesPorMes: any[] = [];
@@ -74,18 +74,18 @@ export default function DashboardPage() {
                     />
                 </div>
 
-                {/* Alertas de stock */}
-                {medicamentosStockBajo.length > 0 && (
+                {/* Alertas de existencia */}
+                {medicamentosExistenciaBaja.length > 0 && (
                     <Card className="border-yellow-200 bg-yellow-50">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-yellow-800">
                                 <AlertCircle className="w-5 h-5" />
-                                Alertas de Stock Bajo
+                                Alertas de Existencia Baja
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
-                                {medicamentosStockBajo.map(med => (
+                                {medicamentosExistenciaBaja.map(med => (
                                     <div
                                         key={med.codigoMedicamento}
                                         className="flex items-center justify-between p-3 bg-white rounded-lg"

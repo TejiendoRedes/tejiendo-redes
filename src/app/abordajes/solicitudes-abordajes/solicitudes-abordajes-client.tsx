@@ -5,7 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, MapPin, Users, Calendar, Truck, Coffee, Droplets, Home, BookOpen } from 'lucide-react';
+import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, MapPin, Users, Calendar, Truck, Coffee, Home } from 'lucide-react';
 import { createSolicitudAbordaje, deleteSolicitudAbordaje, confirmarSolicitudAbordaje, rechazarSolicitudAbordaje } from '@/actions/solicitudes-abordajes-actions';
 import {
     Dialog,
@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -30,22 +31,24 @@ interface SolicitudAbordaje {
     tipoAbordaje: string;
     participantesEstimados: number;
     recursosAdicionales?: string | null;
+    // Campos de logística
+    transporte: boolean;
+    refrigerios: boolean;
+    espacioCubierto: boolean;
+    notasLogistica?: string | null;
     estado: string;
     fechaSolicitud: Date;
     notas?: string | null;
-    prioridad: string;
     comunidad?: any;
 }
 
 interface Comunidad {
     codigoComunidad: string;
     nombreComunidad: string;
-    puntuacionLogistica: number;
-    tieneTransporte?: boolean;
-    tieneRefrigerios?: boolean;
-    tieneAgua?: boolean;
-    tieneEspacioCubierto?: boolean;
-    tieneMaterialEducativo?: boolean;
+    // Campos de logística con nombres correctos
+    transporte?: boolean;
+    refrigerios?: boolean;
+    espacioCubierto?: boolean;
 }
 
 interface SolicitudesAbordajesClientProps {
@@ -67,7 +70,11 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         tipoAbordaje: '',
         participantesEstimados: 1,
         recursosAdicionales: '',
-        prioridad: 'media' as 'alta' | 'media' | 'baja',
+        // Campos de logística - nombres corregidos
+        transporte: false,
+        refrigerios: false,
+        espacioCubierto: false,
+        notasLogistica: '',
     });
 
     const handleAdd = () => {
@@ -79,7 +86,11 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
             tipoAbordaje: '',
             participantesEstimados: 1,
             recursosAdicionales: '',
-            prioridad: 'media',
+            // Campos de logística - nombres corregidos
+            transporte: false,
+            refrigerios: false,
+            espacioCubierto: false,
+            notasLogistica: '',
         });
         setIsModalOpen(true);
     };
@@ -172,28 +183,13 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         }
     };
 
-    const getPrioridadBadge = (prioridad: string) => {
-        switch (prioridad) {
-            case 'alta':
-                return <Badge variant="destructive">Alta</Badge>;
-            case 'media':
-                return <Badge variant="default">Media</Badge>;
-            case 'baja':
-                return <Badge variant="secondary">Baja</Badge>;
-            default:
-                return <Badge variant="outline">{prioridad}</Badge>;
-        }
-    };
-
     const getLogisticaIcons = (recursos: any) => {
         if (!recursos) return [];
         
         const icons = [];
         if (recursos.transporte) icons.push(<Truck key='transporte' className="w-4 h-4 text-green-600" />);
         if (recursos.refrigerios) icons.push(<Coffee key='refrigerios' className="w-4 h-4 text-blue-600" />);
-        if (recursos.agua) icons.push(<Droplets key='agua' className="w-4 h-4 text-cyan-600" />);
         if (recursos.espacioCubierto) icons.push(<Home key='espacio' className="w-4 h-4 text-purple-600" />);
-        if (recursos.materialEducativo) icons.push(<BookOpen key='material' className="w-4 h-4 text-orange-600" />);
         return icons;
     };
 
@@ -246,9 +242,13 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
             ),
         },
         {
-            key: 'prioridad',
-            label: 'Prioridad',
-            render: (row) => getPrioridadBadge(row.prioridad),
+            key: 'logistica',
+            label: 'Logística',
+            render: (row) => (
+                <div className="flex items-center gap-1">
+                    {getLogisticaIcons(row)}
+                </div>
+            ),
         },
         {
             key: 'estado',
@@ -335,25 +335,10 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                                         <span>{comunidad.nombreComunidad}</span>
                                                         <div className="flex items-center gap-1 ml-2">
                                                             {getLogisticaIcons(comunidad)}
-                                                            <span className="text-xs text-gray-500">({comunidad.puntuacionLogistica || 0} pts)</span>
                                                         </div>
                                                     </div>
                                                 </SelectItem>
                                             ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="prioridad">Prioridad</Label>
-                                    <Select value={formData.prioridad} onValueChange={(value: 'alta' | 'media' | 'baja') => setFormData(prev => ({ ...prev, prioridad: value }))}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="alta">Alta</SelectItem>
-                                            <SelectItem value="media">Media</SelectItem>
-                                            <SelectItem value="baja">Baja</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -435,6 +420,66 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                     placeholder="¿Qué recursos adicionales se necesitan para el abordaje?"
                                     rows={2}
                                 />
+                            </div>
+
+                            <div className="space-y-4">
+                                <Label className="text-sm font-semibold text-gray-700">Recursos Logísticos de la Comunidad</Label>
+                                <p className="text-sm text-gray-600">Seleccione los recursos logísticos que tiene disponibles la comunidad para este abordaje</p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                                        <Checkbox
+                                            id="transporte"
+                                            checked={formData.transporte}
+                                            onCheckedChange={(checked) => 
+                                                setFormData({ ...formData, transporte: checked as boolean })
+                                            }
+                                        />
+                                        <Label htmlFor="transporte" className="flex items-center gap-2 cursor-pointer">
+                                            <Truck className="w-4 h-4 text-green-600" />
+                                            <span>Transporte</span>
+                                        </Label>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                                        <Checkbox
+                                            id="refrigerios"
+                                            checked={formData.refrigerios}
+                                            onCheckedChange={(checked) => 
+                                                setFormData({ ...formData, refrigerios: checked as boolean })
+                                            }
+                                        />
+                                        <Label htmlFor="refrigerios" className="flex items-center gap-2 cursor-pointer">
+                                            <Coffee className="w-4 h-4 text-blue-600" />
+                                            <span>Refrigerios</span>
+                                        </Label>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                                        <Checkbox
+                                            id="espacioCubierto"
+                                            checked={formData.espacioCubierto}
+                                            onCheckedChange={(checked) => 
+                                                setFormData({ ...formData, espacioCubierto: checked as boolean })
+                                            }
+                                        />
+                                        <Label htmlFor="espacioCubierto" className="flex items-center gap-2 cursor-pointer">
+                                            <Home className="w-4 h-4 text-purple-600" />
+                                            <span>Espacio Cubierto</span>
+                                        </Label>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="notasLogistica">Notas Adicionales de Logística</Label>
+                                    <Textarea
+                                        id="notasLogistica"
+                                        value={formData.notasLogistica}
+                                        onChange={(e) => setFormData({ ...formData, notasLogistica: e.target.value })}
+                                        placeholder="Describe cualquier detalle adicional sobre los recursos logísticos..."
+                                        rows={2}
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex justify-end gap-2 pt-4">

@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, int, datetime, text, index, foreignKey } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, int, datetime, text, index, foreignKey, boolean } from 'drizzle-orm/mysql-core';
 import { comunidades } from './comunidades';
 
 /**
@@ -15,14 +15,17 @@ export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     tipoAbordaje: varchar('tipo_abordaje', { length: 50 }).notNull(), // Educativo, Médico, Social, etc.
     participantesEstimados: int('participantes_estimados').notNull(),
     recursosAdicionales: text('recursos_adicionales'), // Qué más se necesita
+    // Campos de logística para la solicitud
+    transporte: boolean('transporte').default(false),
+    refrigerios: boolean('refrigerios').default(false),
+    espacioCubierto: boolean('espacio_cubierto').default(false),
+    notasLogistica: text('notas_logistica'), // Notas adicionales de logística
     estado: varchar('estado', { length: 20 }).notNull().default('pendiente'), // pendiente, confirmado, rechazado
     fechaSolicitud: datetime('fecha_solicitud').notNull().default(new Date()),
     notas: text('notas'),
-    prioridad: varchar('prioridad', { length: 10 }).notNull().default('media'), // alta, media, baja
 }, (table) => ({
     comunidadIdx: index('idx_comunidad').on(table.codigoComunidad),
     estadoIdx: index('idx_estado').on(table.estado),
-    prioridadIdx: index('idx_prioridad').on(table.prioridad),
     fechaIdx: index('idx_fecha').on(table.fechaSolicitud),
     solAbordComComFk: foreignKey({
         columns: [table.codigoComunidad],

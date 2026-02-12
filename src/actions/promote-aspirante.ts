@@ -37,6 +37,7 @@ export async function promoteAspiranteToTejedor(cedulaAspirante: string) {
             correoTejedor: aspirante.correoAspirante,
             profesionTejedor: aspirante.profesionAspirante,
             fechaIngreso: new Date(),
+            fechaPromocion: new Date(), // Fecha actual de promoción
             tipodeVoluntario: 'Tejedor Oficial',
         };
 
