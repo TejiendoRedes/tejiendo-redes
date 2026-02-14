@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { especialidades, type NewEspecialidad, type Especialidad } from '@/db/schema/especialidades';
 import { eq } from 'drizzle-orm';
+import { getErrorMessage } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
 
 /**
  * Obtener todas las especialidades
@@ -23,12 +25,25 @@ export async function getEspecialidades() {
  */
 export async function createEspecialidad(data: NewEspecialidad) {
     try {
-        await db.insert(especialidades).values(data);
+        // Validaciones básicas de campos obligatorios
+        if (!data.nombreEspecialidad?.trim()) {
+            return { success: false, error: 'El nombre de la especialidad es requerido' };
+        }
+
+        // Generación automática del código de especialidad (ESP-001...)
+        const newCode = await getNextCode(especialidades, especialidades.codigoEspecialidad, 'ESP-');
+
+        const finalData = {
+            ...data,
+            codigoEspecialidad: newCode
+        };
+
+        await db.insert(especialidades).values(finalData);
         revalidatePath('/datos-basicos/especialidades');
-        return { success: true, message: 'Especialidad creada correctamente' };
+        return { success: true, message: `Especialidad creada correctamente con código ${newCode}` };
     } catch (error) {
-        console.error('Error creating especialidad:', error);
-        return { success: false, error: 'Error al crear la especialidad' };
+        const errorMessage = getErrorMessage(error, 'la especialidad', 'crear');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -43,8 +58,8 @@ export async function updateEspecialidad(codigo: string, data: Partial<NewEspeci
         revalidatePath('/datos-basicos/especialidades');
         return { success: true, message: 'Especialidad actualizada correctamente' };
     } catch (error) {
-        console.error('Error updating especialidad:', error);
-        return { success: false, error: 'Error al actualizar la especialidad' };
+        const errorMessage = getErrorMessage(error, 'la especialidad', 'actualizar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -58,7 +73,7 @@ export async function deleteEspecialidad(codigo: string) {
         revalidatePath('/datos-basicos/especialidades');
         return { success: true, message: 'Especialidad eliminada correctamente' };
     } catch (error) {
-        console.error('Error deleting especialidad:', error);
-        return { success: false, error: 'Error al eliminar la especialidad' };
+        const errorMessage = getErrorMessage(error, 'la especialidad', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }

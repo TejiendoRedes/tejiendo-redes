@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { AbordajesService } from '@/services/abordajes-service';
 import { createResponse } from '@/lib/utils';
 import { abordaje, medicamentosPacientes } from '@/db/schema'; // Import types if needed, or source from service
+import { DeleteErrorMessages } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
 
 /**
  * Obtener todos los abordajes
@@ -14,7 +16,7 @@ export async function getAbordajes() {
         return createResponse(true, data);
     } catch (error) {
         console.error('Error fetching abordajes:', error);
-        return createResponse(false, null, 'Error al obtener los abordajes');
+        return createResponse(false, null, 'No se pudieron obtener los abordajes. Por favor, intenta nuevamente.');
     }
 }
 
@@ -24,11 +26,11 @@ export async function getAbordajes() {
 export async function getAbordajeById(id: string) {
     try {
         const data = await AbordajesService.getById(id);
-        if (!data) return createResponse(false, null, 'Abordaje no encontrado');
+        if (!data) return createResponse(false, null, 'El abordaje no fue encontrado');
         return createResponse(true, data);
     } catch (error) {
         console.error('Error fetching abordaje details:', error);
-        return createResponse(false, null, 'Error al obtener los detalles del abordaje');
+        return createResponse(false, null, 'No se pudieron obtener los detalles del abordaje. Por favor, intenta nuevamente.');
     }
 }
 
@@ -37,12 +39,31 @@ export async function getAbordajeById(id: string) {
  */
 export async function createAbordaje(data: typeof abordaje.$inferInsert) {
     try {
-        await AbordajesService.create(data);
+        // Validaciones básicas de campos obligatorios
+        if (!data.codigoComunidad) {
+            return createResponse(false, null, 'Debe seleccionar una comunidad');
+        }
+
+        // Generación automática del código de abordaje (ABD-001...)
+        const newCode = await getNextCode(abordaje, abordaje.codigoAbordaje, 'ABD-');
+
+        const finalData = {
+            ...data,
+            codigoAbordaje: newCode
+        };
+
+        await AbordajesService.create(finalData);
         revalidatePath('/abordajes');
-        return createResponse(true);
-    } catch (error) {
+        return createResponse(true, { codigoAbordaje: newCode }, `Abordaje registrado correctamente con código ${newCode}`);
+    } catch (error: any) {
         console.error('Error creating abordaje:', error);
-        return createResponse(false, null, 'Error al crear el abordaje');
+        if (error?.message?.includes('Duplicate entry')) {
+            return createResponse(false, null, 'Ya existe un abordaje con este código generado. Por favor, intenta nuevamente.');
+        }
+        if (error?.message?.includes('foreign key constraint') || error?.message?.includes('Cannot add or update')) {
+            return createResponse(false, null, 'La comunidad seleccionada no existe. Por favor, selecciona una comunidad válida.');
+        }
+        return createResponse(false, null, 'Error al crear el abordaje. Por favor, intenta de nuevo.');
     }
 }
 
@@ -55,9 +76,12 @@ export async function updateAbordaje(id: string, data: Partial<typeof abordaje.$
         revalidatePath('/abordajes');
         revalidatePath(`/abordajes/${id}`);
         return createResponse(true);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error updating abordaje:', error);
-        return createResponse(false, null, 'Error al actualizar el abordaje');
+        if (error?.message?.includes('foreign key constraint')) {
+            return createResponse(false, null, 'Los datos referenciados no existen. Por favor, verifica la información.');
+        }
+        return createResponse(false, null, 'Error al actualizar el abordaje. Por favor, intenta nuevamente.');
     }
 }
 
@@ -127,11 +151,33 @@ export async function deleteAbordaje(id: string) {
         return createResponse(true);
     } catch (error: any) {
         console.error('Error deleting abordaje:', error);
-        // Handle Foreign Key Constraint errors specifically
-        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.message?.includes('foreign key constraint')) {
-            return createResponse(false, null, 'No se puede eliminar porque tiene registros asociados (ej. consultas)');
+
+        // Detectar tipo específico de FK constraint
+        // En Drizzle, el error de MySQL está en error.cause
+        const mysqlError = error?.cause || error;
+        const errorCode = mysqlError?.code || error.code;
+        const errorMsg = mysqlError?.sqlMessage || mysqlError?.message || error.message || '';
+
+        if (errorCode === 'ER_ROW_IS_REFERENCED_2' || errorMsg.includes('foreign key constraint')) {
+
+            if (errorMsg.includes('consultas')) {
+                return createResponse(false, null, DeleteErrorMessages.abordaje.conConsultas());
+            }
+            if (errorMsg.includes('abordaje_comunidad') || errorMsg.includes('ab_com_')) {
+                return createResponse(false, null, DeleteErrorMessages.abordaje.conComunidades());
+            }
+            if (errorMsg.includes('tejedores_abordaje') || errorMsg.includes('tej_ab_')) {
+                return createResponse(false, null, DeleteErrorMessages.abordaje.conTejedores());
+            }
+            if (errorMsg.includes('medicamentos_pacientes') || errorMsg.includes('med_pac_')) {
+                return createResponse(false, null, 'No se puede eliminar este abordaje porque tiene entregas de medicamentos registradas en el sistema.');
+            }
+
+            // Mensaje genérico
+            return createResponse(false, null, DeleteErrorMessages.abordaje.generic());
         }
-        return createResponse(false, null, 'Error al eliminar el abordaje');
+
+        return createResponse(false, null, 'Error al eliminar el abordaje. Por favor, intenta nuevamente.');
     }
 }
 

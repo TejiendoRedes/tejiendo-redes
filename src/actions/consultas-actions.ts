@@ -10,17 +10,10 @@ import { especialidades } from '@/db/schema/especialidades';
 import { medicos } from '@/db/schema/medicos';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { tejedores } from '@/db/schema/tejedores';
+import { getErrorMessage } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
 
-/**
- * Validar si un código ya existe
- */
-async function checkCodeExists(codigo: string) {
-    const existing = await db.select({ codigo: consultas.codigoConsulta })
-        .from(consultas)
-        .where(eq(consultas.codigoConsulta, codigo))
-        .limit(1);
-    return existing.length > 0;
-}
+// Eliminado: checkCodeExists (ahora se genera automáticamente)
 
 /**
  * Obtener todas las consultas con relaciones
@@ -45,8 +38,8 @@ export async function getConsultas() {
         // Por ahora, solo retornamos los datos basicos para la tabla
         return { success: true, data };
     } catch (error) {
-        console.error('Error fetching consultas:', error);
-        return { success: false, error: 'Error al obtener las consultas' };
+        const errorMessage = getErrorMessage(error, 'las consultas', 'obtener');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -60,8 +53,8 @@ export async function getEnfermedadesByConsulta(codigoConsulta: string) {
             .where(eq(consultasEnfermedades.codigoConsulta, codigoConsulta));
         return { success: true, data };
     } catch (error) {
-        console.error('Error fetching consulta enfermedades:', error);
-        return { success: false, error: 'Error al obtener enfermedades de la consulta' };
+        const errorMessage = getErrorMessage(error, 'las enfermedades', 'obtener');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -73,18 +66,20 @@ export async function createConsulta(
     enfermedadesIds: string[]
 ) {
     try {
-        if (await checkCodeExists(data.codigoConsulta)) {
-            return { success: false, error: 'El código de consulta ya existe' };
-        }
+        // Generación automática del código de consulta (CON-001...)
+        const newCode = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
 
         await db.transaction(async (tx) => {
             // 1. Insert Consulta
-            await tx.insert(consultas).values(data);
+            await tx.insert(consultas).values({
+                ...data,
+                codigoConsulta: newCode
+            });
 
             // 2. Insert Enfermedades Relations
             if (enfermedadesIds.length > 0) {
                 const relations: NewConsultaEnfermedad[] = enfermedadesIds.map(id => ({
-                    codigoConsulta: data.codigoConsulta,
+                    codigoConsulta: newCode,
                     codigoEnfermedad: id
                 }));
                 await tx.insert(consultasEnfermedades).values(relations);
@@ -92,10 +87,10 @@ export async function createConsulta(
         });
 
         revalidatePath('/datos-basicos/consultas');
-        return { success: true, message: 'Consulta creada correctamente' };
+        return { success: true, message: `Consulta creada correctamente con código ${newCode}` };
     } catch (error) {
-        console.error('Error creating consulta:', error);
-        return { success: false, error: 'Error al crear la consulta' };
+        const errorMessage = getErrorMessage(error, 'la consulta', 'crear');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -131,8 +126,8 @@ export async function updateConsulta(
         revalidatePath('/datos-basicos/consultas');
         return { success: true, message: 'Consulta actualizada correctamente' };
     } catch (error) {
-        console.error('Error updating consulta:', error);
-        return { success: false, error: 'Error al actualizar la consulta' };
+        const errorMessage = getErrorMessage(error, 'la consulta', 'actualizar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -148,7 +143,7 @@ export async function deleteConsulta(codigo: string) {
         revalidatePath('/datos-basicos/consultas');
         return { success: true, message: 'Consulta eliminada correctamente' };
     } catch (error) {
-        console.error('Error deleting consulta:', error);
-        return { success: false, error: 'Error al eliminar la consulta' };
+        const errorMessage = getErrorMessage(error, 'la consulta', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }

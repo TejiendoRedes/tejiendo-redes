@@ -5,6 +5,8 @@ import { db } from '@/db';
 import { organismos, type NewOrganismo, type Organismo } from '@/db/schema/organismos';
 import { tejedores } from '@/db/schema/tejedores';
 import { eq } from 'drizzle-orm';
+import { getErrorMessage } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
 
 /**
  * Obtener todos los organismos con sus tejedores responsables
@@ -33,12 +35,25 @@ export async function getOrganismos() {
  */
 export async function createOrganismo(data: NewOrganismo) {
     try {
-        await db.insert(organismos).values(data);
+        // Validaciones básicas de campos obligatorios
+        if (!data.nombreOrganismo?.trim()) {
+            return { success: false, error: 'El nombre del organismo es requerido' };
+        }
+
+        // Generación automática del código de organismo (ORG-001...)
+        const newCode = await getNextCode(organismos, organismos.codigoOrganismo, 'ORG-');
+
+        const finalData = {
+            ...data,
+            codigoOrganismo: newCode
+        };
+
+        await db.insert(organismos).values(finalData);
         revalidatePath('/datos-basicos/organismos');
-        return { success: true, message: 'Organismo creado correctamente' };
+        return { success: true, message: `Organismo creado correctamente con código ${newCode}` };
     } catch (error) {
-        console.error('Error creating organismo:', error);
-        return { success: false, error: 'Error al crear el organismo' };
+        const errorMessage = getErrorMessage(error, 'el organismo', 'crear');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -53,8 +68,8 @@ export async function updateOrganismo(codigo: string, data: Partial<NewOrganismo
         revalidatePath('/datos-basicos/organismos');
         return { success: true, message: 'Organismo actualizado correctamente' };
     } catch (error) {
-        console.error('Error updating organismo:', error);
-        return { success: false, error: 'Error al actualizar el organismo' };
+        const errorMessage = getErrorMessage(error, 'el organismo', 'actualizar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -68,7 +83,7 @@ export async function deleteOrganismo(codigo: string) {
         revalidatePath('/datos-basicos/organismos');
         return { success: true, message: 'Organismo eliminado correctamente' };
     } catch (error) {
-        console.error('Error deleting organismo:', error);
-        return { success: false, error: 'Error al eliminar el organismo' };
+        const errorMessage = getErrorMessage(error, 'el organismo', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }

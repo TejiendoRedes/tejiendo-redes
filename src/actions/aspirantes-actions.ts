@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { aspirantes, type NewAspirante, type Aspirante } from '@/db/schema/aspirantes';
 import { tejedores } from '@/db/schema/tejedores';
 import { eq } from 'drizzle-orm';
+import { getErrorMessage, isDuplicateKeyError } from '@/lib/error-handler';
 
 /**
  * Obtener todos los aspirantes
@@ -14,8 +15,8 @@ export async function getAspirantes() {
         const data = await db.select().from(aspirantes);
         return { success: true, data };
     } catch (error) {
-        console.error('Error fetching aspirantes:', error);
-        return { success: false, error: 'Error al obtener los aspirantes' };
+        const errorMessage = getErrorMessage(error, 'los aspirantes', 'obtener');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -24,12 +25,25 @@ export async function getAspirantes() {
  */
 export async function createAspirante(data: NewAspirante) {
     try {
+        // Validaciones básicas
+        if (!data.cedulaAspirante?.trim()) {
+            return { success: false, error: 'La cédula es requerida' };
+        }
+        if (!data.nombreAspirante?.trim()) {
+            return { success: false, error: 'El nombre es requerido' };
+        }
+        if (!data.apellidoAspirante?.trim()) {
+            return { success: false, error: 'El apellido es requerido' };
+        }
+
         await db.insert(aspirantes).values(data);
         revalidatePath('/datos-basicos/aspirantes');
         return { success: true, message: 'Postulación registrada correctamente' };
     } catch (error) {
-        console.error('Error creating aspirante:', error);
-        return { success: false, error: 'Error al registrar la postulación' };
+        const errorMessage = getErrorMessage(error, 'la postulación', 'crear', {
+            duplicate: 'Ya existe un aspirante con esta cédula. Por favor, verifica los datos.',
+        });
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -38,14 +52,24 @@ export async function createAspirante(data: NewAspirante) {
  */
 export async function updateAspirante(cedula: string, data: Partial<NewAspirante>) {
     try {
+        // Verificar que el aspirante existe
+        const existing = await db.select()
+            .from(aspirantes)
+            .where(eq(aspirantes.cedulaAspirante, cedula))
+            .limit(1);
+
+        if (!existing || existing.length === 0) {
+            return { success: false, error: 'El aspirante no fue encontrado' };
+        }
+
         await db.update(aspirantes)
             .set(data)
             .where(eq(aspirantes.cedulaAspirante, cedula));
         revalidatePath('/datos-basicos/aspirantes');
         return { success: true, message: 'Aspirante actualizado correctamente' };
     } catch (error) {
-        console.error('Error updating aspirante:', error);
-        return { success: false, error: 'Error al actualizar el aspirante' };
+        const errorMessage = getErrorMessage(error, 'el aspirante', 'actualizar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -54,13 +78,23 @@ export async function updateAspirante(cedula: string, data: Partial<NewAspirante
  */
 export async function deleteAspirante(cedula: string) {
     try {
+        // Verificar que el aspirante existe antes de eliminar
+        const existing = await db.select()
+            .from(aspirantes)
+            .where(eq(aspirantes.cedulaAspirante, cedula))
+            .limit(1);
+
+        if (!existing || existing.length === 0) {
+            return { success: false, error: 'El aspirante no fue encontrado' };
+        }
+
         await db.delete(aspirantes)
             .where(eq(aspirantes.cedulaAspirante, cedula));
         revalidatePath('/datos-basicos/aspirantes');
         return { success: true, message: 'Postulación eliminada correctamente' };
     } catch (error) {
-        console.error('Error deleting aspirante:', error);
-        return { success: false, error: 'Error al eliminar el aspirante' };
+        const errorMessage = getErrorMessage(error, 'la postulación', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -70,6 +104,19 @@ export async function deleteAspirante(cedula: string) {
  */
 export async function promoverATejedor(aspirante: Aspirante) {
     try {
+        // Verificar que no exista ya un tejedor con esta cédula
+        const existingTejedor = await db.select()
+            .from(tejedores)
+            .where(eq(tejedores.cedulaTejedor, aspirante.cedulaAspirante))
+            .limit(1);
+
+        if (existingTejedor && existingTejedor.length > 0) {
+            return {
+                success: false,
+                error: 'Ya existe un tejedor con esta cédula. No se puede promover el aspirante.'
+            };
+        }
+
         await db.transaction(async (tx) => {
             // 1. Insertar en la tabla de tejedores
             await tx.insert(tejedores).values({
@@ -78,11 +125,14 @@ export async function promoverATejedor(aspirante: Aspirante) {
                 apellidoTejedor: aspirante.apellidoAspirante,
                 fechaNacimiento: aspirante.fechaNacimiento,
                 direccionTejedor: aspirante.direccionAspirante,
+                municipioTejedor: aspirante.municipioAspirante,
+                estadoTejedor: aspirante.estadoDireccionAspirante,
+                parroquiaTejedor: aspirante.parroquiaAspirante,
                 telefonoTejedor: aspirante.telefonoAspirante,
                 correoTejedor: aspirante.correoAspirante,
                 profesionTejedor: aspirante.profesionAspirante,
                 fechaIngreso: new Date(), // Fecha actual como ingreso
-                tipoVoluntario: 'Activo',  // Valor por defecto
+                tipodeVoluntario: 'Activo',  // Valor por defecto
             });
 
             // 2. Eliminar de la tabla de aspirantes
@@ -92,10 +142,12 @@ export async function promoverATejedor(aspirante: Aspirante) {
 
         revalidatePath('/datos-basicos/aspirantes');
         revalidatePath('/datos-basicos/tejedores');
-        
+
         return { success: true, message: 'Aspirante promovido a Tejedor exitosamente' };
     } catch (error) {
-        console.error('Error en promoción:', error);
-        return { success: false, error: 'Error al procesar la promoción del aspirante' };
+        const errorMessage = getErrorMessage(error, 'la promoción', 'crear', {
+            duplicate: 'Ya existe un tejedor con esta cédula',
+        });
+        return { success: false, error: errorMessage };
     }
 }

@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { solicitudesAbordajes, comunidades, abordaje, type NewSolicitudAbordaje, type SolicitudAbordaje } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { getErrorMessage } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
 
 /**
  * Obtener todas las solicitudes de abordajes con información de comunidades
@@ -52,14 +54,14 @@ export async function getComunidadesConLogistica() {
  */
 function calcularPuntuacionLogistica(comunidad: any): number {
     let puntuacion = 0;
-    
+
     // Ponderación de recursos logísticos
     if (comunidad.tieneTransporte) puntuacion += 3;
     if (comunidad.tieneRefrigerios) puntuacion += 2;
     if (comunidad.tieneAgua) puntuacion += 2;
     if (comunidad.tieneEspacioCubierto) puntuacion += 1;
     if (comunidad.tieneMaterialEducativo) puntuacion += 1;
-    
+
     return puntuacion;
 }
 
@@ -113,25 +115,21 @@ export async function createSolicitudAbordaje(data: NewSolicitudAbordaje) {
             return { success: false, error: 'El número de participantes debe ser mayor a 0' };
         }
 
-        // Generar código único
-        const count = await db.select({ count: solicitudesAbordajes.id })
-            .from(solicitudesAbordajes);
-        const nextId = (count.length || 0) + 1;
-        const codigoSolicitud = `SAB-${String(nextId).padStart(3, '0')}`;
+        // Generación automática del código de solicitud (SAB-001...)
+        const newCode = await getNextCode(solicitudesAbordajes, solicitudesAbordajes.codigoSolicitud, 'SAB-');
 
         const solicitudData = {
             ...data,
-            codigoSolicitud,
-            fechaSolicitud: new Date(), // Asegurar que se establezca la fecha
+            codigoSolicitud: newCode,
+            fechaSolicitud: new Date(),
         };
 
-        console.log('Datos a insertar:', solicitudData);
         await db.insert(solicitudesAbordajes).values(solicitudData);
         revalidatePath('/abordajes/solicitudes-abordajes');
-        return { success: true, message: 'Solicitud de abordaje creada correctamente' };
+        return { success: true, message: `Solicitud de abordaje creada correctamente con código ${newCode}` };
     } catch (error) {
-        console.error('Error creating solicitud abordaje:', error);
-        return { success: false, error: 'Error al crear la solicitud de abordaje' };
+        const errorMessage = getErrorMessage(error, 'la solicitud de abordaje', 'crear');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -155,11 +153,8 @@ export async function confirmarSolicitudAbordaje(id: number) {
             .set({ estado: 'confirmado' })
             .where(eq(solicitudesAbordajes.id, id));
 
-        // Crear el abordaje real
-        const count = await db.select({ count: abordaje.codigoAbordaje })
-            .from(abordaje);
-        const nextId = (count.length || 0) + 1;
-        const codigoAbordaje = `ABD-${String(nextId).padStart(3, '0')}`;
+        // Generación automática del código de abordaje (ABD-001...)
+        const codigoAbordaje = await getNextCode(abordaje, abordaje.codigoAbordaje, 'ABD-');
 
         const abordajeData = {
             codigoAbordaje,
@@ -175,10 +170,10 @@ export async function confirmarSolicitudAbordaje(id: number) {
 
         revalidatePath('/abordajes/solicitudes-abordajes');
         revalidatePath('/abordajes');
-        return { success: true, message: 'Solicitud confirmada correctamente' };
+        return { success: true, message: `Solicitud confirmada correctamente. Nuevo abordaje: ${codigoAbordaje}` };
     } catch (error) {
-        console.error('Error confirming solicitud abordaje:', error);
-        return { success: false, error: 'Error al confirmar la solicitud' };
+        const errorMessage = getErrorMessage(error, 'el abordaje', 'confirmar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -188,7 +183,7 @@ export async function confirmarSolicitudAbordaje(id: number) {
 export async function rechazarSolicitudAbordaje(id: number, motivo?: string) {
     try {
         await db.update(solicitudesAbordajes)
-            .set({ 
+            .set({
                 estado: 'rechazado',
                 notas: motivo || null
             })
@@ -197,8 +192,8 @@ export async function rechazarSolicitudAbordaje(id: number, motivo?: string) {
         revalidatePath('/abordajes/solicitudes-abordajes');
         return { success: true, message: 'Solicitud rechazada correctamente' };
     } catch (error) {
-        console.error('Error rejecting solicitud abordaje:', error);
-        return { success: false, error: 'Error al rechazar la solicitud' };
+        const errorMessage = getErrorMessage(error, 'la solicitud de abordaje', 'rechazar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -213,7 +208,7 @@ export async function deleteSolicitudAbordaje(id: number) {
         revalidatePath('/abordajes/solicitudes-abordajes');
         return { success: true, message: 'Solicitud eliminada correctamente' };
     } catch (error) {
-        console.error('Error deleting solicitud abordaje:', error);
-        return { success: false, error: 'Error al eliminar la solicitud' };
+        const errorMessage = getErrorMessage(error, 'la solicitud de abordaje', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }

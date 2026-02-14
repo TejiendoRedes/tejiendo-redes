@@ -4,16 +4,18 @@ import { ConsultaForm } from '@/components/abordajes/ConsultaForm';
 import { getAbordajeById } from '@/actions/abordajes-actions';
 import { getPacientes } from '@/actions/pacientes-actions';
 import { getEnfermedades } from '@/actions/enfermedades-actions';
+import { getMedicos } from '@/actions/medicos-actions';
 import { EmptyState } from '@/components/shared/UIComponents';
 
 export default async function NuevaConsultaPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
 
     // Parallel data fetching
-    const [abordajeReq, pacientesReq, enfermedadesReq] = await Promise.all([
+    const [abordajeReq, pacientesReq, enfermedadesReq, medicosReq] = await Promise.all([
         getAbordajeById(id),
         getPacientes(),
-        getEnfermedades()
+        getEnfermedades(),
+        getMedicos()
     ]);
 
     if (!abordajeReq.success || !abordajeReq.data) {
@@ -32,17 +34,18 @@ export default async function NuevaConsultaPage({ params }: { params: Promise<{ 
         );
     }
 
-    // Filter Tejedores who are Medics/Doctors
-    // We assume 'tejedores' in abordaje data contains all participants.
-    // Ideally we filter by 'profesionTejedor'.
     const abordajeData = abordajeReq.data;
-    const medicos = abordajeData.tejedores.filter((t: any) =>
-        t.profesionTejedor?.toLowerCase().includes('medico') ||
-        t.profesionTejedor?.toLowerCase().includes('doctor') ||
-        t.rolAbordaje?.toLowerCase().includes('medico')
-    );
-    // Fallback: if no explicit medics found, show all tejedores (debug/loose mode)
-    const medicalStaff = medicos.length > 0 ? medicos : abordajeData.tejedores;
+
+    // Transform medical staff data to match the expected format
+    // getMedicos returns { success, data: [{ ...medicos, tejedor: {...}, especialidad: {...} }] }
+    const medicosData = (medicosReq.success && medicosReq.data)
+        ? medicosReq.data.map((m: any) => ({
+            cedulaTejedor: m.tejedor.cedulaTejedor,
+            nombreTejedor: m.tejedor.nombreTejedor,
+            apellidoTejedor: m.tejedor.apellidoTejedor,
+            profesionTejedor: m.tejedor.profesionTejedor,
+        }))
+        : [];
 
     return (
         <MainLayout>
@@ -58,7 +61,7 @@ export default async function NuevaConsultaPage({ params }: { params: Promise<{ 
             <ConsultaForm
                 abordajeId={id}
                 pacientes={pacientesReq.data || []}
-                medicos={medicalStaff || []}
+                medicos={medicosData}
                 enfermedades={enfermedadesReq.data || []}
             />
         </MainLayout>

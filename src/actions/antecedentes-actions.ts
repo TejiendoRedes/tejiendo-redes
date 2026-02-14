@@ -5,6 +5,7 @@ import { db } from '@/db';
 import { antecedentes, type NewAntecedente, type Antecedente } from '@/db/schema/antecedentes';
 import { pacientes } from '@/db/schema/pacientes';
 import { eq } from 'drizzle-orm';
+import { getErrorMessage } from '@/lib/error-handler';
 
 /**
  * Obtener todos los antecedentes con la información del paciente
@@ -23,8 +24,8 @@ export async function getAntecedentes() {
 
         return { success: true, data };
     } catch (error) {
-        console.error('Error fetching antecedentes:', error);
-        return { success: false, error: 'Error al obtener los antecedentes' };
+        const errorMessage = getErrorMessage(error, 'los antecedentes', 'obtener');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -33,18 +34,26 @@ export async function getAntecedentes() {
  */
 export async function createAntecedente(data: NewAntecedente) {
     try {
+        // Validaciones básicas
+        if (!data.codigoAntecedente?.trim()) {
+            return { success: false, error: 'El código de antecedente es requerido' };
+        }
+        if (!data.cedulaPaciente?.trim()) {
+            return { success: false, error: 'Debe seleccionar un paciente' };
+        }
+
         // Verificar si ya existe el código
         const existing = await db.select().from(antecedentes).where(eq(antecedentes.codigoAntecedente, data.codigoAntecedente));
         if (existing.length > 0) {
-            return { success: false, error: 'El código de antecedente ya existe' };
+            return { success: false, error: 'Ya existe un antecedente con este código. Por favor, usa un código diferente.' };
         }
 
         await db.insert(antecedentes).values(data);
         revalidatePath('/datos-basicos/antecedentes');
         return { success: true, message: 'Antecedente creado correctamente' };
     } catch (error) {
-        console.error('Error creating antecedente:', error);
-        return { success: false, error: 'Error al crear el antecedente' };
+        const errorMessage = getErrorMessage(error, 'el antecedente', 'crear');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -59,8 +68,8 @@ export async function updateAntecedente(codigo: string, data: Partial<NewAnteced
         revalidatePath('/datos-basicos/antecedentes');
         return { success: true, message: 'Antecedente actualizado correctamente' };
     } catch (error) {
-        console.error('Error updating antecedente:', error);
-        return { success: false, error: 'Error al actualizar el antecedente' };
+        const errorMessage = getErrorMessage(error, 'el antecedente', 'actualizar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -74,7 +83,7 @@ export async function deleteAntecedente(codigo: string) {
         revalidatePath('/datos-basicos/antecedentes');
         return { success: true, message: 'Antecedente eliminado correctamente' };
     } catch (error) {
-        console.error('Error deleting antecedente:', error);
-        return { success: false, error: 'Error al eliminar el antecedente' };
+        const errorMessage = getErrorMessage(error, 'el antecedente', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }

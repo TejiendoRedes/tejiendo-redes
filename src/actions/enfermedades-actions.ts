@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { enfermedades, type NewEnfermedad, type Enfermedad } from '@/db/schema/enfermedades';
 import { eq } from 'drizzle-orm';
+import { getErrorMessage } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
 
 /**
  * Obtener todas las enfermedades
@@ -23,12 +25,25 @@ export async function getEnfermedades() {
  */
 export async function createEnfermedad(data: NewEnfermedad) {
     try {
-        await db.insert(enfermedades).values(data);
+        // Validaciones básicas de campos obligatorios
+        if (!data.nombreEnfermedad?.trim()) {
+            return { success: false, error: 'El nombre de la enfermedad es requerido' };
+        }
+
+        // Generación automática del código de enfermedad (ENF-001...)
+        const newCode = await getNextCode(enfermedades, enfermedades.codigoEnfermedad, 'ENF-');
+
+        const finalData = {
+            ...data,
+            codigoEnfermedad: newCode
+        };
+
+        await db.insert(enfermedades).values(finalData);
         revalidatePath('/datos-basicos/enfermedades');
-        return { success: true, message: 'Enfermedad creada correctamente' };
+        return { success: true, message: `Enfermedad creada correctamente con código ${newCode}` };
     } catch (error) {
-        console.error('Error creating enfermedad:', error);
-        return { success: false, error: 'Error al crear la enfermedad' };
+        const errorMessage = getErrorMessage(error, 'la enfermedad', 'crear');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -43,8 +58,8 @@ export async function updateEnfermedad(codigo: string, data: Partial<NewEnfermed
         revalidatePath('/datos-basicos/enfermedades');
         return { success: true, message: 'Enfermedad actualizada correctamente' };
     } catch (error) {
-        console.error('Error updating enfermedad:', error);
-        return { success: false, error: 'Error al actualizar la enfermedad' };
+        const errorMessage = getErrorMessage(error, 'la enfermedad', 'actualizar');
+        return { success: false, error: errorMessage };
     }
 }
 
@@ -58,7 +73,7 @@ export async function deleteEnfermedad(codigo: string) {
         revalidatePath('/datos-basicos/enfermedades');
         return { success: true, message: 'Enfermedad eliminada correctamente' };
     } catch (error) {
-        console.error('Error deleting enfermedad:', error);
-        return { success: false, error: 'Error al eliminar la enfermedad' };
+        const errorMessage = getErrorMessage(error, 'la enfermedad', 'eliminar');
+        return { success: false, error: errorMessage };
     }
 }
