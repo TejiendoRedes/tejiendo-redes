@@ -81,9 +81,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
     };
 
     const handleAdd = () => {
-        const nuevoCodigo = generarCodigo('COM', initialData.length);
         setFormData({
-            codigoComunidad: nuevoCodigo,
+            codigoComunidad: '',
             nombreComunidad: '',
             tipoComunidad: '',
             estado: '',
@@ -332,10 +331,16 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                                             <Label htmlFor="codigo">Código de Comunidad</Label>
                                             <Input
                                                 id="codigo"
+                                                placeholder={isEditing ? "" : "Automático (COM-XXX)"}
                                                 value={formData.codigoComunidad}
                                                 disabled
-                                                className="bg-gray-50"
+                                                className="bg-gray-50 border-gray-200"
                                             />
+                                            {!isEditing && (
+                                                <p className="text-[10px] text-blue-600 font-medium font-sans">
+                                                    El sistema asignará el código automáticamente al guardar.
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="nombre">Nombre de la Comunidad *</Label>

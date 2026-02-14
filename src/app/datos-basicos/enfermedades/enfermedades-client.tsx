@@ -176,16 +176,21 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="codigo">Código *</Label>
+                                <Label htmlFor="codigo">Código</Label>
                                 <Input
                                     id="codigo"
-                                    placeholder="ENF-001"
+                                    placeholder={editingEnfermedad ? "" : "Automático (ENF-XXX)"}
                                     value={formData.codigoEnfermedad}
                                     onChange={(e) => setFormData({ ...formData, codigoEnfermedad: e.target.value })}
-                                    required
-                                    disabled={!!editingEnfermedad}
-                                    className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                    required={!!editingEnfermedad}
+                                    disabled={true}
+                                    className="h-11 border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500"
                                 />
+                                {!editingEnfermedad && (
+                                    <p className="text-[10px] text-blue-600 font-medium font-sans">
+                                        El sistema asignará el código de forma automática.
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-2">

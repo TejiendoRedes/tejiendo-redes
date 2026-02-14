@@ -75,9 +75,8 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
     };
 
     const handleAdd = () => {
-        const nuevoCodigo = generarCodigo('ORG', initialData.length);
         setFormData({
-            codigoOrganismo: nuevoCodigo,
+            codigoOrganismo: '',
             cedulaTejedor: '',
             nombreOrganismo: '',
             tipoInstitucion: '',
@@ -322,10 +321,16 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                             <Label htmlFor="codigo">Código</Label>
                                             <Input
                                                 id="codigo"
+                                                placeholder={isEditing ? "" : "Automático (ORG-XXX)"}
                                                 value={formData.codigoOrganismo}
                                                 disabled
-                                                className="bg-gray-50"
+                                                className="bg-gray-50 border-gray-200"
                                             />
+                                            {!isEditing && (
+                                                <p className="text-[10px] text-blue-600 font-medium font-sans">
+                                                    El sistema generará el código automáticamente.
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="nombre">Nombre de la Institución *</Label>

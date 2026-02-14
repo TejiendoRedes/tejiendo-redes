@@ -38,9 +38,8 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
 
     const handleAdd = () => {
         setEditingEspecialidad(null);
-        // Sugerencia de código, pero editable
         setFormData({
-            codigoEspecialidad: `ESP-${(initialData.length + 1).toString().padStart(3, '0')}`,
+            codigoEspecialidad: '',
             nombreEspecialidad: '',
             descripcion: '',
         });
@@ -180,11 +179,16 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
                                             id="codigo"
                                             value={formData.codigoEspecialidad}
                                             onChange={(e) => setFormData({ ...formData, codigoEspecialidad: e.target.value })}
-                                            required
-                                            disabled={!!editingEspecialidad}
-                                            placeholder="Ej. ESP-001"
-                                            className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all uppercase"
+                                            required={!!editingEspecialidad}
+                                            disabled={true}
+                                            placeholder={editingEspecialidad ? "" : "Automático (ESP-XXX)"}
+                                            className="h-11 border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500 transition-all uppercase"
                                         />
+                                        {!editingEspecialidad && (
+                                            <p className="text-[10px] text-blue-600 font-medium mt-1">
+                                                El sistema asignará el código automáticamente al guardar.
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">

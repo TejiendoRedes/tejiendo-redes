@@ -299,19 +299,23 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
                             <div className="grid grid-cols-1 gap-5">
                                 <div className="space-y-2">
-                                    <Label htmlFor="codigo" className="text-sm font-semibold text-gray-700">Código del Medicamento *</Label>
+                                    <Label htmlFor="codigo" className="text-sm font-semibold text-gray-700">Código del Medicamento</Label>
                                     <Input
                                         id="codigo"
-                                        placeholder="Ej: MED-001"
+                                        placeholder={editingMedicamento ? "" : "Automático (MED-XXX)"}
                                         value={formData.codigoMedicamento}
                                         onChange={(e) =>
                                             setFormData({ ...formData, codigoMedicamento: e.target.value.toUpperCase() })
                                         }
-                                        required
-                                        disabled={!!editingMedicamento}
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                        required={!!editingMedicamento}
+                                        disabled={true}
+                                        className="h-11 border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500"
                                     />
-                                    <p className="text-[10px] text-gray-400">Identificador único del fármaco en el inventario.</p>
+                                    <p className="text-[10px] text-blue-600 font-medium">
+                                        {editingMedicamento
+                                            ? 'El código no puede ser modificado once asignado.'
+                                            : 'El sistema asignará un código secuencial automáticamente al guardar.'}
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">

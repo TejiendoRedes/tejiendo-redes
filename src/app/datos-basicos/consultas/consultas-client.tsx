@@ -217,15 +217,21 @@ export default function ConsultasClient({
                             {/* Left Column: Basic Info */}
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="codigo">Código Consulta *</Label>
+                                    <Label htmlFor="codigo">Código Consulta</Label>
                                     <Input
                                         id="codigo"
-                                        placeholder="CON-001"
+                                        placeholder={editingId ? "" : "Automático (CON-XXX)"}
                                         value={formData.codigoConsulta}
                                         onChange={(e) => setFormData({ ...formData, codigoConsulta: e.target.value })}
-                                        required
-                                        disabled={!!editingId}
+                                        required={!!editingId}
+                                        disabled={true}
+                                        className="bg-gray-50 border-gray-200"
                                     />
+                                    {!editingId && (
+                                        <p className="text-[10px] text-blue-600 font-medium font-sans">
+                                            El sistema generará el código automáticamente al guardar.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
