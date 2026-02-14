@@ -10,12 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createAbordaje } from '@/actions/abordajes-actions';
+import { getComunidades } from '@/actions/comunidades-actions';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function NuevoAbordajePage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [comunidades, setComunidades] = useState<any[]>([]);
 
     // Simple state management for form
     const [formData, setFormData] = useState({
@@ -23,8 +25,21 @@ export default function NuevoAbordajePage() {
         fechaAbordaje: new Date().toISOString().split('T')[0],
         horaInicio: '08:00',
         horaFin: '12:00',
-        estado: 'Planificado'
+        estado: 'Planificado',
+        codigoComunidad: ''
     });
+
+    React.useEffect(() => {
+        const fetchComunidades = async () => {
+            const result = await getComunidades();
+            if (result.success && result.data) {
+                setComunidades(result.data);
+            } else {
+                toast.error('Error al cargar comunidades');
+            }
+        };
+        fetchComunidades();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -45,12 +60,19 @@ export default function NuevoAbordajePage() {
 
             const payload = {
                 codigoAbordaje: generatedId,
-                fechaAbordaje: new Date(formData.fechaAbordaje), // Format check might be needed depending on schema/driver
+                fechaAbordaje: new Date(formData.fechaAbordaje),
                 horaInicio: formData.horaInicio,
                 horaFin: formData.horaFin,
                 descripcion: formData.descripcion,
-                estado: formData.estado
+                estado: formData.estado,
+                codigoComunidad: formData.codigoComunidad
             };
+
+            if (!formData.codigoComunidad) {
+                toast.error('Debe seleccionar una comunidad');
+                setIsSubmitting(false);
+                return;
+            }
 
             const result = await createAbordaje(payload as any); // Type cast might be needed due to Date vs string in schema types sometimes
 
@@ -98,6 +120,25 @@ export default function NuevoAbordajePage() {
                                     value={formData.descripcion}
                                     onChange={handleChange}
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="comunidad">Comunidad</Label>
+                                <Select
+                                    value={formData.codigoComunidad}
+                                    onValueChange={(val) => handleSelectChange(val, 'codigoComunidad')}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar comunidad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {comunidades.map((c) => (
+                                            <SelectItem key={c.codigoComunidad} value={c.codigoComunidad}>
+                                                {c.nombreComunidad} - {c.municipio}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

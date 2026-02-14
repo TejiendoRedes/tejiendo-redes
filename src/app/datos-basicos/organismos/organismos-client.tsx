@@ -230,7 +230,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             render: (o) => {
                 const estadoNombre = getEstadoNombre(o.estadoOrganismo);
                 const municipioNombre = getMunicipioNombre(o.estadoOrganismo, o.municipioOrganismo);
-                
+
                 return (
                     <div className="text-sm">
                         <div className="font-medium">{estadoNombre || '-'}</div>
@@ -272,7 +272,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             <div className="space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Instituciones</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Instituciones</h1>
                         <p className="text-gray-600">
                             Gestión de instituciones y entes asociados con la organización
                         </p>

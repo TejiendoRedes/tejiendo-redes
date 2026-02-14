@@ -142,7 +142,7 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Especialidades</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Especialidades</h1>
                     <p className="text-gray-600">Catálogo maestro de especialidades para la atención médica.</p>
                 </div>
 

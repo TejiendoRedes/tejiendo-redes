@@ -138,9 +138,9 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         if (res.success) {
             toast.success(res.message);
             router.refresh();
-            setSolicitudes(prev => 
-                prev.map(s => 
-                    s.id === id 
+            setSolicitudes(prev =>
+                prev.map(s =>
+                    s.id === id
                         ? { ...s, estado: 'confirmado' }
                         : s
                 )
@@ -157,9 +157,9 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
             if (res.success) {
                 toast.success(res.message);
                 router.refresh();
-                setSolicitudes(prev => 
-                    prev.map(s => 
-                        s.id === id 
+                setSolicitudes(prev =>
+                    prev.map(s =>
+                        s.id === id
                             ? { ...s, estado: 'rechazado' }
                             : s
                     )
@@ -185,7 +185,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
     const getLogisticaIcons = (recursos: any) => {
         if (!recursos) return [];
-        
+
         const icons = [];
         if (recursos.transporte) icons.push(<Truck key='transporte' className="w-4 h-4 text-green-600" />);
         if (recursos.refrigerios) icons.push(<Coffee key='refrigerios' className="w-4 h-4 text-blue-600" />);
@@ -316,7 +316,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[600px]">
+                    <DialogContent className="sm:max-w-[600px] scroll-y">
                         <DialogHeader>
                             <DialogTitle>Nueva Solicitud de Abordaje</DialogTitle>
                         </DialogHeader>
@@ -425,13 +425,13 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                             <div className="space-y-4">
                                 <Label className="text-sm font-semibold text-gray-700">Recursos Logísticos de la Comunidad</Label>
                                 <p className="text-sm text-gray-600">Seleccione los recursos logísticos que tiene disponibles la comunidad para este abordaje</p>
-                                
+
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="flex items-center space-x-2 p-3 border rounded-lg">
                                         <Checkbox
                                             id="transporte"
                                             checked={formData.transporte}
-                                            onCheckedChange={(checked) => 
+                                            onCheckedChange={(checked) =>
                                                 setFormData({ ...formData, transporte: checked as boolean })
                                             }
                                         />
@@ -445,7 +445,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                         <Checkbox
                                             id="refrigerios"
                                             checked={formData.refrigerios}
-                                            onCheckedChange={(checked) => 
+                                            onCheckedChange={(checked) =>
                                                 setFormData({ ...formData, refrigerios: checked as boolean })
                                             }
                                         />
@@ -459,7 +459,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                         <Checkbox
                                             id="espacioCubierto"
                                             checked={formData.espacioCubierto}
-                                            onCheckedChange={(checked) => 
+                                            onCheckedChange={(checked) =>
                                                 setFormData({ ...formData, espacioCubierto: checked as boolean })
                                             }
                                         />

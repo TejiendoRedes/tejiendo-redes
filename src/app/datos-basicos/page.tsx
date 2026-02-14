@@ -89,7 +89,7 @@ export default function DatosBasicosPage() {
             path: '/datos-basicos/enfermedades',
             color: 'bg-orange-500',
         },
-       
+
         {
             title: 'Consultas',
             count: 0,
@@ -104,7 +104,7 @@ export default function DatosBasicosPage() {
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl text-gray-900 mb-2">Datos Básicos</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Datos Básicos</h1>
                     <p className="text-gray-600">
                         Gestión de catálogos y datos maestros del sistema
                     </p>

@@ -60,13 +60,15 @@ export const consultasEnfermedades = mysqlTable('consultas_enfermedades', {
 export const medicamentosPacientes = mysqlTable('medicamentos_pacientes', {
     codigoMedicamento: varchar('codigo_medicamento', { length: 10 }).notNull(),
     cedulaPaciente: varchar('cedula_paciente', { length: 12 }).notNull(),
+    codigoAbordaje: varchar('codigo_abordaje', { length: 10 }).notNull(),
     fechaEntrega: date('fecha_entrega', { mode: 'date' }).notNull(),
     cantidadEntregada: int('cantidad_entregada').notNull(),
     cedulaTejedor: varchar('cedula_tejedor', { length: 12 }).notNull(),
 }, (table) => ({
-    pk: primaryKey({ columns: [table.codigoMedicamento, table.cedulaPaciente, table.fechaEntrega], name: 'med_pac_pk' }),
+    pk: primaryKey({ columns: [table.codigoMedicamento, table.cedulaPaciente, table.codigoAbordaje], name: 'med_pac_pk' }),
     cedulaPacienteIdx: index('idx_cedula_paciente').on(table.cedulaPaciente),
     cedulaTejedorIdx: index('idx_cedula_tejedor').on(table.cedulaTejedor),
+    codigoAbordajeIdx: index('idx_codigo_abordaje').on(table.codigoAbordaje),
     medFk: foreignKey({
         columns: [table.codigoMedicamento],
         foreignColumns: [medicamentos.codigoMedicamento],
@@ -82,6 +84,11 @@ export const medicamentosPacientes = mysqlTable('medicamentos_pacientes', {
         foreignColumns: [tejedores.cedulaTejedor],
         name: 'med_pac_tej_fk'
     }).onDelete('restrict').onUpdate('cascade'),
+    abFk: foreignKey({
+        columns: [table.codigoAbordaje],
+        foreignColumns: [abordaje.codigoAbordaje],
+        name: 'med_pac_ab_fk'
+    }).onDelete('cascade').onUpdate('cascade'),
 }));
 
 /**

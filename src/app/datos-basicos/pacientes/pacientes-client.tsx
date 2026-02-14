@@ -120,7 +120,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             correoPaciente: paciente.correoPaciente,
             nota: paciente.nota || '',
         });
-        
+
         // Cargar municipios y parroquias para el estado y municipio seleccionados
         if ((paciente as any).estado) {
             setMunicipios(getMunicipiosByEstado((paciente as any).estado));
@@ -128,7 +128,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                 setParroquias(getParroquiasByMunicipio((paciente as any).estado, (paciente as any).municipio));
             }
         }
-        
+
         setIsModalOpen(true);
     };
 
@@ -212,13 +212,13 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         const estado = (paciente as any).estado;
         const municipio = (paciente as any).municipio;
         const parroquia = (paciente as any).parroquia;
-        
+
         if (!estado || !municipio || !parroquia) return '-';
-        
+
         const estadoNombre = getEstadoNombre(estado);
         const municipioNombre = getMunicipioNombre(estado, municipio);
         const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
-        
+
         if (parroquia) {
             return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
         }
@@ -314,7 +314,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl text-gray-900 mb-2">Pacientes</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Pacientes</h1>
                     <p className="text-gray-600">
                         Gestión del registro de pacientes del sistema
                     </p>

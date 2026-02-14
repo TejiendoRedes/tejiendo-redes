@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast'; // Assuming toast hook exists, if not will replace with simple alert or just console
+import { toast } from 'sonner';
 import {
     updateAbordaje,
     addComunidadToAbordaje,
@@ -324,6 +324,7 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
             codigoMedicamento: selectedMedicamento,
             cedulaPaciente: selectedPaciente,
             cedulaTejedor: selectedTejedor,
+            codigoAbordaje: abordajeId, // Add this field
             fechaEntrega: fecha,
             cantidadEntregada: cantidad
         });

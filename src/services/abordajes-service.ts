@@ -161,6 +161,18 @@ export class AbordajesService {
             ));
     }
 
+    static async delete(id: string) {
+        // FK constraints will be handled by the database (restrict or cascade depending on relation)
+        // But for main Abordaje, we might want to ensure manual cascades or checks if DB doesn't handle all.
+        // In relations.ts:
+        // - abordajeComunidad: cascade
+        // - tejedoresAbordaje: cascade
+        // - consultas: restrict (THIS IS GOOD, prevents deleting abordaje with consultations)
+        // - medicamentosPacientes: cascade (we just set this!)
+
+        return await db.delete(abordaje).where(eq(abordaje.codigoAbordaje, id));
+    }
+
     static async registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
         return await db.insert(medicamentosPacientes).values(data);
     }

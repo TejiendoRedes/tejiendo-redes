@@ -1,10 +1,11 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import { migrate } from 'drizzle-orm/mysql2/migrator';
 import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
+import { loadEnvConfig } from '@next/env';
 import path from 'path';
 
-dotenv.config({ path: '.env.local' });
+// Load environment variables correctly for Next.js
+loadEnvConfig(process.cwd());
 
 /**
  * Script para aplicar migraciones a la base de datos
@@ -12,19 +13,28 @@ dotenv.config({ path: '.env.local' });
  */
 async function runMigrations() {
     console.log('🚀 Iniciando proceso de migraciones...\n');
-
-    const connection = await mysql.createConnection({
-        host: process.env.DATABASE_HOST!,
-        user: process.env.DATABASE_USER!,
-        password: process.env.DATABASE_PASSWORD!,
-        database: process.env.DATABASE_NAME!,
-        port: Number(process.env.DATABASE_PORT),
-        multipleStatements: true,
+    console.log('Environment check:', {
+        host: process.env.DATABASE_HOST,
+        user: process.env.DATABASE_USER,
+        port: process.env.DATABASE_PORT,
+        db: process.env.DATABASE_NAME
     });
 
-    const db = drizzle(connection);
+    let connection;
 
     try {
+        connection = await mysql.createConnection({
+            host: process.env.DATABASE_HOST!,
+            user: process.env.DATABASE_USER!,
+            password: process.env.DATABASE_PASSWORD!,
+            database: process.env.DATABASE_NAME!,
+            port: Number(process.env.DATABASE_PORT),
+            multipleStatements: true,
+        });
+        console.log('✅ Connected to database');
+
+        const db = drizzle(connection);
+
         console.log('📝 Aplicando migraciones...');
 
         // Aplica todas las migraciones pendientes desde la carpeta ./drizzle
@@ -37,8 +47,14 @@ async function runMigrations() {
         console.error('❌ Error al aplicar migraciones:', error);
         process.exit(1);
     } finally {
-        await connection.end();
+        if (connection) {
+            await connection.end();
+            console.log('🔌 Conexión cerrada');
+        }
     }
 }
 
-runMigrations();
+runMigrations().catch(err => {
+    console.error('Unhandled error in runMigrations top-level:', err);
+    process.exit(1);
+});

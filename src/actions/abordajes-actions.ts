@@ -118,6 +118,24 @@ export async function removeTejedorFromAbordaje(codigoAbordaje: string, cedulaTe
 }
 
 /**
+ * Eliminar un abordaje
+ */
+export async function deleteAbordaje(id: string) {
+    try {
+        await AbordajesService.delete(id);
+        revalidatePath('/abordajes');
+        return createResponse(true);
+    } catch (error: any) {
+        console.error('Error deleting abordaje:', error);
+        // Handle Foreign Key Constraint errors specifically
+        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.message?.includes('foreign key constraint')) {
+            return createResponse(false, null, 'No se puede eliminar porque tiene registros asociados (ej. consultas)');
+        }
+        return createResponse(false, null, 'Error al eliminar el abordaje');
+    }
+}
+
+/**
  * Registrar entrega de medicamento
  */
 export async function registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {

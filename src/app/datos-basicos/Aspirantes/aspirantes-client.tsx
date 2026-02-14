@@ -161,7 +161,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                 fechaPostulacion: new Date(formData.fechaPostulacion),
             };
 
-            const res = editingAspirante 
+            const res = editingAspirante
                 ? await updateAspirante(editingAspirante.cedulaAspirante, dataToSave)
                 : await createAspirante(dataToSave);
 
@@ -181,21 +181,21 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
 
     const columns: Column<Aspirante>[] = [
         { key: 'cedulaAspirante', label: 'Cédula', sortable: true },
-        { 
-            key: 'nombreAspirante', 
-            label: 'Aspirante', 
+        {
+            key: 'nombreAspirante',
+            label: 'Aspirante',
             render: (asp) => `${asp.nombreAspirante} ${asp.apellidoAspirante}`,
-            sortable: true 
+            sortable: true
         },
         { key: 'profesionAspirante', label: 'Profesión', sortable: true },
-        { 
+        {
             key: 'direccionCompleta',
             label: 'Dirección',
             render: (asp) => {
                 const estadoNombre = getEstadoNombre(asp.estadoDireccionAspirante);
                 const municipioNombre = getMunicipioNombre(asp.estadoDireccionAspirante, asp.municipioAspirante);
                 const parroquiaNombre = getParroquiaNombre(asp.estadoDireccionAspirante, asp.municipioAspirante, asp.parroquiaAspirante);
-                
+
                 return (
                     <div className="text-sm">
                         <div>{asp.direccionAspirante}</div>
@@ -206,7 +206,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                 );
             },
         },
-        { 
+        {
             key: 'telefonoAspirante',
             label: 'Teléfono',
             render: (asp) => (
@@ -216,9 +216,9 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                 </div>
             ),
         },
-        { 
-            key: 'estadoAspirante', 
-            label: 'Estado', 
+        {
+            key: 'estadoAspirante',
+            label: 'Estado',
             render: (asp) => (
                 <Badge variant={asp.estadoAspirante === 'Pendiente' ? 'outline' : 'default'}>
                     {asp.estadoAspirante}
@@ -236,8 +236,8 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                     <Button variant="ghost" size="sm" onClick={() => handleDelete(asp.cedulaAspirante)} disabled={!!isPromoting}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
-                    <Button 
-                        variant="ghost" size="sm" 
+                    <Button
+                        variant="ghost" size="sm"
                         title="Aprobar como Tejedor"
                         onClick={() => handlePromote(asp)}
                         disabled={isPromoting === asp.cedulaAspirante}
@@ -253,7 +253,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Aspirantes</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Aspirantes</h1>
                     <p className="text-gray-600">Lista de espera y postulaciones para nuevos tejedores</p>
                 </div>
 

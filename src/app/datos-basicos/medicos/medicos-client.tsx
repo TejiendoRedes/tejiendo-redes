@@ -173,7 +173,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                     const estadoNombre = getEstadoNombre(m.tejedor.estadoTejedor);
                     const municipioNombre = getMunicipioNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor);
                     const parroquiaNombre = getParroquiaNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor, m.tejedor.parroquiaTejedor);
-                    
+
                     return (
                         <div className="text-sm">
                             <div className="font-medium">{estadoNombre || '-'}</div>
@@ -216,7 +216,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
             <div className="space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Médicos</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Médicos</h1>
                         <p className="text-gray-600">
                             Gestión de médicos registrados en el sistema
                         </p>

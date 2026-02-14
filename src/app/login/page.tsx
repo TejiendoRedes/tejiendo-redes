@@ -43,10 +43,10 @@ export default function LoginPage() {
                 <div className="text-center mb-10 transition-all duration-700 animate-in fade-in slide-in-from-bottom-4">
                     <div className="inline-flex items-center justify-center mb-6">
                         <Image
-                            src="/minilogo.png"
+                            src="/logo.png"
                             alt="Logo"
-                            width={240}
-                            height={240}
+                            width={180}
+                            height={180}
                             className="object-contain drop-shadow-sm"
                             priority
                         />

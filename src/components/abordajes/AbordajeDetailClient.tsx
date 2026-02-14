@@ -15,6 +15,18 @@ import {
     AddTejedorModal,
     RegisterMedicamentoModal
 } from './AbordajeModals';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { deleteAbordaje } from '@/actions/abordajes-actions';
+import { toast } from 'sonner';
 
 interface AbordajeDetailClientProps {
     abordajeData: any;
@@ -26,6 +38,7 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
     const [showAddComunidad, setShowAddComunidad] = useState(false);
     const [showAddTejedor, setShowAddTejedor] = useState(false);
     const [showRegisterMeds, setShowRegisterMeds] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     if (!abordajeData) {
         return (
@@ -71,6 +84,36 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="flex items-center gap-2">
+                            Eliminar
+                        </Button>
+                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                            <AlertDialogContent className="bg-white p-6 rounded-lg max-w-md w-full">
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el abordaje
+                                        {abordajeData.consultas?.length > 0 && " (Nota: Si hay consultas asociadas, la eliminación fallará por seguridad)"}.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="mt-4 flex justify-end gap-2">
+                                    <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={async () => {
+                                        const res = await deleteAbordaje(abordajeData.codigoAbordaje);
+                                        if (res.success) {
+                                            toast.success('Abordaje eliminado exitosamente');
+                                            router.push('/abordajes');
+                                        } else {
+                                            toast.error(res.error || 'No se pudo eliminar el abordaje');
+                                            setShowDeleteDialog(false);
+                                        }
+                                    }} className="bg-red-600 hover:bg-red-700 text-white">
+                                        Eliminar
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+
                         <Button variant="outline" onClick={() => setShowEdit(true)}>
                             Editar Abordaje
                         </Button>

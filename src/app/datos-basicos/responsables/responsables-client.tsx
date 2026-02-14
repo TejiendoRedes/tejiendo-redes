@@ -172,7 +172,7 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Responsables</h1>
+                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Responsables Comunitario</h1>
                         <p className="text-gray-600 font-medium">Gestión de líderes y responsables de comunidades.</p>
                     </div>
                 </div>

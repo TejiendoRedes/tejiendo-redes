@@ -11,9 +11,6 @@ const dbConfig = {
     waitForConnections: true,
     connectionLimit: 50, // Increased from 10 to 50
     queueLimit: 0,
-    // Connection timeout settings
-    acquireTimeout: 60000, // 60 seconds
-    timeout: 60000, // 60 seconds
     // Character set configuration
     charset: 'utf8mb4',
     timezone: 'Z', // UTC

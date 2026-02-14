@@ -282,7 +282,7 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
             <div className="space-y-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Comunidades</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Comunidades</h1>
                         <p className="text-gray-600">
                             Gestión de comunidades atendidas por la organización
                         </p>

@@ -199,7 +199,7 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                 const estadoNombre = getEstadoNombre(tejedor.estadoTejedor);
                 const municipioNombre = getMunicipioNombre(tejedor.estadoTejedor, tejedor.municipioTejedor);
                 const parroquiaNombre = getParroquiaNombre(tejedor.estadoTejedor, tejedor.municipioTejedor, tejedor.parroquiaTejedor);
-                
+
                 return (
                     <div className="text-sm">
                         <div className="font-medium">{estadoNombre || '-'}</div>
@@ -272,7 +272,7 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl text-gray-900 mb-2">Tejedores</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Tejedores</h1>
                     <p className="text-gray-600">
                         Gestión de personal y voluntarios del sistema
                     </p>

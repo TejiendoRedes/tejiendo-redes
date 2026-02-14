@@ -6,7 +6,6 @@ export default async function AspirantesPage() {
     // 1. Obtenemos los datos desde la Server Action
     const { data: aspirantes, success, error } = await getAspirantes();
 
-    // 2. Manejo de error en caso de que la base de datos falle
     if (!success) {
         return (
             <MainLayout>
@@ -23,6 +22,5 @@ export default async function AspirantesPage() {
         );
     }
 
-    // 3. Renderizamos el cliente con la data inicial (pueden ser 0 registros o más)
     return <AspirantesClient initialData={aspirantes || []} />;
 }
