@@ -3,29 +3,39 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createConsulta } from '@/actions/consultas-actions';
 import { LoadingSpinner } from '@/components/shared/UIComponents';
 import { toast } from 'sonner';
 import { BloodPressureInput } from '@/components/ui/blood-pressure-input';
-import { SearchableSelect } from '@/components/shared/SearchableSelect';
+import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
+import { getPacientes } from '@/actions/pacientes-actions';
+import { getMedicos } from '@/actions/medicos-actions';
+import { getEnfermedades } from '@/actions/enfermedades-actions';
 
 interface ConsultaFormProps {
     abordajeId: string;
-    pacientes: any[]; // Replace with proper type
-    medicos: any[]; // Replace with proper type
-    enfermedades: any[]; // Replace with proper type
+    // Removed static arrays in favor of direct action usage or passed fetchers if needed
+    // But since we are importing actions directly, we might not need them as props unless for dependency injection
+    initialPatientId?: string;
+    onSuccess?: () => void;
+    onCancel?: () => void;
+    isInline?: boolean;
 }
 
-export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: ConsultaFormProps) {
+export function ConsultaForm({
+    abordajeId,
+    initialPatientId,
+    onSuccess,
+    onCancel,
+    isInline = false
+}: ConsultaFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        cedulaPaciente: '',
+        cedulaPaciente: initialPatientId || '',
         cedulaMedico: '',
         motivoConsulta: '',
         diagnosticoTexto: '',
@@ -65,8 +75,12 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
 
             if (result.success) {
                 toast.success('Consulta registrada exitosamente');
-                router.push(`/abordajes/${abordajeId}`);
-                router.refresh();
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    router.push(`/abordajes/${abordajeId}`);
+                    router.refresh();
+                }
             } else {
                 toast.error(result.error || 'Error al registrar consulta');
             }
@@ -78,6 +92,129 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
         }
     };
 
+    const content = (
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <AsyncSearchableSelect
+                        label="Paciente"
+                        fetcher={getPacientes}
+                        value={formData.cedulaPaciente}
+                        onValueChange={(val) => handleSelectChange('cedulaPaciente', val)}
+                        placeholder="Seleccione paciente"
+                        searchPlaceholder="Buscar por nombre o cédula..."
+                        idField="cedulaPaciente"
+                        labelField="nombrePaciente"
+                        secondaryLabelField="apellidoPaciente"
+                        disabled={!!initialPatientId}
+                        initialLabel={initialPatientId} // We might need to fetch the initial label if valid
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <AsyncSearchableSelect
+                        label="Médico Tratante"
+                        fetcher={getMedicos}
+                        value={formData.cedulaMedico}
+                        onValueChange={(val) => handleSelectChange('cedulaMedico', val)}
+                        placeholder="Seleccione médico"
+                        searchPlaceholder="Buscar por nombre o cédula..."
+                        idField="cedulaTejedor"
+                        labelField="nombreTejedor"
+                        secondaryLabelField="apellidoTejedor"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="motivoConsulta">Motivo de Consulta</Label>
+                <Textarea
+                    id="motivoConsulta"
+                    name="motivoConsulta"
+                    value={formData.motivoConsulta}
+                    onChange={handleChange}
+                    placeholder="Describa el motivo de la consulta..."
+                    required
+                />
+            </div>
+
+            <div className="space-y-2">
+                <AsyncSearchableSelect
+                    label="Diagnóstico (CIE/Enfermedad)"
+                    fetcher={getEnfermedades}
+                    value={formData.enfermedadPrincipal}
+                    onValueChange={(val) => handleSelectChange('enfermedadPrincipal', val)}
+                    placeholder="Seleccione enfermedad (opcional)"
+                    searchPlaceholder="Buscar por nombre..."
+                    idField="codigoEnfermedad"
+                    labelField="nombreEnfermedad"
+                    secondaryLabelField="codigoEnfermedad"
+                />
+            </div>
+
+            <div className="space-y-4 pt-2">
+                <BloodPressureInput
+                    value={formData.tensionArterial}
+                    onChange={(val) => handleSelectChange('tensionArterial', val)}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="diagnosticoTexto">Descripción del Diagnóstico</Label>
+                <Textarea
+                    id="diagnosticoTexto"
+                    name="diagnosticoTexto"
+                    value={formData.diagnosticoTexto}
+                    onChange={handleChange}
+                    placeholder="Detalles del diagnóstico clínico..."
+                    required
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="tratamiento">Tratamiento Indicado</Label>
+                <Textarea
+                    id="tratamiento"
+                    name="tratamiento"
+                    value={formData.tratamiento}
+                    onChange={handleChange}
+                    placeholder="Medicamentos y dosis..."
+                    required
+                />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="recomendaciones">Recomendaciones</Label>
+                <Textarea
+                    id="recomendaciones"
+                    name="recomendaciones"
+                    value={formData.recomendaciones}
+                    onChange={handleChange}
+                    placeholder="Recomendaciones generales..."
+                    required
+                />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onCancel ? onCancel() : router.back()}
+                    disabled={loading}
+                >
+                    Cancelar
+                </Button>
+                <Button type="submit" disabled={loading}>
+                    {loading ? <LoadingSpinner size="sm" /> : 'Registrar Consulta'}
+                </Button>
+            </div>
+        </form>
+    );
+
+    if (isInline) {
+        return content;
+    }
+
     return (
         <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
@@ -85,115 +222,7 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
                 <CardDescription>Registre los detalles de la atención al paciente</CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <SearchableSelect
-                                label="Paciente"
-                                items={pacientes}
-                                value={formData.cedulaPaciente}
-                                onValueChange={(val) => handleSelectChange('cedulaPaciente', val)}
-                                placeholder="Seleccione paciente"
-                                searchPlaceholder="Buscar por nombre o cédula..."
-                                idField="cedulaPaciente"
-                                labelField="nombrePaciente"
-                                secondaryLabelField="apellidoPaciente"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <SearchableSelect
-                                label="Médico Tratante"
-                                items={medicos}
-                                value={formData.cedulaMedico}
-                                onValueChange={(val) => handleSelectChange('cedulaMedico', val)}
-                                placeholder="Seleccione médico"
-                                searchPlaceholder="Buscar por nombre o cédula..."
-                                idField="cedulaTejedor"
-                                labelField="nombreTejedor"
-                                secondaryLabelField="apellidoTejedor"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="motivoConsulta">Motivo de Consulta</Label>
-                        <Textarea
-                            id="motivoConsulta"
-                            name="motivoConsulta"
-                            value={formData.motivoConsulta}
-                            onChange={handleChange}
-                            placeholder="Describa el motivo de la consulta..."
-                            required
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <SearchableSelect
-                            label="Diagnóstico (CIE/Enfermedad)"
-                            items={enfermedades}
-                            value={formData.enfermedadPrincipal}
-                            onValueChange={(val) => handleSelectChange('enfermedadPrincipal', val)}
-                            placeholder="Seleccione enfermedad (opcional)"
-                            searchPlaceholder="Buscar por nombre o código CIE..."
-                            idField="codigoEnfermedad"
-                            labelField="nombreEnfermedad"
-                            secondaryLabelField="codigoCie"
-                        />
-                    </div>
-
-                    <div className="space-y-4 pt-2">
-                        <BloodPressureInput
-                            value={formData.tensionArterial}
-                            onChange={(val) => handleSelectChange('tensionArterial', val)}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="diagnosticoTexto">Descripción del Diagnóstico</Label>
-                        <Textarea
-                            id="diagnosticoTexto"
-                            name="diagnosticoTexto"
-                            value={formData.diagnosticoTexto}
-                            onChange={handleChange}
-                            placeholder="Detalles del diagnóstico clínico..."
-                            required
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="tratamiento">Tratamiento Indicado</Label>
-                        <Textarea
-                            id="tratamiento"
-                            name="tratamiento"
-                            value={formData.tratamiento}
-                            onChange={handleChange}
-                            placeholder="Medicamentos y dosis..."
-                            required
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="recomendaciones">Recomendaciones</Label>
-                        <Textarea
-                            id="recomendaciones"
-                            name="recomendaciones"
-                            value={formData.recomendaciones}
-                            onChange={handleChange}
-                            placeholder="Recomendaciones generales..."
-                            required
-                        />
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? <LoadingSpinner size="sm" /> : 'Registrar Consulta'}
-                        </Button>
-                    </div>
-                </form>
+                {content}
             </CardContent>
         </Card>
     );

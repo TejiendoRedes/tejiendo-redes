@@ -8,11 +8,25 @@ import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 
 /**
- * Obtener todas las enfermedades
+ * Obtener todas las enfermedades (con búsqueda opcional)
  */
-export async function getEnfermedades() {
+import { like, or } from 'drizzle-orm';
+
+export async function getEnfermedades(query?: string, limit: number = 50) {
     try {
-        const data = await db.select().from(enfermedades);
+        let queryBuilder = db.select().from(enfermedades).$dynamic();
+
+        if (query) {
+            queryBuilder = queryBuilder.where(
+                or(
+                    like(enfermedades.nombreEnfermedad, `%${query}%`),
+                    like(enfermedades.codigoEnfermedad, `%${query}%`),
+                    like(enfermedades.tipoPatologia, `%${query}%`)
+                )
+            );
+        }
+
+        const data = await queryBuilder.limit(limit);
         return { success: true, data };
     } catch (error) {
         console.error('Error fetching enfermedades:', error);

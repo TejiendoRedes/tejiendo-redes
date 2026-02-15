@@ -8,14 +8,29 @@ import { especialidades } from '@/db/schema/especialidades';
 import { eq } from 'drizzle-orm';
 
 /**
- * Obtener todos los médicos con sus relaciones
+ * Obtener todos los médicos con sus relaciones (con búsqueda opcional)
  */
-export async function getMedicos() {
+import { like, or } from 'drizzle-orm';
+
+export async function getMedicos(query?: string, limit: number = 50) {
     try {
-        const result = await db.select()
+        let queryBuilder = db.select()
             .from(medicos)
             .leftJoin(tejedores, eq(medicos.cedulaTejedor, tejedores.cedulaTejedor))
-            .leftJoin(especialidades, eq(medicos.codigoEspecialidad, especialidades.codigoEspecialidad));
+            .leftJoin(especialidades, eq(medicos.codigoEspecialidad, especialidades.codigoEspecialidad))
+            .$dynamic();
+
+        if (query) {
+            queryBuilder = queryBuilder.where(
+                or(
+                    like(tejedores.nombreTejedor, `%${query}%`),
+                    like(tejedores.apellidoTejedor, `%${query}%`),
+                    like(medicos.cedulaTejedor, `%${query}%`)
+                )
+            );
+        }
+
+        const result = await queryBuilder.limit(limit);
 
         // Transformar data para el cliente
         const data = result.map(({ medicos, tejedores, especialidades }) => ({

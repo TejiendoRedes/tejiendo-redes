@@ -8,11 +8,26 @@ import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 
 /**
- * Obtener todos los medicamentos
+ * Obtener todos los medicamentos (con búsqueda opcional)
  */
-export async function getMedicamentos() {
+import { like, or } from 'drizzle-orm';
+
+export async function getMedicamentos(query?: string, limit: number = 50) {
     try {
-        const data = await db.select().from(medicamentos);
+        let queryBuilder = db.select().from(medicamentos).$dynamic();
+
+        if (query) {
+            queryBuilder = queryBuilder.where(
+                or(
+                    like(medicamentos.nombreMedicamento, `%${query}%`),
+                    like(medicamentos.codigoMedicamento, `%${query}%`),
+                    like(medicamentos.descripcion, `%${query}%`),
+                    like(medicamentos.presentacion, `%${query}%`)
+                )
+            );
+        }
+
+        const data = await queryBuilder.limit(limit);
         return { success: true, data };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'los medicamentos', 'obtener');

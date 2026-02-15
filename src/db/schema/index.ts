@@ -15,3 +15,4 @@ export * from './relations';
 export * from './aspirantes';
 export * from './peticiones';
 export * from './solicitudes-abordajes';
+export * from './abordaje-asistencia';

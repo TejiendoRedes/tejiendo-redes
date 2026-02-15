@@ -188,9 +188,54 @@ export async function registerMedicamentoEntrega(data: typeof medicamentosPacien
     try {
         await AbordajesService.registerMedicamentoEntrega(data);
         revalidatePath('/abordajes');
+        // Also revalidate the specific abordaje page
+        if (data.codigoAbordaje) {
+            revalidatePath(`/abordajes/${data.codigoAbordaje}`);
+        }
         return createResponse(true);
     } catch (error) {
         console.error('Error registering medicamento entrega:', error);
         return createResponse(false, null, 'Error al registrar la entrega de medicamento');
+    }
+}
+
+/**
+ * Obtener lista de asistencia (Check-in)
+ */
+export async function getAbordajeAsistencia(abordajeId: string) {
+    try {
+        const data = await AbordajesService.getAsistencia(abordajeId);
+        return createResponse(true, data);
+    } catch (error) {
+        console.error('Error fetching abordaje asistencia:', error);
+        return createResponse(false, [], 'Error al obtener la lista de espera');
+    }
+}
+
+/**
+ * Registrar Check-in de paciente
+ */
+export async function checkInPatient(codigoAbordaje: string, cedulaPaciente: string) {
+    try {
+        await AbordajesService.checkInPatient(codigoAbordaje, cedulaPaciente);
+        revalidatePath(`/abordajes/${codigoAbordaje}`);
+        return createResponse(true, null, 'Paciente registrado correctamente en el abordaje');
+    } catch (error: any) {
+        console.error('Error checking in patient:', error);
+        return createResponse(false, null, error.message || 'Error al registrar el paciente');
+    }
+}
+
+/**
+ * Actualizar asistencia (Estado, notas, etc)
+ */
+export async function updateAbordajeAsistencia(id: number, data: any) {
+    try {
+        await AbordajesService.updateAsistencia(id, data);
+        revalidatePath('/abordajes');
+        return createResponse(true, null, 'Asistencia actualizada');
+    } catch (error: any) {
+        console.error('Error updating asistencia:', error);
+        return createResponse(false, null, error.message || 'Error al actualizar asistencia');
     }
 }

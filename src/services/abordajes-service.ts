@@ -6,6 +6,8 @@ import { tejedores } from '@/db/schema/tejedores';
 import { consultas } from '@/db/schema/consultas';
 import { medicamentos } from '@/db/schema/medicamentos';
 import { eq, and, sql } from 'drizzle-orm';
+import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
+import { pacientes } from '@/db/schema/pacientes';
 
 export class AbordajesService {
     /**
@@ -96,7 +98,7 @@ export class AbordajesService {
         })
             .from(medicamentosPacientes)
             .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
-            .where(eq(medicamentosPacientes.fechaEntrega, abordajeData.fechaAbordaje));
+            .where(eq(medicamentosPacientes.codigoAbordaje, id));
 
         return {
             ...abordajeData,
@@ -222,5 +224,62 @@ export class AbordajesService {
 
             return result;
         });
+    }
+
+    /**
+     * Obtener listado de asistencia (Check-in) para un abordaje
+     */
+    static async getAsistencia(abordajeId: string) {
+        return await db.select({
+            id: abordajeAsistencia.id,
+            cedulaPaciente: abordajeAsistencia.cedulaPaciente,
+            horaLlegada: abordajeAsistencia.horaLlegada,
+            estado: abordajeAsistencia.estado,
+            serviciosRequeridos: abordajeAsistencia.serviciosRequeridos,
+            notas: abordajeAsistencia.notas,
+            paciente: {
+                nombre: pacientes.nombrePaciente,
+                apellido: pacientes.apellidoPaciente,
+                fechaNacimiento: pacientes.fechaNacimiento,
+            }
+        })
+            .from(abordajeAsistencia)
+            .innerJoin(pacientes, eq(abordajeAsistencia.cedulaPaciente, pacientes.cedulaPaciente))
+            .where(eq(abordajeAsistencia.codigoAbordaje, abordajeId))
+            .orderBy(abordajeAsistencia.horaLlegada);
+    }
+
+    /**
+     * Registrar llegada de paciente (Check-in)
+     */
+    static async checkInPatient(codigoAbordaje: string, cedulaPaciente: string, servicios?: string) {
+        // Verificar si ya está registrado
+        const existing = await db.select()
+            .from(abordajeAsistencia)
+            .where(and(
+                eq(abordajeAsistencia.codigoAbordaje, codigoAbordaje),
+                eq(abordajeAsistencia.cedulaPaciente, cedulaPaciente)
+            ));
+
+        if (existing.length > 0) {
+            throw new Error('El paciente ya está registrado en este abordaje');
+        }
+
+        return await db.insert(abordajeAsistencia).values({
+            codigoAbordaje,
+            cedulaPaciente,
+            estado: 'En Espera',
+            serviciosRequeridos: servicios,
+            horaLlegada: new Date(),
+        });
+    }
+
+    /**
+     * Actualizar estado o datos de asistencia
+     */
+    static async updateAsistencia(id: number, data: Partial<typeof abordajeAsistencia.$inferInsert>) {
+        return await db.update(abordajeAsistencia)
+            .set(data)
+            .where(eq(abordajeAsistencia.id, id));
     }
 }

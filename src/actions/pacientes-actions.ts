@@ -8,13 +8,28 @@ import { eq } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 
 /**
- * Obtener todos los pacientes con su comunidad
+ * Obtener todos los pacientes con su comunidad (con búsqueda opcional)
  */
-export async function getPacientes() {
+import { like, or } from 'drizzle-orm';
+
+export async function getPacientes(query?: string, limit: number = 50) {
     try {
-        const result = await db.select()
+        let queryBuilder = db.select()
             .from(pacientes)
-            .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad));
+            .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+            .$dynamic();
+
+        if (query) {
+            queryBuilder = queryBuilder.where(
+                or(
+                    like(pacientes.nombrePaciente, `%${query}%`),
+                    like(pacientes.apellidoPaciente, `%${query}%`),
+                    like(pacientes.cedulaPaciente, `%${query}%`)
+                )
+            );
+        }
+
+        const result = await queryBuilder.limit(limit);
 
         // Transformar data para el cliente
         const data = result.map(({ pacientes, comunidades }) => ({

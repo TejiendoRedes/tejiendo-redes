@@ -319,16 +319,19 @@ export async function getEntityDetails(type: string, id: string): Promise<Entity
                 };
             }
             case 'abordaje': {
-                const abd = await db.select().from(abordaje).where(eq(abordaje.codigoAbordaje, id)).limit(1);
-                if (!abd.length) return null;
-
-                // Related: Comunidad info
-                const com = await db.select().from(comunidades).where(eq(comunidades.codigoComunidad, abd[0].codigoComunidad)).limit(1);
+                // Use AbordajesService.getById to fetch complete data including:
+                // - All comunidades from abordaje_comunidad bridge table
+                // - All tejedores from tejedores_abordaje bridge table
+                // - All consultas
+                // - All medicamentos_entregados from medicamentos_pacientes bridge table
+                const { AbordajesService } = await import('@/services/abordajes-service');
+                const abordajeData = await AbordajesService.getById(id);
+                if (!abordajeData) return null;
 
                 return {
                     type,
-                    data: abd[0],
-                    related: com[0] || null,
+                    data: abordajeData,
+                    related: abordajeData, // All related data is in the main object
                     history: []
                 };
             }

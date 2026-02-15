@@ -8,7 +8,7 @@ import { abordaje } from '@/db/schema/abordajes';
 import { pacientes } from '@/db/schema/pacientes';
 import { especialidades } from '@/db/schema/especialidades';
 import { medicos } from '@/db/schema/medicos';
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql, desc } from 'drizzle-orm';
 import { tejedores } from '@/db/schema/tejedores';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
@@ -39,6 +39,34 @@ export async function getConsultas() {
         return { success: true, data };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'las consultas', 'obtener');
+        return { success: false, error: errorMessage };
+    }
+}
+
+
+/**
+ * Obtener historial de consultas de un paciente
+ */
+export async function getPatientHistory(cedulaPaciente: string) {
+    try {
+        const data = await db.select({
+            consulta: consultas,
+            nombreMedico: sql<string>`concat(${tejedores.nombreTejedor}, ' ', ${tejedores.apellidoTejedor})`,
+            codigoAbordaje: abordaje.codigoAbordaje,
+            fechaAbordaje: abordaje.fechaAbordaje,
+            especialidad: especialidades.nombreEspecialidad
+        })
+            .from(consultas)
+            .leftJoin(medicos, eq(consultas.cedulaMedico, medicos.cedulaTejedor))
+            .leftJoin(tejedores, eq(medicos.cedulaTejedor, tejedores.cedulaTejedor))
+            .leftJoin(especialidades, eq(medicos.codigoEspecialidad, especialidades.codigoEspecialidad))
+            .leftJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+            .where(eq(consultas.cedulaPaciente, cedulaPaciente))
+            .orderBy(desc(abordaje.fechaAbordaje));
+
+        return { success: true, data };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'el historial del paciente', 'obtener');
         return { success: false, error: errorMessage };
     }
 }
@@ -87,6 +115,10 @@ export async function createConsulta(
         });
 
         revalidatePath('/datos-basicos/consultas');
+        // Also revalidate the specific abordaje page if this consulta belongs to an abordaje
+        if (data.codigoAbordaje) {
+            revalidatePath(`/abordajes/${data.codigoAbordaje}`);
+        }
         return { success: true, message: `Consulta creada correctamente con código ${newCode}` };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'la consulta', 'crear');
