@@ -5,13 +5,33 @@ import { comunidades } from '@/db/schema/comunidades';
 import { tejedores } from '@/db/schema/tejedores';
 import { consultas } from '@/db/schema/consultas';
 import { medicamentos } from '@/db/schema/medicamentos';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 export class AbordajesService {
+    /**
+     * Sincronizar estados de abordajes (Planificado -> Finalizado si la fecha ya pasó)
+     */
+    private static async syncStatuses() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        try {
+            await db.update(abordaje)
+                .set({ estado: 'Finalizado' })
+                .where(and(
+                    eq(abordaje.estado, 'Planificado'),
+                    sql`${abordaje.fechaAbordaje} < ${today}`
+                ));
+        } catch (error) {
+            console.error('Error syncing abordajes statuses:', error);
+        }
+    }
+
     /**
      * Obtener todos los abordajes
      */
     static async getAll() {
+        await this.syncStatuses();
         return await db.select({
             abordaje,
             comunidad: comunidades
@@ -25,6 +45,7 @@ export class AbordajesService {
      * Obtener un abordaje por su ID con todas sus relaciones
      */
     static async getById(id: string) {
+        await this.syncStatuses();
         // 1. Obtener datos del abordaje
         const abordajeData = await db.query.abordaje.findFirst({
             where: eq(abordaje.codigoAbordaje, id),
@@ -90,9 +111,23 @@ export class AbordajesService {
 
     /**
      * Crear un nuevo abordaje
+     * Incluye la asociación automática con la comunidad en la tabla puente
      */
     static async create(data: typeof abordaje.$inferInsert) {
-        return await db.insert(abordaje).values(data);
+        return await db.transaction(async (tx) => {
+            // 1. Insertar el abordaje
+            const result = await tx.insert(abordaje).values(data);
+
+            // 2. Si hay un código de comunidad, asociarlo en la tabla puente automáticamente
+            if (data.codigoComunidad) {
+                await tx.insert(abordajeComunidad).values({
+                    codigoAbordaje: data.codigoAbordaje,
+                    codigoComunidad: data.codigoComunidad,
+                });
+            }
+
+            return result;
+        });
     }
 
     /**
@@ -174,6 +209,18 @@ export class AbordajesService {
     }
 
     static async registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
-        return await db.insert(medicamentosPacientes).values(data);
+        return await db.transaction(async (tx) => {
+            // 1. Registrar la entrega en la tabla puente
+            const result = await tx.insert(medicamentosPacientes).values(data);
+
+            // 2. Decrementar la existencia en la tabla de medicamentos de forma atómica
+            await tx.update(medicamentos)
+                .set({
+                    existencia: sql`${medicamentos.existencia} - ${data.cantidadEntregada}`
+                })
+                .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento));
+
+            return result;
+        });
     }
 }

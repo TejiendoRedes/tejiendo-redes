@@ -201,6 +201,7 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
                                             value={formData.nombreEspecialidad}
                                             onChange={(e) => setFormData({ ...formData, nombreEspecialidad: e.target.value })}
                                             required
+                                            maxLength={50}
                                             placeholder="Ej. Medicina Interna"
                                             className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all text-lg font-medium"
                                         />

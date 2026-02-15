@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
 interface Peticion {
     codigoPeticion: string;
@@ -129,9 +130,9 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
             // Actualizar la lista local con estado, fecha y hora de entrega
             const ahora = new Date();
             const horaActual = ahora.toTimeString().slice(0, 8);
-            setPeticiones(prev => 
-                prev.map(p => 
-                    p.codigoPeticion === codigo 
+            setPeticiones(prev =>
+                prev.map(p =>
+                    p.codigoPeticion === codigo
                         ? { ...p, estado: 'entregado', fechaEntrega: ahora, horaEntrega: horaActual }
                         : p
                 )
@@ -150,9 +151,9 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                 toast.success(res.message);
                 router.refresh();
                 // Actualizar la lista local limpiando fecha y hora de entrega
-                setPeticiones(prev => 
-                    prev.map(p => 
-                        p.codigoPeticion === codigo 
+                setPeticiones(prev =>
+                    prev.map(p =>
+                        p.codigoPeticion === codigo
                             ? { ...p, estado: 'cancelado', fechaEntrega: null, horaEntrega: null }
                             : p
                     )
@@ -193,7 +194,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                     getPeticiones(),
                     getMedicamentosForSelect()
                 ]);
-                
+
                 if (peticionesRes.success) {
                     setPeticiones(peticionesRes.data || []);
                 }
@@ -394,36 +395,32 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="paciente">Paciente</Label>
-                                    <Select value={selectedPaciente} onValueChange={handlePacienteChange} required>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar paciente" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {pacientes.map((paciente) => (
-                                                <SelectItem key={paciente.cedulaPaciente} value={paciente.cedulaPaciente}>
-                                                    {paciente.nombrePaciente} {paciente.apellidoPaciente} ({paciente.cedulaPaciente})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="space-y-1">
+                                    <SearchableSelect
+                                        label="Paciente"
+                                        items={pacientes}
+                                        value={selectedPaciente}
+                                        onValueChange={handlePacienteChange}
+                                        placeholder="Seleccionar paciente"
+                                        searchPlaceholder="Buscar por nombre o cédula..."
+                                        idField="cedulaPaciente"
+                                        labelField="nombrePaciente"
+                                        secondaryLabelField="apellidoPaciente"
+                                    />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="medicamento">Medicamento</Label>
-                                    <Select value={selectedMedicamento} onValueChange={handleMedicamentoChange} required>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar medicamento" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {medicamentos.map((medicamento) => (
-                                                <SelectItem key={medicamento.codigoMedicamento} value={medicamento.codigoMedicamento}>
-                                                    {medicamento.nombreMedicamento} - Existencia: {medicamento.existencia}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="space-y-1">
+                                    <SearchableSelect
+                                        label="Medicamento"
+                                        items={medicamentos}
+                                        value={selectedMedicamento}
+                                        onValueChange={handleMedicamentoChange}
+                                        placeholder="Seleccionar medicamento"
+                                        searchPlaceholder="Buscar por nombre o código..."
+                                        idField="codigoMedicamento"
+                                        labelField="nombreMedicamento"
+                                        secondaryLabelField="presentacion"
+                                    />
                                 </div>
                             </div>
 

@@ -4,7 +4,7 @@ import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, UserCheck, Mail, Phone, MapPin, Briefcase, User } from 'lucide-react';
+import { Edit, Trash2, UserCheck, MapPin } from 'lucide-react';
 import { Responsable } from '@/db/schema/responsable';
 import { createResponsable, deleteResponsable, updateResponsable } from '@/actions/responsables-actions';
 import {
@@ -14,10 +14,10 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+import { ResponsableForm } from '@/components/forms/ResponsableForm';
 
 interface ResponsablesClientProps {
     initialData: Responsable[];
@@ -29,41 +29,13 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
     const [editingResponsable, setEditingResponsable] = React.useState<Responsable | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const [formData, setFormData] = React.useState({
-        cedulaResponsable: '',
-        nombreResponsable: '',
-        apellidoResponsable: '',
-        direccionResponsable: '',
-        telefonoResponsable: '',
-        correoResponsable: '',
-        cargo: '',
-    });
-
     const handleAdd = () => {
         setEditingResponsable(null);
-        setFormData({
-            cedulaResponsable: '',
-            nombreResponsable: '',
-            apellidoResponsable: '',
-            direccionResponsable: '',
-            telefonoResponsable: '',
-            correoResponsable: '',
-            cargo: '',
-        });
         setIsModalOpen(true);
     };
 
     const handleEdit = (r: Responsable) => {
         setEditingResponsable(r);
-        setFormData({
-            cedulaResponsable: r.cedulaResponsable,
-            nombreResponsable: r.nombreResponsable,
-            apellidoResponsable: r.apellidoResponsable,
-            direccionResponsable: r.direccionResponsable,
-            telefonoResponsable: r.telefonoResponsable,
-            correoResponsable: r.correoResponsable,
-            cargo: r.cargo,
-        });
         setIsModalOpen(true);
     };
 
@@ -79,10 +51,8 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (formData: any) => {
         setIsLoading(true);
-
         try {
             let res;
             if (editingResponsable) {
@@ -104,6 +74,24 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Función para obtener nombres de ubicación
+    const getLocationNames = (r: Responsable) => {
+        const estado = (r as any).estado;
+        const municipio = (r as any).municipio;
+        const parroquia = (r as any).parroquia;
+
+        if (!estado || !municipio || !parroquia) return '-';
+
+        const estadoNombre = getEstadoNombre(estado);
+        const municipioNombre = getMunicipioNombre(estado, municipio);
+        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
+
+        if (parroquia) {
+            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
+        }
+        return `${estadoNombre}, ${municipioNombre}`;
     };
 
     const columns: Column<Responsable>[] = [
@@ -135,13 +123,13 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
             )
         },
         {
-            key: 'direccionResponsable',
-            label: 'Dirección',
+            key: 'ubicacion',
+            label: 'Ubicación',
             render: (r) => (
                 <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 max-w-xs truncate" title={r.direccionResponsable}>
-                        {r.direccionResponsable}
+                    <span className="text-sm text-gray-600 truncate max-w-[150px]" title={getLocationNames(r)}>
+                        {getLocationNames(r)}
                     </span>
                 </div>
             ),
@@ -188,7 +176,7 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
 
                 {/* Modal Formulario */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[600px] border-none shadow-2xl">
+                    <DialogContent className="sm:max-w-[600px] border-none shadow-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader className="pb-4 border-b border-gray-100">
                             <DialogTitle className="text-2xl flex items-center gap-3 text-gray-900">
                                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -201,129 +189,14 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-6 pt-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <Label htmlFor="cedula" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <User className="w-4 h-4 text-gray-400" />
-                                        Cédula *
-                                    </Label>
-                                    <Input
-                                        id="cedula"
-                                        value={formData.cedulaResponsable}
-                                        onChange={(e) => setFormData({ ...formData, cedulaResponsable: e.target.value })}
-                                        required
-                                        disabled={!!editingResponsable}
-                                        placeholder="Ej. 12345678"
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="cargo" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <Briefcase className="w-4 h-4 text-gray-400" />
-                                        Cargo *
-                                    </Label>
-                                    <Input
-                                        id="cargo"
-                                        value={formData.cargo}
-                                        onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                                        required
-                                        placeholder="Ej. Presidente de JAC"
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="nombre" className="text-sm font-semibold text-gray-700">Nombres *</Label>
-                                    <Input
-                                        id="nombre"
-                                        value={formData.nombreResponsable}
-                                        onChange={(e) => setFormData({ ...formData, nombreResponsable: e.target.value })}
-                                        required
-                                        placeholder="Ej. María Josefa"
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="apellido" className="text-sm font-semibold text-gray-700">Apellidos *</Label>
-                                    <Input
-                                        id="apellido"
-                                        value={formData.apellidoResponsable}
-                                        onChange={(e) => setFormData({ ...formData, apellidoResponsable: e.target.value })}
-                                        required
-                                        placeholder="Ej. Pérez García"
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="telefono" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <Phone className="w-4 h-4 text-gray-400" />
-                                        Teléfono *
-                                    </Label>
-                                    <Input
-                                        id="telefono"
-                                        value={formData.telefonoResponsable}
-                                        onChange={(e) => setFormData({ ...formData, telefonoResponsable: e.target.value })}
-                                        required
-                                        placeholder="Ej. 0424-1234567"
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="correo" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <Mail className="w-4 h-4 text-gray-400" />
-                                        Correo Electrónico *
-                                    </Label>
-                                    <Input
-                                        id="correo"
-                                        type="email"
-                                        value={formData.correoResponsable}
-                                        onChange={(e) => setFormData({ ...formData, correoResponsable: e.target.value })}
-                                        required
-                                        placeholder="correo@ejemplo.com"
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-
-                                <div className="col-span-full space-y-2">
-                                    <Label htmlFor="direccion" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-gray-400" />
-                                        Dirección de Habitación *
-                                    </Label>
-                                    <Input
-                                        id="direccion"
-                                        value={formData.direccionResponsable}
-                                        onChange={(e) => setFormData({ ...formData, direccionResponsable: e.target.value })}
-                                        required
-                                        placeholder="Ej. Calle Principal, Casa nro 123..."
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 justify-end pt-6 border-t border-gray-100">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-6 rounded-lg border-gray-200 text-gray-600 hover:bg-gray-50 transition-all"
-                                    disabled={isLoading}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? 'Guardando...' : (editingResponsable ? 'Actualizar Datos' : 'Registrar Responsable')}
-                                </Button>
-                            </div>
-                        </form>
+                        <div className="pt-6">
+                            <ResponsableForm
+                                initialData={editingResponsable || undefined}
+                                onSubmit={handleSubmit}
+                                onCancel={() => setIsModalOpen(false)}
+                                isLoading={isLoading}
+                            />
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>

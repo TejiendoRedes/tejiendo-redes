@@ -41,21 +41,23 @@ export async function promoteAspiranteToTejedor(cedulaAspirante: string) {
             tipodeVoluntario: 'Tejedor Oficial',
         };
 
-        // Insertar el nuevo tejedor
-        await db.insert(tejedores).values(tejedorData);
+        // Realizar ambas operaciones en una transacción para asegurar la integridad de los datos
+        await db.transaction(async (tx) => {
+            // 1. Insertar el nuevo tejedor
+            await tx.insert(tejedores).values(tejedorData);
 
-        // Actualizar el estado del aspirante a 'Aprobado'
-        await db.update(aspirantes)
-            .set({ estadoAspirante: 'Aprobado' })
-            .where(eq(aspirantes.cedulaAspirante, cedulaAspirante));
+            // 2. Eliminar el aspirante ya que ahora es un tejedor (ya no es necesario en la tabla de aspirantes)
+            await tx.delete(aspirantes)
+                .where(eq(aspirantes.cedulaAspirante, cedulaAspirante));
+        });
 
         // Revalidar las rutas
         revalidatePath('/datos-basicos/aspirantes');
         revalidatePath('/datos-basicos/tejedores');
 
-        return { 
-            success: true, 
-            message: `${aspirante.nombreAspirante} ${aspirante.apellidoAspirante} ha sido promovido a Tejedor Oficial exitosamente` 
+        return {
+            success: true,
+            message: `${aspirante.nombreAspirante} ${aspirante.apellidoAspirante} ha sido promovido a Tejedor Oficial exitosamente`
         };
 
     } catch (error) {

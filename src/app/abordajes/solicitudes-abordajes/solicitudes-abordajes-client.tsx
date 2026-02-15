@@ -14,6 +14,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -388,13 +389,13 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
                                 <div className="space-y-2">
                                     <Label htmlFor="participantes">Participantes Estimados</Label>
-                                    <Input
+                                    <NumberInput
                                         id="participantes"
-                                        type="number"
-                                        min="1"
                                         value={formData.participantesEstimados}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, participantesEstimados: parseInt(e.target.value) || 1 }))}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, participantesEstimados: parseInt(val) || 1 }))}
                                         required
+                                        suffix="pers"
+                                        allowDecomal={false}
                                     />
                                 </div>
                             </div>

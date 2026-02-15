@@ -15,7 +15,7 @@ export const antecedentes = mysqlTable('antecedentes', {
     talla: decimal('talla', { precision: 3, scale: 2 }).notNull(),
     temperatura: decimal('temperatura', { precision: 4, scale: 1 }).notNull(),
     FC: varchar('FC', { length: 10 }).notNull(), // Frecuencia Cardíaca
-    TA: varchar('TA', { length: 10 }).notNull(), // Tensión Arterial
+    TA: varchar('TA', { length: 20 }).notNull(), // Tensión Arterial
     enfermedadesPrevias: text('enfermedades_previas').notNull(), // Historial de enfermedades pasadas
     alergias: text('alergias').notNull(),
     enfermedadesFamilia: text('enfermedades_familia').notNull(),

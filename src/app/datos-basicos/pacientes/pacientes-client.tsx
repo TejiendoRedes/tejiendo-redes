@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Heart, UserPlus, MapPin } from 'lucide-react';
+import { Edit, Trash2, Eye, Heart, MapPin } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -17,18 +17,9 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+import { PacienteForm } from '@/components/forms/PacienteForm';
 
 interface PacienteWithComunidad extends Paciente {
     comunidad: Comunidad | null;
@@ -45,27 +36,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
     const [editingPaciente, setEditingPaciente] = React.useState<PacienteWithComunidad | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
-    // Estados para selectores dependientes
-    const estados = getEstados();
-    const [municipios, setMunicipios] = React.useState<any[]>([]);
-    const [parroquias, setParroquias] = React.useState<any[]>([]);
-
-    const [formData, setFormData] = React.useState({
-        cedulaPaciente: '',
-        nombrePaciente: '',
-        apellidoPaciente: '',
-        sexo: 'M' as 'M' | 'F',
-        fechaNacimiento: '',
-        codigoComunidad: '',
-        estado: '',
-        municipio: '',
-        parroquia: '',
-        direccionPaciente: '',
-        telefonoPaciente: '',
-        correoPaciente: '',
-        nota: '',
-    });
-
     const calcularEdad = (fecha: string | Date | null) => {
         if (!fecha) return 0;
         const hoy = new Date();
@@ -80,55 +50,11 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
     const handleAdd = () => {
         setEditingPaciente(null);
-        setFormData({
-            cedulaPaciente: '',
-            nombrePaciente: '',
-            apellidoPaciente: '',
-            sexo: 'M',
-            fechaNacimiento: '',
-            codigoComunidad: '',
-            estado: '',
-            municipio: '',
-            parroquia: '',
-            direccionPaciente: '',
-            telefonoPaciente: '',
-            correoPaciente: '',
-            nota: '',
-        });
-        // Resetear selectores dependientes
-        setMunicipios([]);
-        setParroquias([]);
         setIsModalOpen(true);
     };
 
     const handleEdit = (paciente: PacienteWithComunidad) => {
         setEditingPaciente(paciente);
-        setFormData({
-            cedulaPaciente: paciente.cedulaPaciente,
-            nombrePaciente: paciente.nombrePaciente,
-            apellidoPaciente: paciente.apellidoPaciente,
-            sexo: paciente.sexo as 'M' | 'F',
-            fechaNacimiento: paciente.fechaNacimiento instanceof Date
-                ? paciente.fechaNacimiento.toISOString().split('T')[0]
-                : typeof paciente.fechaNacimiento === 'string' ? paciente.fechaNacimiento : '',
-            codigoComunidad: paciente.codigoComunidad,
-            estado: (paciente as any).estado || '',
-            municipio: (paciente as any).municipio || '',
-            parroquia: (paciente as any).parroquia || '',
-            direccionPaciente: paciente.direccionPaciente,
-            telefonoPaciente: paciente.telefonoPaciente,
-            correoPaciente: paciente.correoPaciente,
-            nota: paciente.nota || '',
-        });
-
-        // Cargar municipios y parroquias para el estado y municipio seleccionados
-        if ((paciente as any).estado) {
-            setMunicipios(getMunicipiosByEstado((paciente as any).estado));
-            if ((paciente as any).municipio) {
-                setParroquias(getParroquiasByMunicipio((paciente as any).estado, (paciente as any).municipio));
-            }
-        }
-
         setIsModalOpen(true);
     };
 
@@ -144,52 +70,14 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         }
     };
 
-    // Manejadores para selectores dependientes
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            estado: estadoId,
-            municipio: '',
-            parroquia: ''
-        }));
-        setMunicipios(getMunicipiosByEstado(estadoId));
-        setParroquias([]);
-    };
-
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            municipio: municipioId,
-            parroquia: ''
-        }));
-        setParroquias(getParroquiasByMunicipio(formData.estado, municipioId));
-    };
-
-    const handleParroquiaChange = (parroquiaId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            parroquia: parroquiaId
-        }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (data: any) => {
         setIsLoading(true);
-
         try {
-            // Ensure date is purely YYYY-MM-DD for saving if needed, or Date object.
-            // Server action expects Date or string? schema says date mode: 'date', so Date object or string usually works.
-            // Drizzle 'date' mode usually expects Date object or YYYY-MM-DD string.
-            const dataToSubmit = {
-                ...formData,
-                fechaNacimiento: new Date(formData.fechaNacimiento)
-            };
-
             let res;
             if (editingPaciente) {
-                res = await updatePaciente(editingPaciente.cedulaPaciente, dataToSubmit);
+                res = await updatePaciente(editingPaciente.cedulaPaciente, data);
             } else {
-                res = await createPaciente(dataToSubmit);
+                res = await createPaciente(data);
             }
 
             if (res.success) {
@@ -341,234 +229,13 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="cedula">Cédula *</Label>
-                                    <Input
-                                        id="cedula"
-                                        value={formData.cedulaPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, cedulaPaciente: e.target.value })
-                                        }
-                                        required
-                                        disabled={!!editingPaciente}
-                                        maxLength={12}
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="nombre">Nombre *</Label>
-                                    <Input
-                                        id="nombre"
-                                        value={formData.nombrePaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, nombrePaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="apellido">Apellido *</Label>
-                                    <Input
-                                        id="apellido"
-                                        value={formData.apellidoPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, apellidoPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="sexo">Sexo *</Label>
-                                    <Select
-                                        value={formData.sexo}
-                                        onValueChange={(value: 'M' | 'F') =>
-                                            setFormData({ ...formData, sexo: value })
-                                        }
-                                    >
-                                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                            <SelectValue placeholder="Seleccione sexo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="M">Masculino</SelectItem>
-                                            <SelectItem value="F">Femenino</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento *</Label>
-                                    <Input
-                                        id="fechaNacimiento"
-                                        type="date"
-                                        value={formData.fechaNacimiento}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, fechaNacimiento: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="comunidad">Comunidad *</Label>
-                                    <Select
-                                        value={formData.codigoComunidad}
-                                        onValueChange={(value) =>
-                                            setFormData({ ...formData, codigoComunidad: value })
-                                        }
-                                    >
-                                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                            <SelectValue placeholder="Seleccione comunidad" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {comunidades.map((c) => (
-                                                <SelectItem key={c.codigoComunidad} value={c.codigoComunidad}>
-                                                    {c.nombreComunidad}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="telefono">Teléfono *</Label>
-                                    <Input
-                                        id="telefono"
-                                        value={formData.telefonoPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, telefonoPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="correo">Correo Electrónico *</Label>
-                                    <Input
-                                        id="correo"
-                                        type="email"
-                                        value={formData.correoPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, correoPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="estado">Estado *</Label>
-                                        <Select
-                                            value={formData.estado}
-                                            onValueChange={handleEstadoChange}
-                                        >
-                                            <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                <SelectValue placeholder="Seleccione un estado" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {estados.map(estado => (
-                                                    <SelectItem key={estado.id} value={estado.id}>
-                                                        {estado.nombre}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="municipio">Municipio *</Label>
-                                        <Select
-                                            value={formData.municipio}
-                                            onValueChange={handleMunicipioChange}
-                                            disabled={!formData.estado}
-                                        >
-                                            <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                <SelectValue placeholder={formData.estado ? "Seleccione un municipio" : "Seleccione primero el estado"} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {municipios.map(municipio => (
-                                                    <SelectItem key={municipio.id} value={municipio.id}>
-                                                        {municipio.nombre}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="parroquia">Parroquia *</Label>
-                                        <Select
-                                            value={formData.parroquia}
-                                            onValueChange={handleParroquiaChange}
-                                            disabled={!formData.municipio}
-                                        >
-                                            <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                <SelectValue placeholder={formData.municipio ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {parroquias.map(parroquia => (
-                                                    <SelectItem key={parroquia.id} value={parroquia.id}>
-                                                        {parroquia.nombre}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="direccion">Dirección *</Label>
-                                    <Input
-                                        id="direccion"
-                                        value={formData.direccionPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, direccionPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="nota">Notas / Observaciones</Label>
-                                    <Textarea
-                                        id="nota"
-                                        value={formData.nota}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, nota: e.target.value })
-                                        }
-                                        rows={3}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 justify-end pt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
-                                    disabled={isLoading}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? 'Guardando...' : (editingPaciente ? 'Actualizar Paciente' : 'Guardar Paciente')}
-                                </Button>
-                            </div>
-                        </form>
+                        <PacienteForm
+                            initialData={editingPaciente || undefined}
+                            comunidades={comunidades}
+                            onSubmit={handleSubmit}
+                            onCancel={() => setIsModalOpen(false)}
+                            isLoading={isLoading}
+                        />
                     </DialogContent>
                 </Dialog>
             </div>

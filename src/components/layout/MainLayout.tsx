@@ -7,6 +7,7 @@ import { Topbar } from '@/components/layout/Topbar';
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { cn } from '@/components/ui/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { GlobalEditManager } from '@/components/shared/GlobalEditManager';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -42,6 +43,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         )}
       >
         <Breadcrumbs />
+        <GlobalEditManager />
         {children}
       </main>
     </div>

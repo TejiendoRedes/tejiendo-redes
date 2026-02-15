@@ -5,7 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, AlertCircle, Plus, Package } from 'lucide-react';
+import { Edit, Trash2, AlertCircle, Plus, Package, Pill } from 'lucide-react';
 import { Medicamento } from '@/db/schema/medicamentos';
 import { createMedicamento, deleteMedicamento, updateMedicamento, getMedicamentosEntregados } from '@/actions/medicamentos-actions';
 import {
@@ -13,12 +13,11 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { MedicamentoForm } from '@/components/forms/MedicamentoForm';
 
 interface MedicamentosClientProps {
     initialData: Medicamento[];
@@ -42,29 +41,13 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
         loadSolicitudes();
     }, []);
 
-    const [formData, setFormData] = React.useState({
-        codigoMedicamento: '',
-        nombreMedicamento: '',
-        presentacion: '',
-        descripcion: '',
-        existencia: 0,
-    });
-
     const handleAdd = () => {
         setEditingMedicamento(null);
-        setFormData({
-            codigoMedicamento: '',
-            nombreMedicamento: '',
-            presentacion: '',
-            descripcion: '',
-            existencia: 0,
-        });
         setIsModalOpen(true);
     };
 
     const handleEdit = (med: Medicamento) => {
         setEditingMedicamento(med);
-        setFormData({ ...med });
         setIsModalOpen(true);
     };
 
@@ -80,17 +63,15 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (data: any) => {
         setIsLoading(true);
 
         try {
             let res;
             if (editingMedicamento) {
-                // Ensure codigo is consistent
-                res = await updateMedicamento(editingMedicamento.codigoMedicamento, formData);
+                res = await updateMedicamento(editingMedicamento.codigoMedicamento, data);
             } else {
-                res = await createMedicamento(formData);
+                res = await createMedicamento(data);
             }
 
             if (res.success) {
@@ -176,6 +157,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                         size="sm"
                         onClick={() => handleEdit(med)}
                         className="hover:bg-blue-50 hover:text-blue-600"
+                        title="Editar"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
@@ -184,6 +166,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                         size="sm"
                         onClick={() => handleDelete(med.codigoMedicamento)}
                         className="hover:bg-red-50 hover:text-red-600"
+                        title="Eliminar"
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
@@ -283,117 +266,24 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     onExport={(format) => toast.info(`Exportando inventario en ${format.toUpperCase()}...`)}
                 />
 
-                {/* Modal Formulario con diseño mejorado */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[500px]">
+                    <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-gray-900">
-                                {editingMedicamento ? (
-                                    <><Edit className="w-6 h-6 text-blue-600" /> Editar Medicamento</>
-                                ) : (
-                                    <><Plus className="w-6 h-6 text-blue-600" /> Nuevo Medicamento</>
-                                )}
+                                <Pill className="w-6 h-6 text-blue-600" />
+                                {editingMedicamento ? 'Editar Medicamento' : 'Nuevo Medicamento'}
                             </DialogTitle>
+                            <DialogDescription>
+                                Ingrese los datos del medicamento.
+                            </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-                            <div className="grid grid-cols-1 gap-5">
-                                <div className="space-y-2">
-                                    <Label htmlFor="codigo" className="text-sm font-semibold text-gray-700">Código del Medicamento</Label>
-                                    <Input
-                                        id="codigo"
-                                        placeholder={editingMedicamento ? "" : "Automático (MED-XXX)"}
-                                        value={formData.codigoMedicamento}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, codigoMedicamento: e.target.value.toUpperCase() })
-                                        }
-                                        required={!!editingMedicamento}
-                                        disabled={true}
-                                        className="h-11 border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                    <p className="text-[10px] text-blue-600 font-medium">
-                                        {editingMedicamento
-                                            ? 'El código no puede ser modificado once asignado.'
-                                            : 'El sistema asignará un código secuencial automáticamente al guardar.'}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="nombre" className="text-sm font-semibold text-gray-700">Nombre Completo *</Label>
-                                    <Input
-                                        id="nombre"
-                                        placeholder="Ej: Paracetamol 500mg"
-                                        value={formData.nombreMedicamento}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, nombreMedicamento: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="presentacion" className="text-sm font-semibold text-gray-700">Presentación *</Label>
-                                    <Input
-                                        id="presentacion"
-                                        placeholder="Ej: Tabletas, Jarabe, Ampollas..."
-                                        value={formData.presentacion}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, presentacion: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="existencia" className="text-sm font-semibold text-gray-700">Cantidad en Existencia *</Label>
-                                    <Input
-                                        id="existencia"
-                                        type="number"
-                                        min="0"
-                                        value={formData.existencia}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, existencia: parseInt(e.target.value) || 0 })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="descripcion" className="text-sm font-semibold text-gray-700">Descripción / Observaciones</Label>
-                                    <Textarea
-                                        id="descripcion"
-                                        placeholder="Información adicional sobre el medicamento..."
-                                        value={formData.descripcion}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, descripcion: e.target.value })
-                                        }
-                                        className="min-h-[100px] border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 justify-end pt-4 border-t border-gray-100">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-6 h-11 text-gray-600 hover:bg-gray-100"
-                                    disabled={isLoading}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    className="px-8 h-11 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? 'Guardando...' : (editingMedicamento ? 'Actualizar' : 'Guardar Producto')}
-                                </Button>
-                            </div>
-                        </form>
+                        <MedicamentoForm
+                            initialData={editingMedicamento || undefined}
+                            onSubmit={handleSubmit}
+                            onCancel={() => setIsModalOpen(false)}
+                            isLoading={isLoading}
+                        />
                     </DialogContent>
                 </Dialog>
             </div>

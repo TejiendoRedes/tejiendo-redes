@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -12,24 +12,40 @@ import {
     User,
     MapPin,
     Phone,
-    Mail,
     Calendar,
-    FileText,
-    Pill,
-    Activity,
+    Loader2,
+    Edit
 } from 'lucide-react';
-import { calcularEdad, getGrupoEtario } from '@/types/models';
 import { EmptyState } from '@/components/shared/UIComponents';
+import { getEntityDetails, EntityDetails } from '@/actions/global-search-actions';
 
 export default function PacienteDetallePage() {
     const router = useRouter();
     const params = useParams();
     const id = params?.id as string;
+    const [details, setDetails] = useState<EntityDetails | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Placeholder: En el futuro, esto usará una server action real
-    const pacienteData: any = null;
+    useEffect(() => {
+        if (id) {
+            getEntityDetails('paciente', id)
+                .then(setDetails)
+                .catch(console.error)
+                .finally(() => setLoading(false));
+        }
+    }, [id]);
 
-    if (!pacienteData) {
+    if (loading) {
+        return (
+            <MainLayout>
+                <div className="flex h-screen items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                </div>
+            </MainLayout>
+        );
+    }
+
+    if (!details) {
         return (
             <MainLayout>
                 <EmptyState
@@ -45,19 +61,21 @@ export default function PacienteDetallePage() {
         );
     }
 
+    const { data, history } = details;
+    const pacienteData = data;
 
-    const edad = 0;
-    const grupoEtario = '';
-    const comunidad: any = null;
-    const antecedente: any = null;
-    const consultas: any[] = [];
-    const medicamentos: any[] = [];
-
-
+    // Calcular edad (aproximada si no hay función helper a mano)
+    const fechaNacimiento = new Date(pacienteData.fechaNacimiento);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+    const m = hoy.getMonth() - fechaNacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+        edad--;
+    }
 
     return (
         <MainLayout>
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in-50 duration-500">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -65,13 +83,14 @@ export default function PacienteDetallePage() {
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
                         <div>
-                            <h1 className="text-3xl text-gray-900">
-                                {pacienteData.nombre_paciente} {pacienteData.apellido_paciente}
+                            <h1 className="text-3xl font-bold text-gray-900">
+                                {pacienteData.nombrePaciente} {pacienteData.apellidoPaciente}
                             </h1>
-                            <p className="text-gray-600">C.I. {pacienteData.cedula_paciente}</p>
+                            <p className="text-gray-600">C.I. {pacienteData.cedulaPaciente}</p>
                         </div>
                     </div>
-                    <Button onClick={() => router.push(`/datos-basicos/pacientes/${id}/editar`)}>
+                    <Button onClick={() => router.push(`/datos-basicos/pacientes/${id}/editar`)} className="gap-2">
+                        <Edit className="w-4 h-4" />
                         Editar Paciente
                     </Button>
                 </div>
@@ -84,8 +103,8 @@ export default function PacienteDetallePage() {
                                 <Calendar className="w-5 h-5 text-gray-600" />
                                 <div>
                                     <p className="text-sm text-gray-600">Edad</p>
-                                    <p className="text-lg">{edad} años</p>
-                                    <p className="text-xs text-gray-500">{grupoEtario}</p>
+                                    <p className="text-lg font-semibold">{edad} años</p>
+                                    <p className="text-xs text-gray-500">{new Date(pacienteData.fechaNacimiento).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -97,13 +116,7 @@ export default function PacienteDetallePage() {
                                 <User className="w-5 h-5 text-gray-600" />
                                 <div>
                                     <p className="text-sm text-gray-600">Sexo</p>
-                                    <p className="text-lg">
-                                        {pacienteData.sexo === 'M'
-                                            ? 'Masculino'
-                                            : pacienteData.sexo === 'F'
-                                                ? 'Femenino'
-                                                : 'N/A'}
-                                    </p>
+                                    <p className="text-lg font-semibold">{pacienteData.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -115,7 +128,7 @@ export default function PacienteDetallePage() {
                                 <MapPin className="w-5 h-5 text-gray-600" />
                                 <div>
                                     <p className="text-sm text-gray-600">Comunidad</p>
-                                    <p className="text-lg">{comunidad?.nombre_comunidad || 'N/A'}</p>
+                                    <p className="text-lg font-semibold">{pacienteData.codigoComunidad}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -127,7 +140,7 @@ export default function PacienteDetallePage() {
                                 <Phone className="w-5 h-5 text-gray-600" />
                                 <div>
                                     <p className="text-sm text-gray-600">Teléfono</p>
-                                    <p className="text-lg">{pacienteData.telefono_paciente || 'N/A'}</p>
+                                    <p className="text-lg font-semibold">{pacienteData.telefonoPaciente || 'N/A'}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -135,187 +148,58 @@ export default function PacienteDetallePage() {
                 </div>
 
                 {/* Tabs */}
-                <Tabs defaultValue="datos" className="w-full">
+                <Tabs defaultValue="consultas" className="w-full">
                     <TabsList>
+                        <TabsTrigger value="consultas">Historial Consultas</TabsTrigger>
                         <TabsTrigger value="datos">Datos Personales</TabsTrigger>
-                        <TabsTrigger value="antecedentes">Antecedentes</TabsTrigger>
-                        <TabsTrigger value="consultas">Consultas ({consultas.length})</TabsTrigger>
-                        <TabsTrigger value="medicamentos">
-                            Medicamentos ({medicamentos.length})
-                        </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="datos" className="space-y-4">
+                    <TabsContent value="consultas">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Información Personal</CardTitle>
+                                <CardTitle>Consultas Recientes</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Nombre Completo</p>
-                                        <p className="text-base">
-                                            {pacienteData.nombre_paciente} {pacienteData.apellido_paciente}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Cédula</p>
-                                        <p className="text-base">{pacienteData.cedula_paciente}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Fecha de Nacimiento</p>
-                                        <p className="text-base">
-                                            {new Date(pacienteData.fecha_nacimiento).toLocaleDateString('es-VE')}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Teléfono</p>
-                                        <p className="text-base">{pacienteData.telefono_paciente || 'No registrado'}</p>
-                                    </div>
-                                    <div className="col-span-2">
-                                        <p className="text-sm text-gray-600">Dirección</p>
-                                        <p className="text-base">
-                                            {pacienteData.direccion_paciente || 'No registrada'}
-                                        </p>
-                                    </div>
-                                </div>
+                            <CardContent>
+                                {history && history.length > 0 ? (
+                                    <ul className="space-y-4">
+                                        {history.map((item: any, idx: number) => (
+                                            <li key={idx} className="border-b last:border-0 pb-4 last:pb-0">
+                                                <p className="font-semibold text-gray-800">{item.descripcion}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    Fecha: {item.fecha ? new Date(item.fecha).toLocaleDateString() : 'N/A'}
+                                                </p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <EmptyState
+                                        icon="info"
+                                        title="Sin consultas registradas"
+                                        description="Este paciente no tiene consultas recientes."
+                                    />
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="antecedentes">
-                        {antecedente ? (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Historial Médico</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    {antecedente.enfermedades && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Enfermedades</p>
-                                            <p className="text-base">{antecedente.enfermedades}</p>
-                                        </div>
-                                    )}
-                                    {antecedente.alergias && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Alergias</p>
-                                            <Badge variant="destructive">{antecedente.alergias}</Badge>
-                                        </div>
-                                    )}
-                                    {antecedente.cirugias && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Cirugías</p>
-                                            <p className="text-base">{antecedente.cirugias}</p>
-                                        </div>
-                                    )}
-                                    {antecedente.medicamentos_habituales && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Medicamentos Habituales</p>
-                                            <p className="text-base">{antecedente.medicamentos_habituales}</p>
-                                        </div>
-                                    )}
-                                    {antecedente.observaciones && (
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Observaciones</p>
-                                            <p className="text-base">{antecedente.observaciones}</p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <EmptyState
-                                icon="info"
-                                title="Sin antecedentes registrados"
-                                description="Este paciente no tiene antecedentes médicos registrados"
-                            />
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="consultas">
-                        {consultas.length > 0 ? (
-                            <div className="space-y-4">
-                                {consultas.map((consulta) => (
-                                    <Card key={consulta.codigo_consulta}>
-                                        <CardHeader>
-                                            <div className="flex items-center justify-between">
-                                                <CardTitle className="text-lg">
-                                                    {new Date(consulta.fecha_consulta).toLocaleDateString('es-VE')}
-                                                </CardTitle>
-                                                {consulta.tipo_morbilidad && (
-                                                    <Badge>{consulta.tipo_morbilidad}</Badge>
-                                                )}
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="space-y-3">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Motivo de Consulta</p>
-                                                <p className="text-base">{consulta.motivo_consulta}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Diagnóstico</p>
-                                                <p className="text-base">{consulta.diagnostico}</p>
-                                            </div>
-                                            {consulta.tratamiento && (
-                                                <div>
-                                                    <p className="text-sm text-gray-600">Tratamiento</p>
-                                                    <p className="text-base">{consulta.tratamiento}</p>
-                                                </div>
-                                            )}
-                                            {consulta.recomendaciones && (
-                                                <div>
-                                                    <p className="text-sm text-gray-600">Recomendaciones</p>
-                                                    <p className="text-base">{consulta.recomendaciones}</p>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        ) : (
-                            <EmptyState
-                                icon="info"
-                                title="Sin consultas registradas"
-                                description="Este paciente no tiene consultas médicas registradas"
-                            />
-                        )}
-                    </TabsContent>
-
-                    <TabsContent value="medicamentos">
-                        {medicamentos.length > 0 ? (
-                            <div className="space-y-4">
-                                {medicamentos.map((entrega, index) => (
-                                    <Card key={index}>
-                                        <CardContent className="pt-6">
-                                            <div className="flex items-start justify-between">
-                                                <div className="space-y-2">
-                                                    <p className="text-sm text-gray-600">Fecha de Entrega</p>
-                                                    <p className="text-base">
-                                                        {new Date(entrega.fecha_entrega).toLocaleDateString('es-VE')}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600 mt-2">Medicamento</p>
-                                                    <p className="text-base">{entrega.codigoMedicamento}</p>
-                                                    {entrega.indicaciones && (
-                                                        <>
-                                                            <p className="text-sm text-gray-600 mt-2">Indicaciones</p>
-                                                            <p className="text-base">{entrega.indicaciones}</p>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <Badge variant="secondary">
-                                                    {entrega.cantidad_entregada} unidades
-                                                </Badge>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        ) : (
-                            <EmptyState
-                                icon="info"
-                                title="Sin entregas de medicamentos"
-                                description="Este paciente no tiene entregas de medicamentos registradas"
-                            />
-                        )}
+                    <TabsContent value="datos" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Información Completa</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Dirección</p>
+                                        <p className="text-base">{pacienteData.direccionPaciente || 'No registrada'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Jefe de Familia</p>
+                                        <p className="text-base">{pacienteData.jefeFamilia ? 'Sí' : 'No'}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>

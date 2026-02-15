@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Bell, User, LogOut } from 'lucide-react';
+import { GlobalSearch } from './GlobalSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -41,18 +42,9 @@ export function Topbar({ sidebarCollapsed }: TopbarProps) {
     >
       <div className="flex items-center justify-between h-full px-6">
         {/* Búsqueda Global */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Buscar pacientes, comunidades, medicamentos..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4"
-            />
-          </div>
-        </form>
+        <div className="flex-1 max-w-xl mx-4">
+          <GlobalSearch />
+        </div>
 
         {/* Acciones */}
         <div className="flex items-center gap-4">
@@ -62,13 +54,13 @@ export function Topbar({ sidebarCollapsed }: TopbarProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                  {user?.nombre_tejedor?.charAt(0)}
+                  {user?.nombreTejedor?.charAt(0)}
                 </div>
                 <div className="text-left hidden md:block">
                   <p className="text-sm">
-                    {user?.nombre_tejedor} {user?.apellido_tejedor}
+                    {user?.nombreTejedor} {user?.apellidoTejedor}
                   </p>
-                  <p className="text-xs text-gray-500">{user?.rol}</p>
+                  <p className="text-xs text-gray-500">{user?.profesionTejedor}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>

@@ -4,30 +4,17 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createAbordaje } from '@/actions/abordajes-actions';
 import { getComunidades } from '@/actions/comunidades-actions';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { AbordajeForm } from '@/components/forms/AbordajeForm';
 
 export default function NuevoAbordajePage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [comunidades, setComunidades] = useState<any[]>([]);
-
-    // Simple state management for form
-    const [formData, setFormData] = useState({
-        descripcion: '',
-        fechaAbordaje: new Date().toISOString().split('T')[0],
-        horaInicio: '08:00',
-        horaFin: '12:00',
-        estado: 'Planificado',
-        codigoComunidad: ''
-    });
 
     React.useEffect(() => {
         const fetchComunidades = async () => {
@@ -41,31 +28,29 @@ export default function NuevoAbordajePage() {
         fetchComunidades();
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSelectChange = (value: string, name: string) => {
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (formData: any) => {
         setIsSubmitting(true);
 
         try {
-            // Generate a simple ID logic or timestamp based
-            const generatedId = `ABD-${Date.now().toString().slice(-6)}`;
+            // Generate a simple ID logic or timestamp based if not handled by server completely, 
+            // but usually server handles it. 
+            // The previous code generated ID on client side: `const generatedId = ABD-${Date.now().toString().slice(-6)};`
+            // But `createAbordaje` action also has logic to generate ID: `getNextCode`.
+            // Let's check `createAbordaje` again. 
+            // `createAbordaje` in `abordajes-actions.ts` generates `newCode` using `getNextCode`.
+            // So we don't need to generate it here likely?
+            // Wait, previous code in `nuevo/page.tsx` was generating it. 
+            // "const generatedId = ABD-${Date.now().toString().slice(-6)};"
+            // And passing it as `codigoAbordaje`.
+            // The `createAbordaje` action:
+            // "const newCode = await getNextCode(...); const finalData = { ...data, codigoAbordaje: newCode };"
+            // So the server action OVERWRITES `codigoAbordaje` anyway.
+            // So we can send without `codigoAbordaje` or with any value.
 
             const payload = {
-                codigoAbordaje: generatedId,
+                ...formData,
                 fechaAbordaje: new Date(formData.fechaAbordaje),
-                horaInicio: formData.horaInicio,
-                horaFin: formData.horaFin,
-                descripcion: formData.descripcion,
-                estado: formData.estado,
-                codigoComunidad: formData.codigoComunidad
+                participantesEstimados: parseInt(formData.participantesEstimados.toString()) || 0,
             };
 
             if (!formData.codigoComunidad) {
@@ -74,7 +59,7 @@ export default function NuevoAbordajePage() {
                 return;
             }
 
-            const result = await createAbordaje(payload as any); // Type cast might be needed due to Date vs string in schema types sometimes
+            const result = await createAbordaje(payload as any);
 
             if (result.success) {
                 toast.success('Abordaje creado exitosamente');
@@ -109,116 +94,15 @@ export default function NuevoAbordajePage() {
                         <CardTitle>Datos del Abordaje</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="descripcion">Descripción / Título</Label>
-                                <Input
-                                    id="descripcion"
-                                    name="descripcion"
-                                    placeholder="Ej: Jornada Integral El Valle"
-                                    required
-                                    value={formData.descripcion}
-                                    onChange={handleChange}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="comunidad">Comunidad</Label>
-                                <Select
-                                    value={formData.codigoComunidad}
-                                    onValueChange={(val) => handleSelectChange(val, 'codigoComunidad')}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar comunidad" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {comunidades.map((c) => (
-                                            <SelectItem key={c.codigoComunidad} value={c.codigoComunidad}>
-                                                {c.nombreComunidad} - {c.municipio}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="fechaAbordaje">Fecha</Label>
-                                    <Input
-                                        id="fechaAbordaje"
-                                        name="fechaAbordaje"
-                                        type="date"
-                                        required
-                                        value={formData.fechaAbordaje}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="estado">Estado</Label>
-                                    <Select
-                                        value={formData.estado}
-                                        onValueChange={(val) => handleSelectChange(val, 'estado')}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar estado" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Planificado">Planificado</SelectItem>
-                                            <SelectItem value="En Curso">En Curso</SelectItem>
-                                            <SelectItem value="Finalizado">Finalizado</SelectItem>
-                                            <SelectItem value="Cancelado">Cancelado</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="horaInicio">Hora Inicio</Label>
-                                    <Input
-                                        id="horaInicio"
-                                        name="horaInicio"
-                                        type="time"
-                                        required
-                                        value={formData.horaInicio}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="horaFin">Hora Fin</Label>
-                                    <Input
-                                        id="horaFin"
-                                        name="horaFin"
-                                        type="time"
-                                        required
-                                        value={formData.horaFin}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-4 flex justify-end gap-2">
-                                <Button type="button" variant="outline" onClick={() => router.back()}>
-                                    Cancelar
-                                </Button>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Guardando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4 mr-2" />
-                                            Guardar Abordaje
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </form>
+                        <AbordajeForm
+                            comunidades={comunidades}
+                            onSubmit={handleSubmit}
+                            onCancel={() => router.back()}
+                            isLoading={isSubmitting}
+                        />
                     </CardContent>
                 </Card>
-            </div>
-        </MainLayout>
+            </div >
+        </MainLayout >
     );
 }

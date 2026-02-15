@@ -19,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import {
     updateAbordaje,
@@ -30,6 +31,7 @@ import { getComunidades } from '@/actions/comunidades-actions';
 import { getTejedores } from '@/actions/tejedores-actions';
 import { getMedicamentos } from '@/actions/medicamentos-actions';
 import { getPacientes } from '@/actions/pacientes-actions';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
 // --- Edit Abordaje Modal ---
 interface EditAbordajeModalProps {
@@ -43,6 +45,14 @@ export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordaje
     const [estado, setEstado] = useState(abordaje.estado);
     const [horaInicio, setHoraInicio] = useState(abordaje.horaInicio);
     const [horaFin, setHoraFin] = useState(abordaje.horaFin);
+    const [tipoAbordaje, setTipoAbordaje] = useState(abordaje.tipoAbordaje || '');
+    const [participantesEstimados, setParticipantesEstimados] = useState(abordaje.participantesEstimados || 0);
+    const [recursosAdicionales, setRecursosAdicionales] = useState(abordaje.recursosAdicionales || '');
+    const [transporte, setTransporte] = useState(abordaje.transporte || false);
+    const [refrigerios, setRefrigerios] = useState(abordaje.refrigerios || false);
+    const [espacioCubierto, setEspacioCubierto] = useState(abordaje.espacioCubierto || false);
+    const [notasLogistica, setNotasLogistica] = useState(abordaje.notasLogistica || '');
+    const [notas, setNotas] = useState(abordaje.notas || '');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,13 +63,22 @@ export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordaje
                 descripcion,
                 estado,
                 horaInicio,
-                horaFin
+                horaFin,
+                tipoAbordaje,
+                participantesEstimados: parseInt(participantesEstimados.toString()) || 0,
+                recursosAdicionales,
+                transporte,
+                refrigerios,
+                espacioCubierto,
+                notasLogistica,
+                notas
             });
 
             if (res.success) {
+                toast.success('Abordaje actualizado correctamente');
                 onOpenChange(false);
             } else {
-                alert(res.error);
+                toast.error(res.error || 'Error al actualizar');
             }
         }
         setLoading(false);
@@ -113,6 +132,68 @@ export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordaje
                                 <SelectItem value="Cancelado">Cancelado</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Tipo de Abordaje</Label>
+                            <Input
+                                value={tipoAbordaje}
+                                onChange={(e) => setTipoAbordaje(e.target.value)}
+                                placeholder="Ej. Medico, Social..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Participantes Estimados</Label>
+                            <Input
+                                type="number"
+                                value={participantesEstimados}
+                                onChange={(e) => setParticipantesEstimados(parseInt(e.target.value) || 0)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Recursos Adicionales</Label>
+                        <Textarea
+                            value={recursosAdicionales}
+                            onChange={(e) => setRecursosAdicionales(e.target.value)}
+                            placeholder="Materiales, equipos, etc."
+                            rows={2}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 py-2 border-y bg-gray-50/50 -mx-6 px-6">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="transporte" checked={transporte} onCheckedChange={(checked) => setTransporte(!!checked)} />
+                            <Label htmlFor="transporte" className="text-sm font-normal cursor-pointer">Transporte</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="refrigerios" checked={refrigerios} onCheckedChange={(checked) => setRefrigerios(!!checked)} />
+                            <Label htmlFor="refrigerios" className="text-sm font-normal cursor-pointer">Refrigerios</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="espacioCubierto" checked={espacioCubierto} onCheckedChange={(checked) => setEspacioCubierto(!!checked)} />
+                            <Label htmlFor="espacioCubierto" className="text-sm font-normal cursor-pointer">Espacio Cubierto</Label>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Notas de Logística</Label>
+                        <Textarea
+                            value={notasLogistica}
+                            onChange={(e) => setNotasLogistica(e.target.value)}
+                            rows={2}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Observaciones Generales</Label>
+                        <Textarea
+                            value={notas}
+                            onChange={(e) => setNotas(e.target.value)}
+                            rows={2}
+                        />
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -174,19 +255,17 @@ export function AddComunidadModal({ open, onOpenChange, abordajeId, existingIds 
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Seleccionar Comunidad</Label>
-                        <Select value={selectedId} onValueChange={setSelectedId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccione una comunidad" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {comunidades.map(c => (
-                                    <SelectItem key={c.codigoComunidad} value={c.codigoComunidad}>
-                                        {c.nombreComunidad}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                            label="Seleccionar Comunidad"
+                            items={comunidades}
+                            value={selectedId}
+                            onValueChange={setSelectedId}
+                            placeholder="Seleccione una comunidad"
+                            searchPlaceholder="Buscar por nombre o código..."
+                            idField="codigoComunidad"
+                            labelField="nombreComunidad"
+                            secondaryLabelField="parroquia"
+                        />
                     </div>
                     <div className="text-sm text-gray-500">
                         {comunidades.length === 0 && "No hay comunidades disponibles para agregar."}
@@ -247,19 +326,17 @@ export function AddTejedorModal({ open, onOpenChange, abordajeId, existingIds }:
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Seleccionar Tejedor</Label>
-                        <Select value={selectedId} onValueChange={setSelectedId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccione un tejedor" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {tejedores.map(t => (
-                                    <SelectItem key={t.cedulaTejedor} value={t.cedulaTejedor}>
-                                        {t.nombreTejedor} {t.apellidoTejedor}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                            label="Seleccionar Tejedor"
+                            items={tejedores}
+                            value={selectedId}
+                            onValueChange={setSelectedId}
+                            placeholder="Seleccione un tejedor"
+                            searchPlaceholder="Buscar por nombre o cédula..."
+                            idField="cedulaTejedor"
+                            labelField="nombreTejedor"
+                            secondaryLabelField="apellidoTejedor"
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label>Rol en Abordaje</Label>
@@ -350,35 +427,31 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Paciente</Label>
-                        <Select value={selectedPaciente} onValueChange={setSelectedPaciente}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Buscar paciente..." />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[200px]">
-                                {pacientes.map(p => (
-                                    <SelectItem key={p.cedulaPaciente} value={p.cedulaPaciente}>
-                                        {p.nombre} {p.apellido} - {p.cedulaPaciente}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                            label="Paciente"
+                            items={pacientes}
+                            value={selectedPaciente}
+                            onValueChange={setSelectedPaciente}
+                            placeholder="Seleccionar paciente"
+                            searchPlaceholder="Buscar por nombre o cédula..."
+                            idField="cedulaPaciente"
+                            labelField="nombre"
+                            secondaryLabelField="apellido"
+                        />
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Medicamento</Label>
-                        <Select value={selectedMedicamento} onValueChange={setSelectedMedicamento}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar medicamento" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[200px]">
-                                {medicamentos.map(m => (
-                                    <SelectItem key={m.codigoMedicamento} value={m.codigoMedicamento}>
-                                        {m.nombreMedicamento} ({m.presentacion})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                            label="Medicamento"
+                            items={medicamentos}
+                            value={selectedMedicamento}
+                            onValueChange={setSelectedMedicamento}
+                            placeholder="Seleccionar medicamento"
+                            searchPlaceholder="Buscar por nombre o código..."
+                            idField="codigoMedicamento"
+                            labelField="nombreMedicamento"
+                            secondaryLabelField="presentacion"
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -392,19 +465,17 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Entregado por (Tejedor)</Label>
-                        <Select value={selectedTejedor} onValueChange={setSelectedTejedor}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar tejedor" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[200px]">
-                                {tejedores.map(t => (
-                                    <SelectItem key={t.cedulaTejedor} value={t.cedulaTejedor}>
-                                        {t.nombreTejedor} {t.apellidoTejedor}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                            label="Entregado por (Tejedor)"
+                            items={tejedores}
+                            value={selectedTejedor}
+                            onValueChange={setSelectedTejedor}
+                            placeholder="Seleccionar tejedor"
+                            searchPlaceholder="Buscar por nombre o cédula..."
+                            idField="cedulaTejedor"
+                            labelField="nombreTejedor"
+                            secondaryLabelField="apellidoTejedor"
+                        />
                     </div>
                 </div>
                 <DialogFooter>

@@ -33,6 +33,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 
 interface OrganismoWithTejedor extends Organismo {
@@ -340,6 +341,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                                 value={formData.nombreOrganismo}
                                                 onChange={(e) => setFormData({ ...formData, nombreOrganismo: e.target.value })}
                                                 required
+                                                maxLength={100}
                                                 className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                             />
                                         </div>
@@ -365,26 +367,18 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="tejedor" className="flex items-center gap-2">
-                                            <User className="w-4 h-4 text-blue-600" />
-                                            Tejedor de Enlace (Responsable Interno) *
-                                        </Label>
-                                        <Select
+                                    <div className="space-y-4">
+                                        <SearchableSelect
+                                            label="Tejedor de Enlace (Responsable Interno) *"
+                                            items={tejedores}
                                             value={formData.cedulaTejedor}
                                             onValueChange={(val) => setFormData({ ...formData, cedulaTejedor: val })}
-                                        >
-                                            <SelectTrigger id="tejedor" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                <SelectValue placeholder="Seleccione un tejedor" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {tejedores.map(t => (
-                                                    <SelectItem key={t.cedulaTejedor} value={t.cedulaTejedor}>
-                                                        {t.nombreTejedor} {t.apellidoTejedor} ({t.cedulaTejedor})
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Seleccione un tejedor"
+                                            searchPlaceholder="Buscar por nombre o cédula..."
+                                            idField="cedulaTejedor"
+                                            labelField="nombreTejedor"
+                                            secondaryLabelField="apellidoTejedor"
+                                        />
                                     </div>
                                     <div className="flex justify-end pt-4">
                                         <Button type="button" onClick={() => setActiveTab('ubicacion')} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
@@ -401,6 +395,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                                 id="pais"
                                                 value={formData.paisOrganismo}
                                                 onChange={(e) => setFormData({ ...formData, paisOrganismo: e.target.value })}
+                                                maxLength={50}
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -467,6 +462,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                             placeholder="Av. Principal, Edificio..."
                                             value={formData.direccionOrganismo}
                                             onChange={(e) => setFormData({ ...formData, direccionOrganismo: e.target.value })}
+                                            maxLength={150}
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -502,6 +498,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                                     value={formData.correoOrganismo}
                                                     onChange={(e) => setFormData({ ...formData, correoOrganismo: e.target.value })}
                                                     required
+                                                    maxLength={100}
                                                     className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                 />
                                             </div>
@@ -515,6 +512,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                                     placeholder="0212-0000000"
                                                     value={formData.telefonoOrganismo}
                                                     onChange={(e) => setFormData({ ...formData, telefonoOrganismo: e.target.value })}
+                                                    maxLength={15}
                                                     className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                 />
                                             </div>

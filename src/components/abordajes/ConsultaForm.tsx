@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { createConsulta } from '@/actions/consultas-actions';
 import { LoadingSpinner } from '@/components/shared/UIComponents';
 import { toast } from 'sonner';
+import { BloodPressureInput } from '@/components/ui/blood-pressure-input';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
 interface ConsultaFormProps {
     abordajeId: string;
@@ -29,6 +31,7 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
         diagnosticoTexto: '',
         recomendaciones: '',
         tratamiento: '',
+        tensionArterial: '',
         enfermedadPrincipal: '',
     });
 
@@ -57,6 +60,7 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
                 diagnosticoTexto: formData.diagnosticoTexto,
                 recomendaciones: formData.recomendaciones,
                 tratamiento: formData.tratamiento,
+                tensionArterial: formData.tensionArterial,
             }, formData.enfermedadPrincipal ? [formData.enfermedadPrincipal] : []);
 
             if (result.success) {
@@ -84,41 +88,31 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="cedulaPaciente">Paciente</Label>
-                            <Select
+                            <SearchableSelect
+                                label="Paciente"
+                                items={pacientes}
                                 value={formData.cedulaPaciente}
                                 onValueChange={(val) => handleSelectChange('cedulaPaciente', val)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccione paciente" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {pacientes.map((p) => (
-                                        <SelectItem key={p.cedulaPaciente} value={p.cedulaPaciente}>
-                                            {p.nombrePaciente} {p.apellidoPaciente} ({p.cedulaPaciente})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Seleccione paciente"
+                                searchPlaceholder="Buscar por nombre o cédula..."
+                                idField="cedulaPaciente"
+                                labelField="nombrePaciente"
+                                secondaryLabelField="apellidoPaciente"
+                            />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="cedulaMedico">Médico Tratante</Label>
-                            <Select
+                            <SearchableSelect
+                                label="Médico Tratante"
+                                items={medicos}
                                 value={formData.cedulaMedico}
                                 onValueChange={(val) => handleSelectChange('cedulaMedico', val)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccione médico" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {medicos.map((m) => (
-                                        <SelectItem key={m.cedulaTejedor} value={m.cedulaTejedor}>
-                                            {m.nombreTejedor} {m.apellidoTejedor}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Seleccione médico"
+                                searchPlaceholder="Buscar por nombre o cédula..."
+                                idField="cedulaTejedor"
+                                labelField="nombreTejedor"
+                                secondaryLabelField="apellidoTejedor"
+                            />
                         </div>
                     </div>
 
@@ -135,22 +129,24 @@ export function ConsultaForm({ abordajeId, pacientes, medicos, enfermedades }: C
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="enfermedadPrincipal">Diagnóstico (CIE/Enfermedad)</Label>
-                        <Select
+                        <SearchableSelect
+                            label="Diagnóstico (CIE/Enfermedad)"
+                            items={enfermedades}
                             value={formData.enfermedadPrincipal}
                             onValueChange={(val) => handleSelectChange('enfermedadPrincipal', val)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccione enfermedad (opcional)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {enfermedades.map((e) => (
-                                    <SelectItem key={e.codigoEnfermedad} value={e.codigoEnfermedad}>
-                                        {e.nombreEnfermedad} ({e.codigoCie})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            placeholder="Seleccione enfermedad (opcional)"
+                            searchPlaceholder="Buscar por nombre o código CIE..."
+                            idField="codigoEnfermedad"
+                            labelField="nombreEnfermedad"
+                            secondaryLabelField="codigoCie"
+                        />
+                    </div>
+
+                    <div className="space-y-4 pt-2">
+                        <BloodPressureInput
+                            value={formData.tensionArterial}
+                            onChange={(val) => handleSelectChange('tensionArterial', val)}
+                        />
                     </div>
 
                     <div className="space-y-2">

@@ -131,3 +131,24 @@ export async function getMedicamentosEntregados() {
         return { success: false, error: errorMessage };
     }
 }
+
+/**
+ * Obtener un medicamento por código
+ */
+export async function getMedicamento(codigo: string) {
+    try {
+        const result = await db.select()
+            .from(medicamentos)
+            .where(eq(medicamentos.codigoMedicamento, codigo))
+            .limit(1);
+
+        if (!result || result.length === 0) {
+            return { success: false, error: 'Medicamento no encontrado' };
+        }
+
+        return { success: true, data: result[0] };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'el medicamento', 'obtener');
+        return { success: false, error: errorMessage };
+    }
+}

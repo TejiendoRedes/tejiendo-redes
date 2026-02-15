@@ -4,7 +4,7 @@ import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Activity } from 'lucide-react';
+import { Edit, Trash2, Activity, Stethoscope } from 'lucide-react'; // Stethoscope for diseases
 
 import type { Enfermedad, NewEnfermedad } from '@/db/schema/enfermedades';
 import {
@@ -12,49 +12,36 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createEnfermedad, updateEnfermedad, deleteEnfermedad } from '@/actions/enfermedades-actions';
+import { EnfermedadForm } from '@/components/forms/EnfermedadForm';
+import { useRouter } from 'next/navigation';
 
 interface EnfermedadesClientProps {
     initialData: Enfermedad[];
 }
 
 export default function EnfermedadesClient({ initialData }: EnfermedadesClientProps) {
-    const [enfermedades, setEnfermedades] = React.useState<Enfermedad[]>(initialData);
+    const router = useRouter();
+    // We can rely on initialData and router.refresh() or keep local state.
+    // Given the pattern in other clients, we'll try to rely on router.refresh for simplicity, 
+    // but the previous code used local state 'enfermedades'. 
+    // To match other refactors (e.g. Medicamentos), we usually use initialData prop directly in DataTable 
+    // and rely on router.refresh() to update it.
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingEnfermedad, setEditingEnfermedad] = React.useState<Enfermedad | null>(null);
-
-    const [formData, setFormData] = React.useState<NewEnfermedad>({
-        codigoEnfermedad: '',
-        nombreEnfermedad: '',
-        tipoPatologia: '',
-        descripcion: '',
-    });
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const handleAdd = () => {
         setEditingEnfermedad(null);
-        setFormData({
-            codigoEnfermedad: '',
-            nombreEnfermedad: '',
-            tipoPatologia: '',
-            descripcion: '',
-        });
         setIsModalOpen(true);
     };
 
     const handleEdit = (enfermedad: Enfermedad) => {
         setEditingEnfermedad(enfermedad);
-        setFormData({
-            codigoEnfermedad: enfermedad.codigoEnfermedad,
-            nombreEnfermedad: enfermedad.nombreEnfermedad,
-            tipoPatologia: enfermedad.tipoPatologia,
-            descripcion: enfermedad.descripcion || '',
-        });
         setIsModalOpen(true);
     };
 
@@ -62,43 +49,37 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
         if (confirm('¿Está seguro de eliminar esta enfermedad?')) {
             const res = await deleteEnfermedad(codigo);
             if (res.success) {
-                setEnfermedades(prev => prev.filter(e => e.codigoEnfermedad !== codigo));
-                toast.success('Enfermedad eliminada correctamente');
+                toast.success(res.message);
+                router.refresh();
             } else {
                 toast.error(res.error || 'Error al eliminar');
             }
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (data: any) => {
+        setIsLoading(true);
 
-        if (editingEnfermedad) {
-            const res = await updateEnfermedad(editingEnfermedad.codigoEnfermedad, formData);
-            if (res.success) {
-                // Optimistic update or refresh could happen here, but for simplicity we relies on revalidatePath
-                // However, to update local state immediately without refresh:
-                setEnfermedades(prev =>
-                    prev.map(en =>
-                        en.codigoEnfermedad === editingEnfermedad.codigoEnfermedad
-                            ? { ...en, ...formData } as Enfermedad
-                            : en
-                    )
-                );
-                toast.success('Enfermedad actualizada correctamente');
-                setIsModalOpen(false);
+        try {
+            let res;
+            if (editingEnfermedad) {
+                res = await updateEnfermedad(editingEnfermedad.codigoEnfermedad, data);
             } else {
-                toast.error(res.error || 'Error al actualizar');
+                res = await createEnfermedad(data);
             }
-        } else {
-            const res = await createEnfermedad(formData);
+
             if (res.success) {
-                setEnfermedades(prev => [...prev, formData as Enfermedad]);
-                toast.success('Enfermedad creada correctamente');
+                toast.success(res.message);
                 setIsModalOpen(false);
+                router.refresh();
             } else {
-                toast.error(res.error || 'Error al crear');
+                toast.error(res.error || 'Error al guardar');
             }
+        } catch (error) {
+            console.error(error);
+            toast.error('Ocurrió un error inesperado');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -126,18 +107,20 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
             key: 'acciones',
             label: 'Acciones',
             render: (enfermedad) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(enfermedad)}
+                        title="Editar"
                     >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-4 h-4 text-blue-600" />
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(enfermedad.codigoEnfermedad)}
+                        title="Eliminar"
                     >
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
@@ -150,14 +133,17 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Enfermedades</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2 flex items-center gap-2">
+                        <Stethoscope className="w-8 h-8 text-blue-600" />
+                        Enfermedades
+                    </h1>
                     <p className="text-gray-600">
                         Catálogo de enfermedades para estandarizar diagnósticos
                     </p>
                 </div>
 
                 <DataTable
-                    data={enfermedades}
+                    data={initialData}
                     columns={columns}
                     searchPlaceholder="Buscar por código, nombre o tipo..."
                     onAdd={handleAdd}
@@ -169,79 +155,20 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
                     <DialogContent className="max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Activity className="w-6 h-6 text-blue-600" />
+                                <Stethoscope className="w-6 h-6 text-blue-600" />
                                 {editingEnfermedad ? 'Editar Enfermedad' : 'Nueva Enfermedad'}
                             </DialogTitle>
+                            <DialogDescription>
+                                Ingrese los detalles de la enfermedad.
+                            </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="codigo">Código</Label>
-                                <Input
-                                    id="codigo"
-                                    placeholder={editingEnfermedad ? "" : "Automático (ENF-XXX)"}
-                                    value={formData.codigoEnfermedad}
-                                    onChange={(e) => setFormData({ ...formData, codigoEnfermedad: e.target.value })}
-                                    required={!!editingEnfermedad}
-                                    disabled={true}
-                                    className="h-11 border-gray-200 bg-gray-50 focus:border-blue-500 focus:ring-blue-500"
-                                />
-                                {!editingEnfermedad && (
-                                    <p className="text-[10px] text-blue-600 font-medium font-sans">
-                                        El sistema asignará el código de forma automática.
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="nombre">Nombre *</Label>
-                                <Input
-                                    id="nombre"
-                                    value={formData.nombreEnfermedad}
-                                    onChange={(e) => setFormData({ ...formData, nombreEnfermedad: e.target.value })}
-                                    required
-                                    className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="tipo">Tipo Patología *</Label>
-                                <Input
-                                    id="tipo"
-                                    placeholder="Ej: Respiratoria, Viral..."
-                                    value={formData.tipoPatologia}
-                                    onChange={(e) => setFormData({ ...formData, tipoPatologia: e.target.value })}
-                                    required
-                                    className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="descripcion">Descripción</Label>
-                                <Textarea
-                                    id="descripcion"
-                                    value={formData.descripcion || ''}
-                                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                                    className="border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div className="flex gap-2 justify-end">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                >
-                                    Guardar Enfermedad
-                                </Button>
-                            </div>
-                        </form>
+                        <EnfermedadForm
+                            initialData={editingEnfermedad || undefined}
+                            onSubmit={handleSubmit}
+                            onCancel={() => setIsModalOpen(false)}
+                            isLoading={isLoading}
+                        />
                     </DialogContent>
                 </Dialog>
             </div>

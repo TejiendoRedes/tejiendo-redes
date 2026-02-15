@@ -25,6 +25,7 @@ export const consultas = mysqlTable('consultas', {
     diagnosticoTexto: text('diagnostico_texto').notNull(), // Diagnóstico narrativo del médico
     recomendaciones: text('recomendaciones').notNull(),
     tratamiento: text('tratamiento').notNull(),
+    tensionArterial: varchar('tension_arterial', { length: 20 }),
 }, (table) => ({
     codigoAbordajeIdx: index('idx_codigo_abordaje').on(table.codigoAbordaje),
     cedulaPacienteIdx: index('idx_cedula_paciente').on(table.cedulaPaciente),

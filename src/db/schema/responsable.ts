@@ -12,6 +12,9 @@ export const responsable = mysqlTable('responsable', {
     telefonoResponsable: varchar('telefono_responsable', { length: 15 }).notNull(),
     correoResponsable: varchar('correo_responsable', { length: 100 }).notNull(),
     cargo: varchar('cargo', { length: 50 }).notNull(), // Ej: Presidente, Vocal, etc.
+    estado: varchar('estado', { length: 2 }).notNull(),
+    municipio: varchar('municipio', { length: 2 }).notNull(),
+    parroquia: varchar('parroquia', { length: 2 }).notNull(),
 });
 
 export type Responsable = typeof responsable.$inferSelect;

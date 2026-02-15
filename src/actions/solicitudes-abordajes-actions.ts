@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { solicitudesAbordajes, comunidades, abordaje, type NewSolicitudAbordaje, type SolicitudAbordaje } from '@/db/schema';
+import { AbordajesService } from '@/services/abordajes-service';
 import { eq, and, desc } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
@@ -159,14 +160,23 @@ export async function confirmarSolicitudAbordaje(id: number) {
         const abordajeData = {
             codigoAbordaje,
             codigoComunidad: solicitud[0].codigoComunidad,
+            codigoSolicitud: solicitud[0].codigoSolicitud,
             fechaAbordaje: new Date(solicitud[0].fechaSugerida),
             horaInicio: solicitud[0].horaInicioSugerida,
             horaFin: solicitud[0].horaInicioSugerida, // Usar la misma hora de inicio
             descripcion: solicitud[0].descripcionActividad,
+            tipoAbordaje: solicitud[0].tipoAbordaje,
+            participantesEstimados: solicitud[0].participantesEstimados,
+            recursosAdicionales: solicitud[0].recursosAdicionales,
+            transporte: solicitud[0].transporte,
+            refrigerios: solicitud[0].refrigerios,
+            espacioCubierto: solicitud[0].espacioCubierto,
+            notasLogistica: solicitud[0].notasLogistica,
+            notas: solicitud[0].notas,
             estado: 'Pendiente',
         };
 
-        await db.insert(abordaje).values(abordajeData);
+        await AbordajesService.create(abordajeData);
 
         revalidatePath('/abordajes/solicitudes-abordajes');
         revalidatePath('/abordajes');

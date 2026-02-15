@@ -26,6 +26,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { NumberInput } from '@/components/ui/number-input';
+import { BloodPressureInput } from '@/components/ui/blood-pressure-input';
 import { toast } from 'sonner';
 
 interface AntecedenteWithPaciente extends Antecedente {
@@ -85,7 +87,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
             codigoAntecedente: antecedente.codigoAntecedente,
             cedulaPaciente: antecedente.cedulaPaciente,
             peso: antecedente.peso.toString(),
-            talla: antecedente.talla.toString(),
+            talla: (parseFloat(antecedente.talla.toString()) * 100).toString(), // Convert m to cm for form
             temperatura: antecedente.temperatura.toString(),
             FC: antecedente.FC,
             TA: antecedente.TA,
@@ -122,8 +124,8 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
 
             const dataToSubmit = {
                 ...formData,
-                peso: formData.peso, // Managed as string in form, but DB expects decimal string or number. Drizzle handles string for decimal.
-                talla: formData.talla,
+                peso: formData.peso,
+                talla: (parseFloat(formData.talla) / 100).toString(), // Convert cm to m for DB decimal(3,2)
                 temperatura: formData.temperatura,
             };
 
@@ -286,36 +288,33 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
 
                                 <div className="space-y-2">
                                     <Label htmlFor="peso">Peso (kg) *</Label>
-                                    <Input
+                                    <NumberInput
                                         id="peso"
-                                        type="number"
-                                        step="0.01"
+                                        suffix="kg"
                                         value={formData.peso}
-                                        onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
+                                        onChange={(val) => setFormData({ ...formData, peso: val })}
                                         required
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="talla">Talla (m) *</Label>
-                                    <Input
+                                    <Label htmlFor="talla">Talla (cm) *</Label>
+                                    <NumberInput
                                         id="talla"
-                                        type="number"
-                                        step="0.01"
+                                        suffix="cm"
                                         value={formData.talla}
-                                        onChange={(e) => setFormData({ ...formData, talla: e.target.value })}
+                                        onChange={(val) => setFormData({ ...formData, talla: val })}
                                         required
                                     />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="temperatura">Temperatura (°C) *</Label>
-                                    <Input
+                                    <NumberInput
                                         id="temperatura"
-                                        type="number"
-                                        step="0.1"
+                                        suffix="°C"
                                         value={formData.temperatura}
-                                        onChange={(e) => setFormData({ ...formData, temperatura: e.target.value })}
+                                        onChange={(val) => setFormData({ ...formData, temperatura: val })}
                                         required
                                     />
                                 </div>
@@ -331,14 +330,12 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="ta">Tensión Arterial (TA) *</Label>
-                                    <Input
-                                        id="ta"
+                                <div className="space-y-4 pt-2">
+                                    <BloodPressureInput
                                         value={formData.TA}
-                                        onChange={(e) => setFormData({ ...formData, TA: e.target.value })}
+                                        onChange={(val) => setFormData({ ...formData, TA: val })}
+                                        label="Tensión Arterial (TA) *"
                                         required
-                                        maxLength={10}
                                     />
                                 </div>
                             </div>

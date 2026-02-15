@@ -119,3 +119,24 @@ export async function deleteTejedor(cedula: string) {
         return { success: false, error: errorMessage };
     }
 }
+
+/**
+ * Obtener un tejedor por cédula
+ */
+export async function getTejedor(cedula: string) {
+    try {
+        const result = await db.select()
+            .from(tejedores)
+            .where(eq(tejedores.cedulaTejedor, cedula))
+            .limit(1);
+
+        if (!result || result.length === 0) {
+            return { success: false, error: 'Tejedor no encontrado' };
+        }
+
+        return { success: true, data: result[0] };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'el tejedor', 'obtener');
+        return { success: false, error: errorMessage };
+    }
+}

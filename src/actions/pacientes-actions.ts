@@ -158,3 +158,30 @@ export async function deletePaciente(cedula: string) {
         return { success: false, error: errorMessage };
     }
 }
+
+/**
+ * Obtener un paciente por cédula
+ */
+export async function getPaciente(cedula: string) {
+    try {
+        const result = await db.select()
+            .from(pacientes)
+            .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+            .where(eq(pacientes.cedulaPaciente, cedula))
+            .limit(1);
+
+        if (!result || result.length === 0) {
+            return { success: false, error: 'Paciente no encontrado' };
+        }
+
+        const data = {
+            ...result[0].pacientes,
+            comunidad: result[0].comunidades
+        };
+
+        return { success: true, data };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'el paciente', 'obtener');
+        return { success: false, error: errorMessage };
+    }
+}

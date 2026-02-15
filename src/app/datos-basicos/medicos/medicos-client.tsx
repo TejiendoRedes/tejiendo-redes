@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
 interface MedicoWithRelations {
     cedulaTejedor: string;
@@ -258,42 +259,19 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                 </TabsList>
 
                                 <TabsContent value="tejedor" className="space-y-4 py-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="tejedor">Seleccionar Tejedor (Médicos no asignados)</Label>
-                                        <Select
+                                    <div className="space-y-4">
+                                        <SearchableSelect
+                                            label="Seleccionar Tejedor (Médicos no asignados)"
+                                            items={isEditing ? tejedores.filter(t => t.cedulaTejedor === formData.cedulaTejedor) : tejedoresDisponibles}
                                             value={formData.cedulaTejedor}
                                             onValueChange={(val) => setFormData({ ...formData, cedulaTejedor: val })}
-                                            disabled={isEditing} // No se puede cambiar el tejedor al editar (es PK part)
-                                        >
-                                            <SelectTrigger id="tejedor" className="h-12 text-lg">
-                                                <SelectValue placeholder="Busque por nombre o cédula..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {isEditing ? (
-                                                    // Show selected user when editing
-                                                    tejedores.filter(t => t.cedulaTejedor === formData.cedulaTejedor).map(t => (
-                                                        <SelectItem key={t.cedulaTejedor} value={t.cedulaTejedor}>
-                                                            {t.cedulaTejedor} - {t.nombreTejedor} {t.apellidoTejedor}
-                                                        </SelectItem>
-                                                    ))
-                                                ) : (
-                                                    tejedoresDisponibles.length > 0 ? (
-                                                        tejedoresDisponibles.map(t => (
-                                                            <SelectItem key={t.cedulaTejedor} value={t.cedulaTejedor}>
-                                                                {t.cedulaTejedor} - {t.nombreTejedor} {t.apellidoTejedor}
-                                                            </SelectItem>
-                                                        ))
-                                                    ) : (
-                                                        <div className="p-4 text-center text-gray-500 text-sm">
-                                                            No hay tejedores disponibles para asignar.
-                                                        </div>
-                                                    )
-                                                )}
-                                            </SelectContent>
-                                        </Select>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            {isEditing ? 'El tejedor no se puede modificar.' : 'Solo se muestran tejedores que no han sido asignados como médicos.'}
-                                        </p>
+                                            placeholder="Busque por nombre o cédula..."
+                                            searchPlaceholder="Buscar por nombre o cédula..."
+                                            idField="cedulaTejedor"
+                                            labelField="nombreTejedor"
+                                            secondaryLabelField="apellidoTejedor"
+                                            disabled={isEditing}
+                                        />
                                     </div>
 
                                     <div className="mt-8 flex justify-end">
@@ -310,23 +288,17 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
 
                                 <TabsContent value="especialidad" className="space-y-6 py-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="especialidad">Especialidad Médica *</Label>
-                                            <Select
+                                        <div className="space-y-4">
+                                            <SearchableSelect
+                                                label="Especialidad Médica *"
+                                                items={especialidades}
                                                 value={formData.codigoEspecialidad}
                                                 onValueChange={(val) => setFormData({ ...formData, codigoEspecialidad: val })}
-                                            >
-                                                <SelectTrigger id="especialidad" className="h-11">
-                                                    <SelectValue placeholder="Seleccione especialidad" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {especialidades.map(e => (
-                                                        <SelectItem key={e.codigoEspecialidad} value={e.codigoEspecialidad}>
-                                                            {e.nombreEspecialidad}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                placeholder="Seleccione especialidad"
+                                                searchPlaceholder="Buscar por nombre o código..."
+                                                idField="codigoEspecialidad"
+                                                labelField="nombreEspecialidad"
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
@@ -338,6 +310,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                                 onChange={(e) => setFormData({ ...formData, matriculaColegioMedico: e.target.value })}
                                                 className="h-11"
                                                 required
+                                                maxLength={30}
                                             />
                                         </div>
 
@@ -350,6 +323,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                                 onChange={(e) => setFormData({ ...formData, matriculaSanidad: e.target.value })}
                                                 className="h-11"
                                                 required
+                                                maxLength={30}
                                             />
                                         </div>
                                     </div>
