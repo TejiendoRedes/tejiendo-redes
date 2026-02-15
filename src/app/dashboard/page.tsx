@@ -3,181 +3,85 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { StatsCard } from '@/components/shared/UIComponents';
-import { Activity, Users, FileText, Pill, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Legend,
-} from 'recharts';
+import { Activity, Users, ClipboardList, BarChart3, Pill } from 'lucide-react';
+
 export default function DashboardPage() {
     const router = useRouter();
 
-    // Calcular KPIs (Placeholders)
-    const abordajesEsteMes = 0;
-    const totalPacientes = 0;
-    const consultasEsteMes = 0;
-    const medicamentosEntregadosEsteMes = 0;
-
-    // Medicamentos con existencia baja (Placeholder)
-    const medicamentosExistenciaBaja: any[] = [];
-
-    // Datos para gráficas (Placeholders)
-    const abordajesPorMes: any[] = [];
-    const consultasPorTipo: any[] = [];
-
-
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl text-gray-900">Dashboard</h1>
-                    <Button onClick={() => router.push('/abordajes/nuevo')}>
-                        Nuevo Abordaje
-                    </Button>
+            <div className="space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Bienvenido a Tejiendo Redes</h1>
+                    <p className="text-gray-500 mt-1">
+                        Sistema de Gestión de Abordajes Médicos Comunitarios.
+                    </p>
                 </div>
 
-                {/* KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatsCard
-                        label="Abordajes este mes"
-                        value={abordajesEsteMes}
-                        icon={<Activity className="w-6 h-6" />}
-                        change={{ value: 15, trend: 'up' }}
-                    />
-                    <StatsCard
-                        label="Pacientes registrados"
-                        value={totalPacientes}
-                        icon={<Users className="w-6 h-6" />}
-                    />
-                    <StatsCard
-                        label="Consultas este mes"
-                        value={consultasEsteMes}
-                        icon={<FileText className="w-6 h-6" />}
-                        change={{ value: 8, trend: 'up' }}
-                    />
-                    <StatsCard
-                        label="Entregas de medicamentos"
-                        value={medicamentosEntregadosEsteMes}
-                        icon={<Pill className="w-6 h-6" />}
-                    />
-                </div>
-
-                {/* Alertas de existencia */}
-                {medicamentosExistenciaBaja.length > 0 && (
-                    <Card className="border-yellow-200 bg-yellow-50">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-yellow-800">
-                                <AlertCircle className="w-5 h-5" />
-                                Alertas de Existencia Baja
-                            </CardTitle>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Accesos Directos */}
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/abordajes')}>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                            <CardTitle className="text-sm font-medium text-gray-500">Gestión de Abordajes</CardTitle>
+                            <Activity className="w-4 h-4 text-gray-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-2">
-                                {medicamentosExistenciaBaja.map(med => (
-                                    <div
-                                        key={med.codigoMedicamento}
-                                        className="flex items-center justify-between p-3 bg-white rounded-lg"
-                                    >
-                                        <div>
-                                            <p className="text-sm">{med.nombreMedicamento}</p>
-                                            <p className="text-xs text-gray-600">
-                                                Código: {med.codigoMedicamento}
-                                            </p>
-                                        </div>
-                                        <Badge variant="destructive">
-                                            {med.existencia}
-                                        </Badge>
-                                    </div>
-                                ))}
-                            </div>
-                            <Button
-                                variant="outline"
-                                className="w-full mt-4"
-                                onClick={() => router.push('/farmacia/medicamentos')}
-                            >
-                                Gestionar Inventario
-                            </Button>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Gráficas */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Abordajes por mes */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Abordajes por Mes</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={abordajesPorMes}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="mes" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Bar dataKey="cantidad" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <div className="text-2xl font-bold text-blue-600">Jornadas</div>
+                            <p className="text-xs text-gray-400 mt-1">Planificación y ejecución</p>
                         </CardContent>
                     </Card>
 
-                    {/* Consultas por tipo de morbilidad */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Consultas por Tipo de Morbilidad</CardTitle>
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/estadisticas')}>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                            <CardTitle className="text-sm font-medium text-gray-500">Inteligencia de Negocios</CardTitle>
+                            <BarChart3 className="w-4 h-4 text-gray-500" />
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <PieChart>
-                                    <Pie
-                                        data={consultasPorTipo}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        label={({ name, percent = 0 }) =>
-                                            `${name} ${(percent * 100).toFixed(0)}%`
-                                        }
-                                        outerRadius={80}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                    >
-                                        {consultasPorTipo.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <div className="text-2xl font-bold text-purple-600">Estadísticas</div>
+                            <p className="text-xs text-gray-400 mt-1">Dashboards y reportes KPI</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/datos-basicos/pacientes')}>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                            <CardTitle className="text-sm font-medium text-gray-500">Pacientes</CardTitle>
+                            <Users className="w-4 h-4 text-gray-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-green-600">Comunidad</div>
+                            <p className="text-xs text-gray-400 mt-1">Registro y control</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Últimos abordajes (Placeholder) */}
+                {/* Accesos Rápidos */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Últimos Abordajes</CardTitle>
+                        <CardTitle>Accesos Rápidos</CardTitle>
+                        <CardDescription>Operaciones frecuentes en el sistema</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-center py-6 text-gray-500">
-                            No hay abordajes registrados recientemente.
-                        </div>
+                    <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => router.push('/abordajes/nuevo')}>
+                            <Activity className="w-6 h-6 text-blue-500" />
+                            Nuevo Abordaje
+                        </Button>
+                        <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => router.push('/datos-basicos/pacientes?action=new')}>
+                            <Users className="w-6 h-6 text-green-500" />
+                            Registrar Paciente
+                        </Button>
+                        <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => router.push('/farmacia/medicamentos')}>
+                            <Pill className="w-6 h-6 text-rose-500" />
+                            Inventario Farmacia
+                        </Button>
+                        <Button variant="outline" className="h-20 flex flex-col gap-2" onClick={() => router.push('/estadisticas')}>
+                            <BarChart3 className="w-6 h-6 text-purple-500" />
+                            Ver Reportes
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
         </MainLayout>
     );
 }
-
