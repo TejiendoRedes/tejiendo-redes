@@ -7,10 +7,12 @@ const dbConfig = {
     user: process.env.DATABASE_USER || 'root',
     password: process.env.DATABASE_PASSWORD || '',
     database: process.env.DATABASE_NAME || 'bd_sistema_abordajes',
-    // Connection pool settings - increased for better performance
+    // Connection pool settings — DB-07: Reduced for Next.js serverless
     waitForConnections: true,
-    connectionLimit: 50, // Increased from 10 to 50
+    connectionLimit: 10,
     queueLimit: 0,
+    maxIdle: 5,
+    idleTimeout: 60000, // Close idle connections after 1 min
     // Character set configuration
     charset: 'utf8mb4',
     timezone: 'Z', // UTC

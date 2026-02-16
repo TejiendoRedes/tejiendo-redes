@@ -63,16 +63,7 @@ export async function createPaciente(data: NewPaciente) {
             return { success: false, error: 'La comunidad es requerida' };
         }
 
-        // Verificar que la comunidad existe
-        const comunidadExists = await db.select()
-            .from(comunidades)
-            .where(eq(comunidades.codigoComunidad, data.codigoComunidad))
-            .limit(1);
-
-        if (!comunidadExists || comunidadExists.length === 0) {
-            return { success: false, error: 'La comunidad seleccionada no existe. Por favor, selecciona una comunidad válida.' };
-        }
-
+        // DB-06: INSERT directly — FK constraint handles community validation
         await db.insert(pacientes).values(data);
         revalidatePath('/datos-basicos/pacientes');
         return { success: true, message: 'Paciente creado correctamente' };

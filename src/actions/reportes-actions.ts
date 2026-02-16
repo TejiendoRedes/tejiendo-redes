@@ -9,50 +9,33 @@ import { consultas } from '@/db/schema/consultas';
 import { consultasEnfermedades } from '@/db/schema/relations';
 import { enfermedades } from '@/db/schema/enfermedades';
 import { medicamentos } from '@/db/schema/medicamentos';
-import { eq, sql, and, gte, lte, count } from 'drizzle-orm';
+import { eq, sql, and, gte, lte, count, desc } from 'drizzle-orm';
 
 /**
- * Obtener datos para el Reporte de Abordajes
+ * DB-04: Obtener datos para el Reporte de Abordajes
+ * Consolidated from 3 queries into 1 with subqueries + applied filters + limit
  */
 export async function getReporteAbordajes(fechaInicio?: string, fechaFin?: string, codigoComunidad?: string) {
     try {
-        // Obtener todos los abordajes
-        const abordajes = await db
-            .select()
-            .from(abordaje);
+        const conditions = [];
+        if (fechaInicio) conditions.push(gte(abordaje.fechaAbordaje, new Date(fechaInicio)));
+        if (fechaFin) conditions.push(lte(abordaje.fechaAbordaje, new Date(fechaFin)));
 
-        // Obtener conteos de comunidades por abordaje
-        const comunidadesCounts = await db
+        // Single query with correlated subqueries instead of 3 separate queries + JS Maps
+        const result = await db
             .select({
-                codigoAbordaje: abordajeComunidad.codigoAbordaje,
-                total: count(abordajeComunidad.codigoComunidad)
+                codigo_abordaje: abordaje.codigoAbordaje,
+                fecha_abordaje: abordaje.fechaAbordaje,
+                descripcion: abordaje.descripcion,
+                hora_inicio: abordaje.horaInicio,
+                hora_fin: abordaje.horaFin,
+                comunidades: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_abordaje = ${abordaje.codigoAbordaje})`,
+                pacientes_atendidos: sql<number>`(SELECT COUNT(DISTINCT c.cedula_paciente) FROM consultas c WHERE c.codigo_abordaje = ${abordaje.codigoAbordaje})`,
             })
-            .from(abordajeComunidad)
-            .groupBy(abordajeComunidad.codigoAbordaje);
-
-        // Obtener conteos de pacientes por abordaje
-        const pacientesCounts = await db
-            .select({
-                codigoAbordaje: consultas.codigoAbordaje,
-                total: sql<number>`COUNT(DISTINCT ${consultas.cedulaPaciente})`
-            })
-            .from(consultas)
-            .groupBy(consultas.codigoAbordaje);
-
-        // Crear mapas para búsqueda rápida
-        const comunidadesMap = new Map(comunidadesCounts.map(c => [c.codigoAbordaje, c.total]));
-        const pacientesMap = new Map(pacientesCounts.map(p => [p.codigoAbordaje, Number(p.total)]));
-
-        // Combinar datos
-        const result = abordajes.map(a => ({
-            codigo_abordaje: a.codigoAbordaje,
-            fecha_abordaje: a.fechaAbordaje,
-            descripcion: a.descripcion,
-            hora_inicio: a.horaInicio,
-            hora_fin: a.horaFin,
-            comunidades: comunidadesMap.get(a.codigoAbordaje) || 0,
-            pacientes_atendidos: pacientesMap.get(a.codigoAbordaje) || 0
-        }));
+            .from(abordaje)
+            .where(conditions.length > 0 ? and(...conditions) : undefined)
+            .orderBy(desc(abordaje.fechaAbordaje))
+            .limit(200);
 
         return { success: true, data: result };
     } catch (error) {
@@ -63,59 +46,27 @@ export async function getReporteAbordajes(fechaInicio?: string, fechaFin?: strin
 
 
 /**
- * Obtener datos para el Reporte de Comunidades
+ * DB-04: Obtener datos para el Reporte de Comunidades
+ * Consolidated from 4 queries into 1 with subqueries
  */
 export async function getReporteComunidades(codigoComunidad?: string) {
     try {
-        // Obtener todas las comunidades
-        const todasComunidades = await db
-            .select()
-            .from(comunidades);
+        const conditions = [];
+        if (codigoComunidad) conditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
 
-        // Obtener conteos de pacientes por comunidad
-        const pacientesCounts = await db
+        const result = await db
             .select({
-                codigoComunidad: pacientes.codigoComunidad,
-                total: count(pacientes.cedulaPaciente)
+                codigo_comunidad: comunidades.codigoComunidad,
+                nombre_comunidad: comunidades.nombreComunidad,
+                estado: comunidades.estado,
+                municipio: comunidades.municipio,
+                cantidad_habitantes: comunidades.cantidadHabitantes,
+                pacientes_tratados: sql<number>`(SELECT COUNT(*) FROM pacientes p WHERE p.codigo_comunidad = ${comunidades.codigoComunidad})`,
+                abordajes_realizados: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_comunidad = ${comunidades.codigoComunidad})`,
+                total_consultas: sql<number>`(SELECT COUNT(*) FROM consultas c INNER JOIN pacientes p ON c.cedula_paciente = p.cedula_paciente WHERE p.codigo_comunidad = ${comunidades.codigoComunidad})`,
             })
-            .from(pacientes)
-            .groupBy(pacientes.codigoComunidad);
-
-        // Obtener conteos de abordajes por comunidad
-        const abordajesCounts = await db
-            .select({
-                codigoComunidad: abordajeComunidad.codigoComunidad,
-                total: count(abordajeComunidad.codigoAbordaje)
-            })
-            .from(abordajeComunidad)
-            .groupBy(abordajeComunidad.codigoComunidad);
-
-        // Obtener conteos de consultas por comunidad
-        const consultasCounts = await db
-            .select({
-                codigoComunidad: pacientes.codigoComunidad,
-                total: count(consultas.codigoConsulta)
-            })
-            .from(consultas)
-            .innerJoin(pacientes, eq(consultas.cedulaPaciente, pacientes.cedulaPaciente))
-            .groupBy(pacientes.codigoComunidad);
-
-        // Crear mapas para búsqueda rápida
-        const pacientesMap = new Map(pacientesCounts.map(p => [p.codigoComunidad, p.total]));
-        const abordajesMap = new Map(abordajesCounts.map(a => [a.codigoComunidad, a.total]));
-        const consultasMap = new Map(consultasCounts.map(c => [c.codigoComunidad, c.total]));
-
-        // Combinar datos
-        const result = todasComunidades.map(c => ({
-            codigo_comunidad: c.codigoComunidad,
-            nombre_comunidad: c.nombreComunidad,
-            estado: c.estado,
-            municipio: c.municipio,
-            cantidad_habitantes: c.cantidadHabitantes,
-            pacientes_tratados: pacientesMap.get(c.codigoComunidad) || 0,
-            abordajes_realizados: abordajesMap.get(c.codigoComunidad) || 0,
-            total_consultas: consultasMap.get(c.codigoComunidad) || 0
-        }));
+            .from(comunidades)
+            .where(conditions.length > 0 ? and(...conditions) : undefined);
 
         return { success: true, data: result };
     } catch (error) {
@@ -125,47 +76,30 @@ export async function getReporteComunidades(codigoComunidad?: string) {
 }
 
 /**
- * Obtener datos para el Reporte de Pacientes
+ * DB-04: Obtener datos para el Reporte de Pacientes
+ * Consolidated from 2 queries + Map into 1 JOIN query
  */
 export async function getReportePacientes(codigoComunidad?: string) {
     try {
-        // Obtener pacientes con sus comunidades
-        const todosPacientes = await db
+        const conditions = [];
+        if (codigoComunidad) conditions.push(eq(pacientes.codigoComunidad, codigoComunidad));
+
+        const result = await db
             .select({
                 cedula_paciente: pacientes.cedulaPaciente,
                 codigo_comunidad: pacientes.codigoComunidad,
+                nombre_comunidad: comunidades.nombreComunidad,
                 nombre_paciente: pacientes.nombrePaciente,
                 apellido_paciente: pacientes.apellidoPaciente,
                 fecha_nacimiento: pacientes.fechaNacimiento,
                 direccion_paciente: pacientes.direccionPaciente,
                 telefono_paciente: pacientes.telefonoPaciente,
-                correo_paciente: pacientes.correoPaciente
+                correo_paciente: pacientes.correoPaciente,
             })
-            .from(pacientes);
-
-        // Obtener datos de comunidades
-        const comunidadesData = await db
-            .select({
-                codigo: comunidades.codigoComunidad,
-                nombre: comunidades.nombreComunidad
-            })
-            .from(comunidades);
-
-        // Crear mapa de comunidades
-        const comunidadesMap = new Map(comunidadesData.map(c => [c.codigo, c.nombre]));
-
-        // Combinar datos
-        const result = todosPacientes.map(p => ({
-            cedula_paciente: p.cedula_paciente,
-            codigo_comunidad: p.codigo_comunidad,
-            nombre_comunidad: comunidadesMap.get(p.codigo_comunidad) || '',
-            nombre_paciente: p.nombre_paciente,
-            apellido_paciente: p.apellido_paciente,
-            fecha_nacimiento: p.fecha_nacimiento,
-            direccion_paciente: p.direccion_paciente,
-            telefono_paciente: p.telefono_paciente,
-            correo_paciente: p.correo_paciente
-        }));
+            .from(pacientes)
+            .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+            .where(conditions.length > 0 ? and(...conditions) : undefined)
+            .limit(500);
 
         return { success: true, data: result };
     } catch (error) {

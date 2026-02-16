@@ -134,27 +134,7 @@ export async function createPeticion(data: NewPeticion) {
             return { success: false, error: 'La cantidad debe ser mayor a 0' };
         }
 
-        // Verificar que el paciente existe
-        const pacienteExists = await db.select()
-            .from(pacientes)
-            .where(eq(pacientes.cedulaPaciente, data.codigoPaciente))
-            .limit(1);
-
-        if (!pacienteExists || pacienteExists.length === 0) {
-            return { success: false, error: 'El paciente seleccionado no existe. Por favor, selecciona un paciente válido.' };
-        }
-
-        // Verificar que el medicamento existe (sin validar existencia por ahora)
-        const medicamento = await db.select()
-            .from(medicamentos)
-            .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento))
-            .limit(1);
-
-        if (!medicamento[0]) {
-            return { success: false, error: 'El medicamento seleccionado no existe. Por favor, selecciona un medicamento válido.' };
-        }
-
-        // Preparar datos para inserción
+        // DB-06: INSERT directly — let DB validate FK constraints
         const peticionData = {
             codigoPaciente: data.codigoPaciente,
             codigoMedicamento: data.codigoMedicamento,
@@ -163,12 +143,22 @@ export async function createPeticion(data: NewPeticion) {
             notas: data.notas || null,
         };
 
-        // Crear la petición (sin modificar existencias)
         await db.insert(peticiones).values(peticionData);
 
         revalidatePath('/farmacia/peticiones');
         return { success: true, message: 'Petición creada correctamente' };
-    } catch (error) {
+    } catch (error: any) {
+        // Parse FK constraint errors for user-friendly messages
+        const msg = error?.cause?.sqlMessage || error?.message || '';
+        if (msg.includes('foreign key constraint') || error?.cause?.code === 'ER_NO_REFERENCED_ROW_2') {
+            if (msg.includes('paciente') || msg.includes('codigo_paciente')) {
+                return { success: false, error: 'El paciente seleccionado no existe. Por favor, selecciona un paciente válido.' };
+            }
+            if (msg.includes('medicamento') || msg.includes('codigo_medicamento')) {
+                return { success: false, error: 'El medicamento seleccionado no existe. Por favor, selecciona un medicamento válido.' };
+            }
+            return { success: false, error: 'Referencia inválida. Verifique los datos seleccionados.' };
+        }
         const errorMessage = getErrorMessage(error, 'la petición', 'crear');
         return { success: false, error: errorMessage };
     }

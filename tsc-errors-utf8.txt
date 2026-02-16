@@ -1,0 +1,79 @@
+﻿check_data.ts(2,49): error TS2724: '"./src/db/schema"' has no exported member named 'abordajes'. Did you mean 'abordaje'?
+src/__tests__/actions/abordajes-actions.test.ts(18,17): error TS18048: 'result.data' is possibly 'undefined'.
+src/__tests__/actions/enfermedades-actions.test.ts(28,44): error TS18048: 'allEnfermedades.data' is possibly 'undefined'.
+src/__tests__/actions/enfermedades-actions.test.ts(29,35): error TS18048: 'allEnfermedades.data' is possibly 'undefined'.
+src/__tests__/actions/enfermedades-actions.test.ts(55,51): error TS2345: Argument of type '{ nombreEnfermedad: string; tipoPatologia: string; descripcion: string; }' is not assignable to parameter of type '{ codigoEnfermedad: string; nombreEnfermedad: string; tipoPatologia: string; descripcion?: string | null | undefined; }'.
+  Property 'codigoEnfermedad' is missing in type '{ nombreEnfermedad: string; tipoPatologia: string; descripcion: string; }' but required in type '{ codigoEnfermedad: string; nombreEnfermedad: string; tipoPatologia: string; descripcion?: string | null | undefined; }'.
+src/__tests__/actions/enfermedades-actions.test.ts(69,51): error TS2345: Argument of type '{ nombreEnfermedad: string; tipoPatologia: string; }' is not assignable to parameter of type '{ codigoEnfermedad: string; nombreEnfermedad: string; tipoPatologia: string; descripcion?: string | null | undefined; }'.
+  Property 'codigoEnfermedad' is missing in type '{ nombreEnfermedad: string; tipoPatologia: string; }' but required in type '{ codigoEnfermedad: string; nombreEnfermedad: string; tipoPatologia: string; descripcion?: string | null | undefined; }'.
+src/__tests__/actions/enfermedades-actions.test.ts(81,44): error TS18048: 'allEnfermedades.data' is possibly 'undefined'.
+src/__tests__/actions/enfermedades-actions.test.ts(82,38): error TS18048: 'allEnfermedades.data' is possibly 'undefined'.
+src/__tests__/actions/enfermedades-actions.test.ts(105,44): error TS18048: 'allEnfermedades.data' is possibly 'undefined'.
+src/__tests__/actions/enfermedades-actions.test.ts(106,38): error TS18048: 'allEnfermedades.data' is possibly 'undefined'.
+src/app/abordajes/[id]/nueva-consulta/page.tsx(63,17): error TS2322: Type '{ abordajeId: string; pacientes: { comunidad: { codigoComunidad: string; nombreComunidad: string; tipoComunidad: string; estado: string; municipio: string; parroquia: string; direccion: string; ... 14 more ...; notasLogistica: string | null; } | null; ... 12 more ...; nota: string | null; }[]; medicos: { ...; }[]; e...' is not assignable to type 'IntrinsicAttributes & ConsultaFormProps'.
+  Property 'pacientes' does not exist on type 'IntrinsicAttributes & ConsultaFormProps'.
+src/app/abordajes/solicitudes-abordajes/page.tsx(12,13): error TS2322: Type '{ comunidad: { codigoComunidad: string; nombreComunidad: string; tipoComunidad: string; estado: string; municipio: string; parroquia: string; direccion: string; ubicacionFisica: string; cedulaResponsable: string; ... 12 more ...; notasLogistica: string | null; } | null; ... 15 more ...; notas: string | null; }[]' is not assignable to type 'SolicitudAbordaje[]'.
+  Type '{ comunidad: { codigoComunidad: string; nombreComunidad: string; tipoComunidad: string; estado: string; municipio: string; parroquia: string; direccion: string; ubicacionFisica: string; cedulaResponsable: string; ... 12 more ...; notasLogistica: string | null; } | null; ... 15 more ...; notas: string | null; }' is not assignable to type 'SolicitudAbordaje'.
+    Types of property 'transporte' are incompatible.
+      Type 'boolean | null' is not assignable to type 'boolean'.
+        Type 'null' is not assignable to type 'boolean'.
+src/app/reportes/page.tsx(51,21): error TS2322: Type '{ cedula_paciente: string; codigo_comunidad: string; nombre_comunidad: string | null; nombre_paciente: string; apellido_paciente: string; fecha_nacimiento: Date; direccion_paciente: string; telefono_paciente: string; correo_paciente: string; }[]' is not assignable to type '{ cedula_paciente: string; codigo_comunidad: string; nombre_comunidad: string; nombre_paciente: string; apellido_paciente: string; fecha_nacimiento: Date; direccion_paciente: string; telefono_paciente: string; correo_paciente: string; }[]'.
+  Type '{ cedula_paciente: string; codigo_comunidad: string; nombre_comunidad: string | null; nombre_paciente: string; apellido_paciente: string; fecha_nacimiento: Date; direccion_paciente: string; telefono_paciente: string; correo_paciente: string; }' is not assignable to type '{ cedula_paciente: string; codigo_comunidad: string; nombre_comunidad: string; nombre_paciente: string; apellido_paciente: string; fecha_nacimiento: Date; direccion_paciente: string; telefono_paciente: string; correo_paciente: string; }'.
+    Types of property 'nombre_comunidad' are incompatible.
+      Type 'string | null' is not assignable to type 'string'.
+        Type 'null' is not assignable to type 'string'.
+src/components/abordajes/stations/MedicalStation.tsx(67,57): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: { id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }, index: number, array: { ...; }[]) => value is { ...; }, thisArg?: any): { ...; }[]', gave the following error.
+    Argument of type '(item: AbordajeAsistencia) => boolean' is not assignable to parameter of type '(value: { id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }, index: number, array: { ...; }[]) => value is { ...; }'.
+      Types of parameters 'item' and 'value' are incompatible.
+        Type '{ id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }' is not assignable to type 'AbordajeAsistencia'.
+          The types of 'paciente.fechaNacimiento' are incompatible between these types.
+            Type 'Date' is not assignable to type 'string'.
+  Overload 2 of 2, '(predicate: (value: { id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }, index: number, array: { ...; }[]) => unknown, thisArg?: any): { ...; }[]', gave the following error.
+    Argument of type '(item: AbordajeAsistencia) => boolean' is not assignable to parameter of type '(value: { id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }, index: number, array: { ...; }[]) => unknown'.
+      Types of parameters 'item' and 'value' are incompatible.
+        Type '{ id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }' is not assignable to type 'AbordajeAsistencia'.
+          The types of 'paciente.fechaNacimiento' are incompatible between these types.
+            Type 'Date' is not assignable to type 'string'.
+src/components/abordajes/stations/MedicalStation.tsx(70,30): error TS2345: Argument of type '{ id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }[]' is not assignable to parameter of type 'SetStateAction<AbordajeAsistencia[]>'.
+  Type '{ id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }[]' is not assignable to type 'AbordajeAsistencia[]'.
+    Type '{ id: number; cedulaPaciente: string; horaLlegada: Date; estado: "En Espera" | "En Triaje" | "En Consulta" | "En Farmacia" | "Finalizado"; serviciosRequeridos: string | null; notas: string | null; paciente: { ...; }; }' is not assignable to type 'AbordajeAsistencia'.
+      The types of 'paciente.fechaNacimiento' are incompatible between these types.
+        Type 'Date' is not assignable to type 'string'.
+src/components/abordajes/stations/MedicalStation.tsx(204,33): error TS2322: Type '{ abordajeId: any; pacientes: { cedulaPaciente: string; nombrePaciente: string; apellidoPaciente: string; }[]; medicos: any; enfermedades: any[]; initialPatientId: string; onSuccess: () => Promise<void>; onCancel: () => void; isInline: true; }' is not assignable to type 'IntrinsicAttributes & ConsultaFormProps'.
+  Property 'pacientes' does not exist on type 'IntrinsicAttributes & ConsultaFormProps'.
+src/components/abordajes/stations/PharmacyStation.tsx(123,44): error TS2345: Argument of type '{ codigoMedicamento: string; cedulaPaciente: string; cantidadEntregada: number; fechaEntrega: Date; }' is not assignable to parameter of type '{ codigoAbordaje: string; cedulaPaciente: string; cedulaTejedor: string; codigoMedicamento: string; fechaEntrega: Date; cantidadEntregada: number; }'.
+  Type '{ codigoMedicamento: string; cedulaPaciente: string; cantidadEntregada: number; fechaEntrega: Date; }' is missing the following properties from type '{ codigoAbordaje: string; cedulaPaciente: string; cedulaTejedor: string; codigoMedicamento: string; fechaEntrega: Date; cantidadEntregada: number; }': codigoAbordaje, cedulaTejedor
+src/components/ui/chart.tsx(109,3): error TS2339: Property 'payload' does not exist on type 'Omit<Props<ValueType, NameType>, PropertiesReadFromContext> & { active?: boolean | undefined; allowEscapeViewBox?: AllowInDimension | undefined; ... 24 more ...; wrapperStyle?: CSSProperties | undefined; } & ClassAttributes<...> & HTMLAttributes<...> & { ...; }'.
+src/components/ui/chart.tsx(114,3): error TS2339: Property 'label' does not exist on type 'Omit<Props<ValueType, NameType>, PropertiesReadFromContext> & { active?: boolean | undefined; allowEscapeViewBox?: AllowInDimension | undefined; ... 24 more ...; wrapperStyle?: CSSProperties | undefined; } & ClassAttributes<...> & HTMLAttributes<...> & { ...; }'.
+src/components/ui/chart.tsx(182,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/chart.tsx(182,29): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/components/ui/chart.tsx(260,39): error TS2344: Type '"payload" | "verticalAlign"' does not satisfy the constraint '"string" | "local" | "filter" | "fill" | "values" | "id" | "name" | "mode" | "path" | "scale" | "end" | "format" | "result" | "offset" | "fontFamily" | "transform" | "type" | "key" | ... 431 more ... | "portal"'.
+  Type '"payload"' is not assignable to type '"string" | "local" | "filter" | "fill" | "values" | "id" | "name" | "mode" | "path" | "scale" | "end" | "format" | "result" | "offset" | "fontFamily" | "transform" | "type" | "key" | ... 431 more ... | "portal"'.
+src/components/ui/chart.tsx(266,17): error TS2339: Property 'length' does not exist on type '{}'.
+src/components/ui/chart.tsx(278,16): error TS2339: Property 'map' does not exist on type '{}'.
+src/components/ui/chart.tsx(278,21): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/db/manual-migrate.ts(12,26): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(sql: string): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'string'.
+  Overload 2 of 4, '(options: QueryOptions): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'QueryOptions'.
+      Property 'sql' is missing in type 'SQL<unknown>' but required in type 'QueryOptions'.
+src/db/manual-migrate.ts(30,30): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(sql: string): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'string'.
+  Overload 2 of 4, '(options: QueryOptions): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'QueryOptions'.
+      Property 'sql' is missing in type 'SQL<unknown>' but required in type 'QueryOptions'.
+src/db/manual-migrate.ts(33,30): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(sql: string): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'string'.
+  Overload 2 of 4, '(options: QueryOptions): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'QueryOptions'.
+      Property 'sql' is missing in type 'SQL<unknown>' but required in type 'QueryOptions'.
+src/db/manual-migrate.ts(36,30): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(sql: string): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'string'.
+  Overload 2 of 4, '(options: QueryOptions): Promise<[QueryResult, FieldPacket[]]>', gave the following error.
+    Argument of type 'SQL<unknown>' is not assignable to parameter of type 'QueryOptions'.
+      Property 'sql' is missing in type 'SQL<unknown>' but required in type 'QueryOptions'.

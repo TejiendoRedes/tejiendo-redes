@@ -11,9 +11,16 @@ import { pacientes } from '@/db/schema/pacientes';
 
 export class AbordajesService {
     /**
-     * Sincronizar estados de abordajes (Planificado -> Finalizado si la fecha ya pasó)
+     * DB-02: Debounced sync — only runs once per minute instead of every read
      */
-    private static async syncStatuses() {
+    private static lastSyncTime = 0;
+    private static SYNC_INTERVAL_MS = 60_000; // 1 minute
+
+    private static async syncStatusesIfNeeded() {
+        const now = Date.now();
+        if (now - this.lastSyncTime < this.SYNC_INTERVAL_MS) return;
+        this.lastSyncTime = now;
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -33,7 +40,7 @@ export class AbordajesService {
      * Obtener todos los abordajes
      */
     static async getAll() {
-        await this.syncStatuses();
+        await this.syncStatusesIfNeeded();
         return await db.select({
             abordaje,
             comunidad: comunidades
@@ -44,61 +51,55 @@ export class AbordajesService {
     }
 
     /**
-     * Obtener un abordaje por su ID con todas sus relaciones
+     * DB-01: Obtener un abordaje por su ID con todas sus relaciones (parallelized)
      */
     static async getById(id: string) {
-        await this.syncStatuses();
-        // 1. Obtener datos del abordaje
-        const abordajeData = await db.query.abordaje.findFirst({
-            where: eq(abordaje.codigoAbordaje, id),
-        });
+        await this.syncStatusesIfNeeded();
 
-        if (!abordajeData) {
-            return null;
-        }
+        // Execute all queries in parallel with Promise.all
+        const [abordajeData, comunidadesData, tejedoresData, consultasData, medicamentosData] =
+            await Promise.all([
+                db.query.abordaje.findFirst({
+                    where: eq(abordaje.codigoAbordaje, id),
+                }),
+                db.select({
+                    codigoComunidad: comunidades.codigoComunidad,
+                    nombreComunidad: comunidades.nombreComunidad,
+                    municipio: comunidades.municipio,
+                    parroquia: comunidades.direccion,
+                    estado: comunidades.estado,
+                    habitantes: comunidades.cantidadHabitantes,
+                    observaciones: abordajeComunidad.observaciones,
+                })
+                    .from(abordajeComunidad)
+                    .innerJoin(comunidades, eq(abordajeComunidad.codigoComunidad, comunidades.codigoComunidad))
+                    .where(eq(abordajeComunidad.codigoAbordaje, id)),
+                db.select({
+                    cedulaTejedor: tejedores.cedulaTejedor,
+                    nombreTejedor: tejedores.nombreTejedor,
+                    apellidoTejedor: tejedores.apellidoTejedor,
+                    profesionTejedor: tejedores.profesionTejedor,
+                    rolAbordaje: tejedoresAbordaje.rolEnAbordaje,
+                })
+                    .from(tejedoresAbordaje)
+                    .innerJoin(tejedores, eq(tejedoresAbordaje.cedulaTejedor, tejedores.cedulaTejedor))
+                    .where(eq(tejedoresAbordaje.codigoAbordaje, id)),
+                db.select()
+                    .from(consultas)
+                    .where(eq(consultas.codigoAbordaje, id)),
+                db.select({
+                    codigoMedicamento: medicamentos.codigoMedicamento,
+                    cedulaPaciente: medicamentosPacientes.cedulaPaciente,
+                    cantidadEntregada: medicamentosPacientes.cantidadEntregada,
+                    indicaciones: medicamentos.descripcion,
+                    nombreMedicamento: medicamentos.nombreMedicamento,
+                })
+                    .from(medicamentosPacientes)
+                    .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
+                    .where(eq(medicamentosPacientes.codigoAbordaje, id)),
+            ]);
 
-        // 2. Obtener comunidades relacionadas
-        const comunidadesData = await db.select({
-            codigoComunidad: comunidades.codigoComunidad,
-            nombreComunidad: comunidades.nombreComunidad,
-            municipio: comunidades.municipio,
-            parroquia: comunidades.direccion,
-            estado: comunidades.estado,
-            habitantes: comunidades.cantidadHabitantes,
-            observaciones: abordajeComunidad.observaciones,
-        })
-            .from(abordajeComunidad)
-            .innerJoin(comunidades, eq(abordajeComunidad.codigoComunidad, comunidades.codigoComunidad))
-            .where(eq(abordajeComunidad.codigoAbordaje, id));
-
-        // 3. Obtener tejedores participantes
-        const tejedoresData = await db.select({
-            cedulaTejedor: tejedores.cedulaTejedor,
-            nombreTejedor: tejedores.nombreTejedor,
-            apellidoTejedor: tejedores.apellidoTejedor,
-            profesionTejedor: tejedores.profesionTejedor,
-            rolAbordaje: tejedoresAbordaje.rolEnAbordaje,
-        })
-            .from(tejedoresAbordaje)
-            .innerJoin(tejedores, eq(tejedoresAbordaje.cedulaTejedor, tejedores.cedulaTejedor))
-            .where(eq(tejedoresAbordaje.codigoAbordaje, id));
-
-        // 4. Obtener consultas realizadas
-        const consultasData = await db.select()
-            .from(consultas)
-            .where(eq(consultas.codigoAbordaje, id));
-
-        // 5. Obtener medicamentos entregados
-        const medicamentosData = await db.select({
-            codigoMedicamento: medicamentos.codigoMedicamento,
-            cedulaPaciente: medicamentosPacientes.cedulaPaciente,
-            cantidadEntregada: medicamentosPacientes.cantidadEntregada,
-            indicaciones: medicamentos.descripcion,
-            nombreMedicamento: medicamentos.nombreMedicamento,
-        })
-            .from(medicamentosPacientes)
-            .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
-            .where(eq(medicamentosPacientes.codigoAbordaje, id));
+        if (!abordajeData) return null;
 
         return {
             ...abordajeData,
