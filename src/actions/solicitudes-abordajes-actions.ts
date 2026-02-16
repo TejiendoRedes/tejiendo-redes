@@ -35,9 +35,9 @@ export async function getSolicitudesAbordajes() {
 }
 
 /**
- * Obtener comunidades con su logística para el selector
+ * Obtener comunidades para el selector de solicitudes
  */
-export async function getComunidadesConLogistica() {
+export async function getComunidadesParaSolicitud() {
     try {
         const data = await db.select()
             .from(comunidades)
@@ -47,47 +47,6 @@ export async function getComunidadesConLogistica() {
     } catch (error) {
         console.error('Error fetching comunidades:', error);
         return { success: false, error: 'Error al obtener las comunidades' };
-    }
-}
-
-/**
- * Calcular puntuación de logística de una comunidad
- */
-function calcularPuntuacionLogistica(comunidad: any): number {
-    let puntuacion = 0;
-
-    // Ponderación de recursos logísticos
-    if (comunidad.tieneTransporte) puntuacion += 3;
-    if (comunidad.tieneRefrigerios) puntuacion += 2;
-    if (comunidad.tieneAgua) puntuacion += 2;
-    if (comunidad.tieneEspacioCubierto) puntuacion += 1;
-    if (comunidad.tieneMaterialEducativo) puntuacion += 1;
-
-    return puntuacion;
-}
-
-/**
- * Obtener comunidades ordenadas por logística (prioridad)
- */
-export async function getComunidadesPorPrioridadLogistica() {
-    try {
-        const comunidadesData = await db.select()
-            .from(comunidades)
-            .orderBy(comunidades.nombreComunidad);
-
-        // Calcular puntuación y ordenar
-        const comunidadesConPuntuacion = comunidadesData.map(comunidad => ({
-            ...comunidad,
-            puntuacionLogistica: calcularPuntuacionLogistica(comunidad),
-        }));
-
-        // Ordenar por puntuación descendente
-        comunidadesConPuntuacion.sort((a, b) => b.puntuacionLogistica - a.puntuacionLogistica);
-
-        return { success: true, data: comunidadesConPuntuacion };
-    } catch (error) {
-        console.error('Error fetching comunidades por prioridad:', error);
-        return { success: false, error: 'Error al obtener las comunidades por prioridad' };
     }
 }
 
@@ -168,10 +127,6 @@ export async function confirmarSolicitudAbordaje(id: number) {
             tipoAbordaje: solicitud[0].tipoAbordaje,
             participantesEstimados: solicitud[0].participantesEstimados,
             recursosAdicionales: solicitud[0].recursosAdicionales,
-            transporte: solicitud[0].transporte,
-            refrigerios: solicitud[0].refrigerios,
-            espacioCubierto: solicitud[0].espacioCubierto,
-            notasLogistica: solicitud[0].notasLogistica,
             notas: solicitud[0].notas,
             estado: 'Pendiente',
         };

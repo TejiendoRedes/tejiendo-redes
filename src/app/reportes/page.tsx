@@ -10,7 +10,20 @@ import {
 } from '@/actions/reportes-actions';
 import ReportesClient from '@/app/reportes/ReportesClient';
 
-export default async function ReportesPage() {
+export default async function ReportesPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+    const resolvedSearchParams = await searchParams;
+    const { fechaInicio, fechaFin, codigoComunidad } = resolvedSearchParams;
+
+    const filters = {
+        fechaInicio: fechaInicio as string,
+        fechaFin: fechaFin as string,
+        codigoComunidad: codigoComunidad as string
+    };
+
     // Obtener todos los datos de reportes en paralelo para mejor rendimiento
     const [
         comunidadesResult,
@@ -21,15 +34,15 @@ export default async function ReportesPage() {
         medicamentosResult
     ] = await Promise.all([
         getComunidadesParaFiltro(),
-        getReporteAbordajes(),
-        getReporteComunidades(),
-        getReportePacientes(),
-        getReporteMorbilidad(),
+        getReporteAbordajes(filters),
+        getReporteComunidades(filters),
+        getReportePacientes(filters),
+        getReporteMorbilidad(filters),
         getReporteMedicamentos()
     ]);
 
     // Extraer datos o usar arrays vacíos como fallback
-    const comunidades = comunidadesResult.success ? comunidadesResult.data : [];
+    const comunidadesFilter = comunidadesResult.success ? comunidadesResult.data : [];
     const reporteAbordajes = abordajesResult.success ? abordajesResult.data : [];
     const reporteComunidades = comunidadesReporteResult.success ? comunidadesReporteResult.data : [];
     const reportePacientes = pacientesResult.success ? pacientesResult.data : [];
@@ -45,7 +58,7 @@ export default async function ReportesPage() {
                 </div>
 
                 <ReportesClient
-                    comunidades={comunidades}
+                    comunidades={comunidadesFilter}
                     reporteAbordajes={reporteAbordajes}
                     reporteComunidades={reporteComunidades}
                     reportePacientes={reportePacientes}

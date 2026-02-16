@@ -267,6 +267,40 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(o => {
+            const estadoNombre = getEstadoNombre(o.estadoOrganismo);
+            const municipioNombre = getMunicipioNombre(o.estadoOrganismo, o.municipioOrganismo);
+
+            return {
+                codigo: o.codigoOrganismo,
+                nombre: o.nombreOrganismo,
+                tipo: o.tipoInstitucion || 'N/A',
+                tejedor: o.tejedor ? `${o.tejedor.nombreTejedor} ${o.tejedor.apellidoTejedor}` : o.cedulaTejedor,
+                correo: o.correoOrganismo,
+                telefono: o.telefonoOrganismo || 'N/A',
+                ubicacion: `${estadoNombre}, ${municipioNombre}, ${o.paisOrganismo}`,
+            };
+        });
+
+        const headers = ['codigo', 'nombre', 'tipo', 'tejedor', 'correo', 'telefono', 'ubicacion'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Tipo', dataKey: 'tipo' },
+            { header: 'Tejedor Enlace', dataKey: 'tejedor' },
+            { header: 'Correo', dataKey: 'correo' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Ubicación', dataKey: 'ubicacion' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'instituciones'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'instituciones', 'Reporte de Instituciones'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -285,6 +319,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                     searchPlaceholder="Buscar institución..."
                     onAdd={handleAdd}
                     addLabel="Agregar Institución"
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

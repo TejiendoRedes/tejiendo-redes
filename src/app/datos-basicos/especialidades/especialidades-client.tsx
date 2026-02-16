@@ -137,6 +137,27 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(e => ({
+            codigo: e.codigoEspecialidad,
+            nombre: e.nombreEspecialidad,
+            descripcion: e.descripcion,
+        }));
+
+        const headers = ['codigo', 'nombre', 'descripcion'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Descripción', dataKey: 'descripcion' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'especialidades'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'especialidades', 'Reporte de Especialidades'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -151,7 +172,7 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
                     searchPlaceholder="Buscar especialidad..."
                     onAdd={handleAdd}
                     addLabel="Agregar Especialidad"
-                    onExport={(format) => toast.info(`Exportando en formato ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 {/* Modal Formulario */}

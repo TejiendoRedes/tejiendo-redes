@@ -49,7 +49,6 @@ const menuItems: MenuItem[] = [
     label: 'Datos Básicos',
     path: '/datos-basicos',
     icon: <Database className="w-5 h-5" />,
-    // roles: ['ADMIN', 'REGISTRO'],
     children: [
       { label: 'Tejedores', path: '/datos-basicos/tejedores', icon: <Users className="w-4 h-4" /> },
       { label: 'Aspirantes', path: '/datos-basicos/aspirantes', icon: <UserPlus className="w-4 h-4" /> },
@@ -71,7 +70,6 @@ const menuItems: MenuItem[] = [
       { label: 'Solicitudes', path: '/abordajes/solicitudes-abordajes', icon: <Clock className="w-4 h-4" /> },
       { label: 'Abordajes Confirmados', path: '/abordajes', icon: <CheckCircle className="w-4 h-4" /> },
     ],
-    // roles: ['ADMIN', 'REGISTRO', 'MEDICO'],
   },
   {
     label: 'Farmacia',
@@ -126,12 +124,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-40',
+        'fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 z-40',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       {/* Logo y Toggle */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <Image
@@ -141,7 +139,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               height={56}
               className="object-contain"
             />
-            <span className="font-bold text-lg text-gray-900">Abordajes</span>
+            <span className="font-bold text-lg text-foreground">Abordajes</span>
           </div>
         )}
         {collapsed && (
@@ -173,11 +171,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <>
                     <button
                       onClick={() => toggleMenu(item.path)}
+                      title={collapsed ? item.label : undefined}
                       className={cn(
                         'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                         itemActive
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                       )}
                     >
                       {item.icon}
@@ -186,7 +185,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                           <span className="flex-1 text-left">{item.label}</span>
                           <ChevronRight
                             className={cn(
-                              'w-4 h-4 transition-transform',
+                              'w-4 h-4 transition-transform duration-200',
                               isExpanded && 'rotate-90'
                             )}
                           />
@@ -202,8 +201,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                               className={cn(
                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
                                 isActive(child.path)
-                                  ? 'bg-blue-50 text-blue-600'
-                                  : 'text-gray-600 hover:bg-gray-100'
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                               )}
                             >
                               {child.icon}
@@ -217,11 +216,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 ) : (
                   <Link
                     href={item.path}
+                    title={collapsed ? item.label : undefined}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                       itemActive
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     )}
                   >
                     {item.icon}
@@ -237,15 +237,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1 shadow-md hover:shadow-lg transition-shadow"
+        aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+        className="absolute -right-3 top-20 bg-card border border-border rounded-full p-1 shadow-md hover:shadow-lg transition-shadow"
       >
         {collapsed ? (
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         ) : (
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
+          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
         )}
       </button>
     </aside>
   );
 }
-

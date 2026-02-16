@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, User, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -11,9 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 interface TopbarProps {
   sidebarCollapsed: boolean;
@@ -37,7 +35,7 @@ export function Topbar({ sidebarCollapsed }: TopbarProps) {
 
   return (
     <header
-      className="fixed top-0 right-0 h-16 bg-white border-b border-gray-200 z-30 transition-all duration-300"
+      className="fixed top-0 right-0 h-16 bg-card border-b border-border z-30 transition-all duration-300"
       style={{ left: sidebarCollapsed ? '4rem' : '16rem' }}
     >
       <div className="flex items-center justify-between h-full px-6">
@@ -53,14 +51,14 @@ export function Topbar({ sidebarCollapsed }: TopbarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                   {user?.nombreTejedor?.charAt(0)}
                 </div>
                 <div className="text-left hidden md:block">
                   <p className="text-sm">
                     {user?.nombreTejedor} {user?.apellidoTejedor}
                   </p>
-                  <p className="text-xs text-gray-500">{user?.profesionTejedor}</p>
+                  <p className="text-xs text-muted-foreground">{user?.profesionTejedor}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>

@@ -33,6 +33,7 @@ interface AsyncSearchableSelectProps {
     disabled?: boolean;
     className?: string;
     initialLabel?: string; // To show when value is set but items not loaded
+    id?: string;
 }
 
 export function AsyncSearchableSelect({
@@ -47,7 +48,8 @@ export function AsyncSearchableSelect({
     secondaryLabelField,
     disabled = false,
     className,
-    initialLabel
+    initialLabel,
+    id // Add id prop
 }: AsyncSearchableSelectProps) {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -117,22 +119,24 @@ export function AsyncSearchableSelect({
 
     return (
         <div className={cn("w-full", className)}>
-            {label && <label className="text-sm font-medium mb-1 block text-gray-700">{label}</label>}
+            {label && <label htmlFor={id} className="text-sm font-medium mb-1 block text-gray-700">{label}</label>}
             <Button
+                id={id}
                 type="button"
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
+                aria-label={label || placeholder}
                 className="w-full justify-between bg-white font-normal text-left h-10 px-3 border-gray-300 hover:bg-gray-50 transition-colors"
                 onClick={() => !disabled && setOpen(true)}
                 disabled={disabled}
             >
                 {value ? (
-                    <span className="truncate flex flex-col items-start leading-tight">
-                        <span className="font-medium">{selectedLabel || value}</span>
+                    <span className="truncate flex-1 text-left">
+                        <span className="font-medium truncate block">{selectedLabel || value}</span>
                     </span>
                 ) : (
-                    <span className="text-gray-400">{placeholder}</span>
+                    <span className="text-gray-400 truncate flex-1 text-left">{placeholder}</span>
                 )}
                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -151,11 +155,13 @@ export function AsyncSearchableSelect({
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10 pr-10 h-11 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all rounded-lg"
                                 autoFocus
+                                aria-label={searchPlaceholder}
                             />
                             {searchTerm && (
                                 <button
                                     type="button"
                                     onClick={() => setSearchTerm('')}
+                                    aria-label="Borrar búsqueda"
                                     className="absolute right-3 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <X className="h-4 w-4" />

@@ -6,6 +6,7 @@ import { createResponse } from '@/lib/utils';
 import { abordaje, medicamentosPacientes } from '@/db/schema'; // Import types if needed, or source from service
 import { DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { MedicamentoEntregaSchema, CreateAbordajeSchema, UpdateAbordajeSchema } from '@/lib/validators/abordajes';
 
 /**
  * Obtener todos los abordajes
@@ -39,9 +40,9 @@ export async function getAbordajeById(id: string) {
  */
 export async function createAbordaje(data: typeof abordaje.$inferInsert) {
     try {
-        // Validaciones básicas de campos obligatorios
-        if (!data.codigoComunidad) {
-            return createResponse(false, null, 'Debe seleccionar una comunidad');
+        const validation = CreateAbordajeSchema.safeParse(data);
+        if (!validation.success) {
+            return createResponse(false, null, validation.error.errors[0].message);
         }
 
         // Generación automática del código de abordaje (ABD-001...)
@@ -72,6 +73,10 @@ export async function createAbordaje(data: typeof abordaje.$inferInsert) {
  */
 export async function updateAbordaje(id: string, data: Partial<typeof abordaje.$inferInsert>) {
     try {
+        const validation = UpdateAbordajeSchema.safeParse(data);
+        if (!validation.success) {
+            return createResponse(false, null, validation.error.errors[0].message);
+        }
         await AbordajesService.update(id, data);
         revalidatePath('/abordajes');
         revalidatePath(`/abordajes/${id}`);
@@ -186,6 +191,11 @@ export async function deleteAbordaje(id: string) {
  */
 export async function registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
     try {
+        const validation = MedicamentoEntregaSchema.safeParse(data);
+        if (!validation.success) {
+            return createResponse(false, null, validation.error.errors[0].message);
+        }
+
         await AbordajesService.registerMedicamentoEntrega(data);
         revalidatePath('/abordajes');
         // Also revalidate the specific abordaje page

@@ -213,6 +213,22 @@ export class AbordajesService {
 
     static async registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
         return await db.transaction(async (tx) => {
+            // 0. Verificar existencia actual
+            const [medicamento] = await tx.select({
+                existencia: medicamentos.existencia,
+                nombreMedicamento: medicamentos.nombreMedicamento
+            })
+                .from(medicamentos)
+                .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento));
+
+            if (!medicamento) {
+                throw new Error('Medicamento no encontrado');
+            }
+
+            if (medicamento.existencia < data.cantidadEntregada) {
+                throw new Error(`Inventario insuficiente para ${medicamento.nombreMedicamento}. Disponible: ${medicamento.existencia}, Solicitado: ${data.cantidadEntregada}`);
+            }
+
             // 1. Registrar la entrega en la tabla puente
             const result = await tx.insert(medicamentosPacientes).values(data);
 

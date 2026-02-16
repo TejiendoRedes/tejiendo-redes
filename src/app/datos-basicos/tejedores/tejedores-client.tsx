@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, Users } from 'lucide-react';
+import { Edit, Trash2, Users } from 'lucide-react';
 import { Tejedor } from '@/db/schema/tejedores';
 import { createTejedor, deleteTejedor, updateTejedor } from '@/actions/tejedores-actions';
 import {
@@ -109,14 +109,6 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                     <Button
                         variant="ghost"
                         size="sm"
-                        title="Ver detalles"
-                        onClick={() => toast.info('Detalle de tejedor en construcción')}
-                    >
-                        <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleEdit(t)}
                         title="Editar"
                     >
@@ -135,6 +127,31 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(t => ({
+            cedula: t.cedulaTejedor,
+            nombre: `${t.nombreTejedor} ${t.apellidoTejedor}`,
+            profesion: t.profesionTejedor,
+            tipo: t.tipodeVoluntario,
+            telefono: t.telefonoTejedor,
+        }));
+
+        const headers = ['cedula', 'nombre', 'profesion', 'tipo', 'telefono'];
+        const columnsData = [
+            { header: 'Cédula', dataKey: 'cedula' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Profesión', dataKey: 'profesion' },
+            { header: 'Tipo Voluntario', dataKey: 'tipo' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'tejedores'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'tejedores', 'Reporte de Tejedores'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -151,7 +168,7 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                     searchPlaceholder="Buscar por cédula, nombre, profesión..."
                     onAdd={handleAdd}
                     addLabel="Agregar Tejedor"
-                    onExport={(format) => toast.info(`Exportando ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

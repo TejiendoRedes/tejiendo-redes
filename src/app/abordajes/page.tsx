@@ -4,7 +4,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, Clock, MapPin } from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Users } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyState } from '@/components/shared/UIComponents';
 
@@ -46,17 +46,24 @@ export default async function AbordajesPage() {
                                                     {comunidad?.nombreComunidad || 'Sin comunidad asignada'}
                                                 </p>
                                             </div>
-                                            <Badge
-                                                variant={
-                                                    abordaje.estado === 'Finalizado'
-                                                        ? 'default'
-                                                        : abordaje.estado === 'En Curso'
-                                                            ? 'secondary'
-                                                            : 'outline'
-                                                }
-                                            >
-                                                {abordaje.estado}
-                                            </Badge>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <Badge
+                                                    variant={
+                                                        abordaje.estado === 'Finalizado'
+                                                            ? 'default'
+                                                            : abordaje.estado === 'En Curso'
+                                                                ? 'secondary'
+                                                                : 'outline'
+                                                    }
+                                                >
+                                                    {abordaje.estado}
+                                                </Badge>
+                                                {abordaje.tipoAbordaje && (
+                                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                                        {abordaje.tipoAbordaje}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="space-y-2 text-sm text-gray-600 mt-4">
@@ -70,6 +77,12 @@ export default async function AbordajesPage() {
                                                         {abordaje.horaInicio} - {abordaje.horaFin}
                                                     </span>
                                                 </div>
+                                                {abordaje.participantesEstimados && (
+                                                    <div className="flex items-center gap-2" title="Participantes Estimados">
+                                                        <Users className="w-4 h-4" />
+                                                        <span>{abordaje.participantesEstimados} est.</span>
+                                                    </div>
+                                                )}
                                                 {comunidad && (
                                                     <div className="flex items-center gap-2">
                                                         <MapPin className="w-4 h-4" />

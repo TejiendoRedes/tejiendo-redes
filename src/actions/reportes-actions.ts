@@ -2,26 +2,41 @@
 
 import { db } from '@/db';
 import { abordaje } from '@/db/schema/abordajes';
-import { abordajeComunidad } from '@/db/schema/relations';
+import { abordajeComunidad, consultasEnfermedades } from '@/db/schema/relations';
 import { comunidades } from '@/db/schema/comunidades';
 import { pacientes } from '@/db/schema/pacientes';
 import { consultas } from '@/db/schema/consultas';
-import { consultasEnfermedades } from '@/db/schema/relations';
 import { enfermedades } from '@/db/schema/enfermedades';
 import { medicamentos } from '@/db/schema/medicamentos';
-import { eq, sql, and, gte, lte, count, desc } from 'drizzle-orm';
+import { eq, sql, and, gte, lte, count, desc, like } from 'drizzle-orm';
+import { reportesFilterSchema } from '@/lib/validators/reportes';
 
 /**
  * DB-04: Obtener datos para el Reporte de Abordajes
- * Consolidated from 3 queries into 1 with subqueries + applied filters + limit
  */
-export async function getReporteAbordajes(fechaInicio?: string, fechaFin?: string, codigoComunidad?: string) {
+export async function getReporteAbordajes(params: unknown) {
     try {
+        const validatedParams = reportesFilterSchema.safeParse(params);
+        if (!validatedParams.success) {
+            return { success: false, error: 'Parámetros inválidos', data: [] };
+        }
+
+        const { fechaInicio, fechaFin, codigoComunidad } = validatedParams.data;
         const conditions = [];
+
         if (fechaInicio) conditions.push(gte(abordaje.fechaAbordaje, new Date(fechaInicio)));
         if (fechaFin) conditions.push(lte(abordaje.fechaAbordaje, new Date(fechaFin)));
 
-        // Single query with correlated subqueries instead of 3 separate queries + JS Maps
+        // Si hay filtro de comunidad, necesitamos hacer join o subquery
+        if (codigoComunidad && codigoComunidad !== 'todas') {
+            const abordajesEnComunidad = db
+                .select({ codigoAbordaje: abordajeComunidad.codigoAbordaje })
+                .from(abordajeComunidad)
+                .where(eq(abordajeComunidad.codigoComunidad, codigoComunidad));
+
+            conditions.push(sql`${abordaje.codigoAbordaje} IN (${abordajesEnComunidad})`);
+        }
+
         const result = await db
             .select({
                 codigo_abordaje: abordaje.codigoAbordaje,
@@ -47,12 +62,19 @@ export async function getReporteAbordajes(fechaInicio?: string, fechaFin?: strin
 
 /**
  * DB-04: Obtener datos para el Reporte de Comunidades
- * Consolidated from 4 queries into 1 with subqueries
  */
-export async function getReporteComunidades(codigoComunidad?: string) {
+export async function getReporteComunidades(params: unknown) {
     try {
+        const validatedParams = reportesFilterSchema.safeParse(params);
+        if (!validatedParams.success) {
+            return { success: false, error: 'Parámetros inválidos', data: [] };
+        }
+        const { codigoComunidad } = validatedParams.data;
+
         const conditions = [];
-        if (codigoComunidad) conditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
+        if (codigoComunidad && codigoComunidad !== 'todas') {
+            conditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
+        }
 
         const result = await db
             .select({
@@ -77,12 +99,19 @@ export async function getReporteComunidades(codigoComunidad?: string) {
 
 /**
  * DB-04: Obtener datos para el Reporte de Pacientes
- * Consolidated from 2 queries + Map into 1 JOIN query
  */
-export async function getReportePacientes(codigoComunidad?: string) {
+export async function getReportePacientes(params: unknown) {
     try {
+        const validatedParams = reportesFilterSchema.safeParse(params);
+        if (!validatedParams.success) {
+            return { success: false, error: 'Parámetros inválidos', data: [] };
+        }
+        const { codigoComunidad } = validatedParams.data;
+
         const conditions = [];
-        if (codigoComunidad) conditions.push(eq(pacientes.codigoComunidad, codigoComunidad));
+        if (codigoComunidad && codigoComunidad !== 'todas') {
+            conditions.push(eq(pacientes.codigoComunidad, codigoComunidad));
+        }
 
         const result = await db
             .select({
@@ -111,16 +140,31 @@ export async function getReportePacientes(codigoComunidad?: string) {
 /**
  * Obtener datos para el Reporte de Morbilidad
  */
-export async function getReporteMorbilidad(fechaInicio?: string, fechaFin?: string) {
+export async function getReporteMorbilidad(params: unknown) {
     try {
-        // Subconsulta para obtener total de consultas (para calcular porcentajes)
-        const totalConsultas = await db
+        const validatedParams = reportesFilterSchema.safeParse(params);
+        if (!validatedParams.success) {
+            return { success: false, error: 'Parámetros inválidos', data: [] };
+        }
+        const { fechaInicio, fechaFin } = validatedParams.data;
+
+        // Filtros para la subconsulta de casos
+        const whereConditions = [];
+        if (fechaInicio) whereConditions.push(gte(abordaje.fechaAbordaje, new Date(fechaInicio)));
+        if (fechaFin) whereConditions.push(lte(abordaje.fechaAbordaje, new Date(fechaFin)));
+
+        // Subconsulta para obtener total de consultas filtradas (para calcular porcentajes)
+        // Necesitamos contar consultas que coincidan con los filtros de fecha (unidas con abordajes)
+        const totalConsultasQuery = db
             .select({ total: count(consultas.codigoConsulta) })
-            .from(consultas);
+            .from(consultas)
+            .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+            .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
 
-        const total = totalConsultas[0]?.total || 1; // Evitar división por cero
+        const totalConsultasResult = await totalConsultasQuery;
+        const total = totalConsultasResult[0]?.total || 1;
 
-        // Subconsulta para casos y pacientes por enfermedad
+        // Subconsulta para casos y pacientes por enfermedad con filtros
         const casosPorEnfermedad = db
             .select({
                 codigoEnfermedad: consultasEnfermedades.codigoEnfermedad,
@@ -131,6 +175,7 @@ export async function getReporteMorbilidad(fechaInicio?: string, fechaFin?: stri
             .from(consultasEnfermedades)
             .innerJoin(consultas, eq(consultasEnfermedades.codigoConsulta, consultas.codigoConsulta))
             .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+            .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
             .groupBy(consultasEnfermedades.codigoEnfermedad)
             .as('casos_count');
 
@@ -146,7 +191,10 @@ export async function getReporteMorbilidad(fechaInicio?: string, fechaFin?: stri
                 ultima_consulta: casosPorEnfermedad.ultimaConsulta
             })
             .from(enfermedades)
-            .leftJoin(casosPorEnfermedad, eq(enfermedades.codigoEnfermedad, casosPorEnfermedad.codigoEnfermedad));
+            .leftJoin(casosPorEnfermedad, eq(enfermedades.codigoEnfermedad, casosPorEnfermedad.codigoEnfermedad))
+            // Opcional: Mostrar solo enfermedades con casos > 0 si se filtra
+            .where(whereConditions.length > 0 ? sql`${casosPorEnfermedad.totalCasos} > 0` : undefined)
+            .orderBy(desc(sql`COALESCE(${casosPorEnfermedad.totalCasos}, 0)`));
 
         return { success: true, data: result };
     } catch (error) {
@@ -157,6 +205,8 @@ export async function getReporteMorbilidad(fechaInicio?: string, fechaFin?: stri
 
 /**
  * Obtener datos para el Reporte de Medicamentos
+ * (Este reporte no suele filtrar por fecha de abordaje directamente, sino por inventario actual,
+ * pero si se quisiera historial de movimientos sería diferente. Asumimos inventario actual por ahora)
  */
 export async function getReporteMedicamentos() {
     try {

@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Heart, MapPin } from 'lucide-react';
+import { Edit, Trash2, Heart, MapPin } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { PacienteForm } from '@/components/forms/PacienteForm';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 interface PacienteWithComunidad extends Paciente {
     comunidad: Comunidad | null;
@@ -35,6 +36,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingPaciente, setEditingPaciente] = React.useState<PacienteWithComunidad | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
 
     const calcularEdad = (fecha: string | Date | null) => {
         if (!fecha) return 0;
@@ -59,15 +61,14 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
     };
 
     const handleDelete = async (cedula: string) => {
-        if (confirm('¿Está seguro de eliminar este paciente?')) {
-            const res = await deletePaciente(cedula);
-            if (res.success) {
-                toast.success(res.message);
-                router.refresh();
-            } else {
-                toast.error(res.error);
-            }
+        const res = await deletePaciente(cedula);
+        if (res.success) {
+            toast.success(res.message);
+            router.refresh();
+        } else {
+            toast.error(res.error);
         }
+        setDeleteTarget(null);
     };
 
     const handleSubmit = async (data: any) => {
@@ -152,7 +153,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             label: 'Ubicación',
             render: (p) => (
                 <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm">{getLocationNames(p)}</span>
                 </div>
             ),
@@ -170,27 +171,20 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                         <Button
                             variant="ghost"
                             size="sm"
-                            title="Ver detalles"
-                            // onClick={() => router.push(`/datos-basicos/pacientes/${p.cedulaPaciente}`)} // Page details not implemented yet
-                            onClick={() => toast.info('Detalle de paciente en construcción')}
-                        >
-                            <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
                             onClick={() => handleEdit(p)}
                             title="Editar"
+                            aria-label="Editar paciente"
                         >
                             <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(p.cedulaPaciente)}
+                            onClick={() => setDeleteTarget(p.cedulaPaciente)}
                             title="Eliminar"
+                            aria-label="Eliminar paciente"
                         >
-                            <Trash2 className="w-4 h-4 text-red-600" />
+                            <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                     </div>
                 );
@@ -198,12 +192,41 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(p => ({
+            cedula: p.cedulaPaciente,
+            nombre: `${p.nombrePaciente} ${p.apellidoPaciente}`,
+            edad: `${calcularEdad(p.fechaNacimiento)} años`,
+            sexo: p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : 'N/A',
+            comunidad: p.comunidad?.nombreComunidad || p.codigoComunidad || '-',
+            ubicacion: getLocationNames(p),
+            telefono: p.telefonoPaciente || '-',
+        }));
+
+        const headers = ['cedula', 'nombre', 'edad', 'sexo', 'comunidad', 'ubicacion', 'telefono'];
+        const columnsData = [
+            { header: 'Cédula', dataKey: 'cedula' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Edad', dataKey: 'edad' },
+            { header: 'Sexo', dataKey: 'sexo' },
+            { header: 'Comunidad', dataKey: 'comunidad' },
+            { header: 'Ubicación', dataKey: 'ubicacion' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'pacientes'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'pacientes', 'Reporte de Pacientes'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Pacientes</h1>
-                    <p className="text-gray-600">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Pacientes</h1>
+                    <p className="text-muted-foreground">
                         Gestión del registro de pacientes del sistema
                     </p>
                 </div>
@@ -214,14 +237,14 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                     searchPlaceholder="Buscar por cédula, nombre, teléfono..."
                     onAdd={handleAdd}
                     addLabel="Agregar Paciente"
-                    onExport={(format) => toast.info(`Exportando ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Heart className="w-6 h-6 text-blue-600" />
+                                <Heart className="w-6 h-6 text-primary" />
                                 {editingPaciente ? 'Editar Paciente' : 'Nuevo Paciente'}
                             </DialogTitle>
                             <DialogDescription>
@@ -238,6 +261,15 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                         />
                     </DialogContent>
                 </Dialog>
+
+                <ConfirmDialog
+                    open={!!deleteTarget}
+                    onOpenChange={(open) => !open && setDeleteTarget(null)}
+                    title="Eliminar paciente"
+                    description="¿Está seguro de eliminar este paciente? Esta acción no se puede deshacer."
+                    confirmLabel="Eliminar"
+                    onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+                />
             </div>
         </MainLayout>
     );

@@ -31,7 +31,7 @@ export function GlobalEditManager() {
             {entityType === 'abordaje' && <AbordajeEditDialog onClose={closeEditModal} />}
             {entityType === 'responsable' && <ResponsableEditDialog onClose={closeEditModal} />}
             {entityType === 'aspirante' && <AspiranteEditDialog onClose={closeEditModal} />}
-            {/* {entityType === 'aspirante' && <AspiranteEditDialog onClose={closeEditModal} />} */}
+            {entityType === 'aspirante' && <AspiranteEditDialog onClose={closeEditModal} />}
         </Suspense>
     );
 }

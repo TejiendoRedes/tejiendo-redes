@@ -186,6 +186,37 @@ export default function ConsultasClient({
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = consultasData.map(row => ({
+            codigo: row.consulta.codigoConsulta,
+            paciente: row.nombrePaciente || row.consulta.cedulaPaciente,
+            medico: row.nombreMedico || row.consulta.cedulaMedico,
+            abordaje: row.codigoAbordaje || row.consulta.codigoAbordaje,
+            motivo: row.consulta.motivoConsulta,
+            diagnostico: row.consulta.diagnosticoTexto,
+            tratamiento: row.consulta.tratamiento,
+            recomendaciones: row.consulta.recomendaciones,
+        }));
+
+        const headers = ['codigo', 'paciente', 'medico', 'abordaje', 'motivo', 'diagnostico', 'tratamiento', 'recomendaciones'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Paciente', dataKey: 'paciente' },
+            { header: 'Médico', dataKey: 'medico' },
+            { header: 'Abordaje', dataKey: 'abordaje' },
+            { header: 'Motivo', dataKey: 'motivo' },
+            { header: 'Diagnóstico', dataKey: 'diagnostico' },
+            { header: 'Tratamiento', dataKey: 'tratamiento' },
+            { header: 'Recomendaciones', dataKey: 'recomendaciones' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'consultas'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'consultas', 'Reporte de Consultas Médicas'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -202,6 +233,7 @@ export default function ConsultasClient({
                     searchPlaceholder="Buscar consulta..."
                     onAdd={handleAdd}
                     addLabel="Nueva Consulta"
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

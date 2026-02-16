@@ -212,6 +212,40 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialMedicos.map(m => {
+            const tejedor = m.tejedor;
+            const estadoNombre = tejedor ? getEstadoNombre(tejedor.estadoTejedor) : '-';
+            const municipioNombre = tejedor ? getMunicipioNombre(tejedor.estadoTejedor, tejedor.municipioTejedor) : '-';
+            const parroquiaNombre = tejedor ? getParroquiaNombre(tejedor.estadoTejedor, tejedor.municipioTejedor, tejedor.parroquiaTejedor) : '-';
+
+            return {
+                cedula: m.cedulaTejedor,
+                nombre: tejedor ? `${tejedor.nombreTejedor} ${tejedor.apellidoTejedor}` : 'N/A',
+                especialidad: m.especialidad ? m.especialidad.nombreEspecialidad : m.codigoEspecialidad,
+                telefono: tejedor ? tejedor.telefonoTejedor : '-',
+                correo: tejedor ? tejedor.correoTejedor : '-',
+                ubicacion: `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`,
+            };
+        });
+
+        const headers = ['cedula', 'nombre', 'especialidad', 'telefono', 'correo', 'ubicacion'];
+        const columnsData = [
+            { header: 'Cédula', dataKey: 'cedula' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Especialidad', dataKey: 'especialidad' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Correo', dataKey: 'correo' },
+            { header: 'Ubicación', dataKey: 'ubicacion' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'medicos'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'medicos', 'Reporte de Médicos'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -230,6 +264,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                     searchPlaceholder="Buscar médico..."
                     onAdd={handleAdd}
                     addLabel="Asignar Médico"
+                    onExport={handleExport}
                 />
 
                 {/* Modal Formulario con Pestañas */}

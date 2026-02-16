@@ -18,7 +18,7 @@ export function AlertDialogProvider({ children }: { children: React.ReactNode })
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [onConfirm, setOnConfirm] = useState<() => void>(() => {});
+  const [onConfirm, setOnConfirm] = useState<() => void>(() => { });
 
   const openDialog = useCallback((config: { title: string; description: string; onConfirm: () => void }) => {
     setTitle(config.title);
@@ -36,20 +36,20 @@ export function AlertDialogProvider({ children }: { children: React.ReactNode })
       {children}
       {open && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+          <div className="bg-card rounded-lg shadow-lg max-w-md w-full">
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-2">{title}</h3>
-              <p className="text-gray-600 mb-6">{description}</p>
+              <p className="text-muted-foreground mb-6">{description}</p>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={closeDialog}>
                   Cancelar
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     onConfirm();
                     closeDialog();
                   }}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-destructive hover:bg-destructive/90"
                 >
                   Confirmar
                 </Button>
@@ -82,8 +82,8 @@ export function AlertDialog({ open, onOpenChange, children }: AlertDialogProps) 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div 
-        className="bg-white rounded-lg shadow-lg max-w-lg w-full animate-in fade-in-0 zoom-in-95"
+      <div
+        className="bg-card rounded-lg shadow-lg max-w-lg w-full animate-in fade-in-0 zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -109,23 +109,23 @@ export function AlertDialogTitle({ children, className }: { children: React.Reac
 }
 
 export function AlertDialogDescription({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={`text-sm text-gray-600 ${className || ''}`}>{children}</p>;
+  return <p className={`text-sm text-muted-foreground ${className || ''}`}>{children}</p>;
 }
 
-export function AlertDialogAction({ 
-  children, 
-  className, 
+export function AlertDialogAction({
+  children,
+  className,
   onClick,
-  disabled 
-}: { 
-  children: React.ReactNode; 
+  disabled
+}: {
+  children: React.ReactNode;
   className?: string;
   onClick?: () => void;
   disabled?: boolean;
 }) {
   return (
-    <Button 
-      onClick={onClick} 
+    <Button
+      onClick={onClick}
       className={className}
       disabled={disabled}
     >
@@ -134,20 +134,23 @@ export function AlertDialogAction({
   );
 }
 
-export function AlertDialogCancel({ 
-  children, 
-  className, 
-  onClick 
-}: { 
-  children: React.ReactNode; 
+export function AlertDialogCancel({
+  children,
+  className,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
-    <Button 
-      variant="outline" 
-      onClick={onClick} 
+    <Button
+      variant="outline"
+      onClick={onClick}
       className={className}
+      disabled={disabled}
     >
       {children}
     </Button>

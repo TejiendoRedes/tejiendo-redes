@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -15,11 +14,13 @@ import {
 } from '@/components/ui/select';
 import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
 import { Comunidad } from '@/db/schema/comunidades';
-import { Responsable } from '@/db/schema/responsable'; // Assuming exported type
+import { Responsable } from '@/db/schema/responsable';
+import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
+import { getResponsables } from '@/actions/responsables-actions';
 
 export interface ComunidadFormProps {
     initialData?: Comunidad;
-    responsables: Responsable[];
+    responsables: Responsable[]; // Still passed for initial label lookup
     onSubmit: (data: any) => Promise<void>;
     onCancel: () => void;
     isLoading?: boolean;
@@ -51,12 +52,6 @@ export function ComunidadForm({
         cantidadMayores: initialData?.cantidadMayores || 0,
         cantidadMayores60: initialData?.cantidadMayores60 || 0,
         telefonoComunidad: initialData?.telefonoComunidad || '',
-        tieneTransporte: initialData?.tieneTransporte || false,
-        tieneRefrigerios: initialData?.tieneRefrigerios || false,
-        tieneAgua: initialData?.tieneAgua || false,
-        tieneEspacioCubierto: initialData?.tieneEspacioCubierto || false,
-        tieneMaterialEducativo: initialData?.tieneMaterialEducativo || false,
-        notasLogistica: initialData?.notasLogistica || '',
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
@@ -130,7 +125,7 @@ export function ComunidadForm({
                         onValueChange={(value) => setFormData({ ...formData, tipoComunidad: value })}
                         required
                     >
-                        <SelectTrigger>
+                        <SelectTrigger id="tipo">
                             <SelectValue placeholder="Seleccione tipo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -143,23 +138,23 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="responsable">Responsable *</Label>
-                    <Select
+                    <AsyncSearchableSelect
+                        label="Responsable *"
+                        fetcher={(query) => getResponsables(query, 20)}
                         value={formData.cedulaResponsable}
                         onValueChange={(value) => setFormData({ ...formData, cedulaResponsable: value })}
-                        required
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccione responsable" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {responsables.map((resp) => (
-                                <SelectItem key={resp.cedulaResponsable} value={resp.cedulaResponsable}>
-                                    {resp.nombreResponsable} {resp.apellidoResponsable}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                        placeholder="Seleccione responsable"
+                        searchPlaceholder="Buscar por nombre o cédula..."
+                        idField="cedulaResponsable"
+                        labelField="nombreResponsable"
+                        secondaryLabelField="apellidoResponsable"
+                        id="responsable-select"
+                        initialLabel={
+                            responsables.find(r => r.cedulaResponsable === formData.cedulaResponsable)
+                                ? `${responsables.find(r => r.cedulaResponsable === formData.cedulaResponsable)?.nombreResponsable} ${responsables.find(r => r.cedulaResponsable === formData.cedulaResponsable)?.apellidoResponsable}`
+                                : undefined
+                        }
+                    />
                 </div>
 
                 <div className="space-y-2">
@@ -181,7 +176,7 @@ export function ComunidadForm({
                 <div className="space-y-2">
                     <Label htmlFor="estado">Estado *</Label>
                     <Select value={formData.estado} onValueChange={handleEstadoChange} required>
-                        <SelectTrigger><SelectValue placeholder="Seleccione estado" /></SelectTrigger>
+                        <SelectTrigger id="estado"><SelectValue placeholder="Seleccione estado" /></SelectTrigger>
                         <SelectContent>
                             {estados.map(e => <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>)}
                         </SelectContent>
@@ -191,7 +186,7 @@ export function ComunidadForm({
                 <div className="space-y-2">
                     <Label htmlFor="municipio">Municipio *</Label>
                     <Select value={formData.municipio} onValueChange={handleMunicipioChange} disabled={!formData.estado} required>
-                        <SelectTrigger><SelectValue placeholder="Seleccione municipio" /></SelectTrigger>
+                        <SelectTrigger id="municipio"><SelectValue placeholder="Seleccione municipio" /></SelectTrigger>
                         <SelectContent>
                             {municipios.map(m => <SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>)}
                         </SelectContent>
@@ -201,7 +196,7 @@ export function ComunidadForm({
                 <div className="space-y-2">
                     <Label htmlFor="parroquia">Parroquia *</Label>
                     <Select value={formData.parroquia} onValueChange={handleParroquiaChange} disabled={!formData.municipio} required>
-                        <SelectTrigger><SelectValue placeholder="Seleccione parroquia" /></SelectTrigger>
+                        <SelectTrigger id="parroquia"><SelectValue placeholder="Seleccione parroquia" /></SelectTrigger>
                         <SelectContent>
                             {parroquias.map(p => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}
                         </SelectContent>
@@ -259,43 +254,6 @@ export function ComunidadForm({
                     <Label htmlFor="mayores60">Mayores de 60 *</Label>
                     <Input type="number" id="mayores60" value={formData.cantidadMayores60} onChange={(e) => setFormData({ ...formData, cantidadMayores60: parseInt(e.target.value) || 0 })} required min={0} />
                 </div>
-
-                {/* Logística */}
-                <div className="col-span-full mt-4">
-                    <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Logística y Recursos</h3>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="transporte" checked={formData.tieneTransporte} onCheckedChange={(checked) => setFormData({ ...formData, tieneTransporte: !!checked })} />
-                    <Label htmlFor="transporte">Tiene Transporte</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="refrigerios" checked={formData.tieneRefrigerios} onCheckedChange={(checked) => setFormData({ ...formData, tieneRefrigerios: !!checked })} />
-                    <Label htmlFor="refrigerios">Tiene Refrigerios</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="agua" checked={formData.tieneAgua} onCheckedChange={(checked) => setFormData({ ...formData, tieneAgua: !!checked })} />
-                    <Label htmlFor="agua">Tiene Agua Potable</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="espacio" checked={formData.tieneEspacioCubierto} onCheckedChange={(checked) => setFormData({ ...formData, tieneEspacioCubierto: !!checked })} />
-                    <Label htmlFor="espacio">Tiene Espacio Cubierto</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="material" checked={formData.tieneMaterialEducativo} onCheckedChange={(checked) => setFormData({ ...formData, tieneMaterialEducativo: !!checked })} />
-                    <Label htmlFor="material">Tiene Material Educativo</Label>
-                </div>
-
-                <div className="col-span-full space-y-2">
-                    <Label htmlFor="notas">Notas de Logística</Label>
-                    <Textarea
-                        id="notas"
-                        value={formData.notasLogistica || ''}
-                        onChange={(e) => setFormData({ ...formData, notasLogistica: e.target.value })}
-                        className="min-h-[80px]"
-                    />
-                </div>
-
             </div>
 
             <div className="flex gap-2 justify-end pt-4 border-t mt-6">

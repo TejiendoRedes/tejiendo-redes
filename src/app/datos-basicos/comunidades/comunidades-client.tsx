@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, Home, MapPin } from 'lucide-react';
+import { Edit, Trash2, Home, MapPin } from 'lucide-react';
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { createComunidad, deleteComunidad, updateComunidad } from '@/actions/comunidades-actions';
@@ -133,14 +133,6 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                     <Button
                         variant="ghost"
                         size="sm"
-                        title="Ver detalles"
-                        onClick={() => toast.info('Detalle de comunidad en construcción')}
-                    >
-                        <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleEdit(c)}
                         title="Editar"
                     >
@@ -159,6 +151,30 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const types: Record<string, string> = { '1': 'Urbana', '2': 'Rural', '3': 'Indígena', '4': 'Base de Misiones' };
+        const exportData = initialData.map(c => ({
+            codigo: c.codigoComunidad,
+            nombre: c.nombreComunidad,
+            ubicacion: getLocationNames(c),
+            tipo: types[c.tipoComunidad] || c.tipoComunidad,
+        }));
+
+        const headers = ['codigo', 'nombre', 'ubicacion', 'tipo'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Ubicación', dataKey: 'ubicacion' },
+            { header: 'Tipo', dataKey: 'tipo' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'comunidades'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'comunidades', 'Reporte de Comunidades'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -175,7 +191,7 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                     searchPlaceholder="Buscar comunidad..."
                     onAdd={handleAdd}
                     addLabel="Agregar Comunidad"
-                    onExport={(format) => toast.info(`Exportando ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

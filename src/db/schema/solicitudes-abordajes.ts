@@ -15,11 +15,6 @@ export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     tipoAbordaje: varchar('tipo_abordaje', { length: 50 }).notNull(), // Educativo, Médico, Social, etc.
     participantesEstimados: int('participantes_estimados').notNull(),
     recursosAdicionales: text('recursos_adicionales'), // Qué más se necesita
-    // Campos de logística para la solicitud
-    transporte: boolean('transporte').default(false),
-    refrigerios: boolean('refrigerios').default(false),
-    espacioCubierto: boolean('espacio_cubierto').default(false),
-    notasLogistica: text('notas_logistica'), // Notas adicionales de logística
     estado: varchar('estado', { length: 20 }).notNull().default('pendiente'), // pendiente, confirmado, rechazado
     fechaSolicitud: datetime('fecha_solicitud').notNull().default(new Date()),
     notas: text('notas'),

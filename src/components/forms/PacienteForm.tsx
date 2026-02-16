@@ -163,7 +163,7 @@ export function PacienteForm({
                             setFormData({ ...formData, sexo: value })
                         }
                     >
-                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="sexo" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder="Seleccione sexo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -200,6 +200,7 @@ export function PacienteForm({
                         idField="codigoComunidad"
                         labelField="nombreComunidad"
                         secondaryLabelField="municipio"
+                        id="comunidad-select"
                     />
                 </div>
 

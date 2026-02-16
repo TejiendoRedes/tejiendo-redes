@@ -170,6 +170,39 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(asp => {
+            const estadoNombre = getEstadoNombre(asp.estadoDireccionAspirante);
+            const municipioNombre = getMunicipioNombre(asp.estadoDireccionAspirante, asp.municipioAspirante);
+            const parroquiaNombre = getParroquiaNombre(asp.estadoDireccionAspirante, asp.municipioAspirante, asp.parroquiaAspirante);
+
+            return {
+                cedula: asp.cedulaAspirante,
+                nombre: `${asp.nombreAspirante} ${asp.apellidoAspirante}`,
+                profesion: asp.profesionAspirante,
+                direccion: `${asp.direccionAspirante}, ${parroquiaNombre}, ${municipioNombre}, ${estadoNombre}`,
+                telefono: asp.telefonoAspirante,
+                estado: asp.estadoAspirante,
+            };
+        });
+
+        const headers = ['cedula', 'nombre', 'profesion', 'direccion', 'telefono', 'estado'];
+        const columnsData = [
+            { header: 'Cédula', dataKey: 'cedula' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Profesión', dataKey: 'profesion' },
+            { header: 'Dirección', dataKey: 'direccion' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Estado', dataKey: 'estado' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'aspirantes'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'aspirantes', 'Reporte de Aspirantes'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -184,6 +217,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                     searchPlaceholder="Buscar por cédula o nombre..."
                     onAdd={handleAdd}
                     addLabel="Nueva Postulación"
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

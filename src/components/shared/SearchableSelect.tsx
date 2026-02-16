@@ -31,6 +31,7 @@ interface SearchableSelectProps {
     secondaryLabelField?: string;
     disabled?: boolean;
     className?: string;
+    id?: string;
 }
 
 export function SearchableSelect({
@@ -44,7 +45,8 @@ export function SearchableSelect({
     labelField = 'label',
     secondaryLabelField,
     disabled = false,
-    className
+    className,
+    id // Add id prop
 }: SearchableSelectProps) {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -80,12 +82,14 @@ export function SearchableSelect({
 
     return (
         <div className={cn("w-full", className)}>
-            {label && <label className="text-sm font-medium mb-1 block text-gray-700">{label}</label>}
+            {label && <label htmlFor={id} className="text-sm font-medium mb-1 block text-gray-700">{label}</label>}
             <Button
+                id={id}
                 type="button"
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
+                aria-label={label || placeholder}
                 className="w-full justify-between bg-white font-normal text-left h-10 px-3 border-gray-300 hover:bg-gray-50 transition-colors"
                 onClick={() => !disabled && setOpen(true)}
                 disabled={disabled}
@@ -117,11 +121,13 @@ export function SearchableSelect({
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-10 pr-10 h-11 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all rounded-lg"
                                 autoFocus
+                                aria-label={searchPlaceholder}
                             />
                             {searchTerm && (
                                 <button
                                     type="button"
                                     onClick={() => setSearchTerm('')}
+                                    aria-label="Borrar búsqueda"
                                     className="absolute right-3 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <X className="h-4 w-4" />

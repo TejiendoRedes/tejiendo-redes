@@ -25,13 +25,6 @@ export const comunidades = mysqlTable('comunidades', {
     cantidadMayores: int('cantidad_mayores').notNull(),
     cantidadMayores60: int('cantidad_mayores_60').notNull(),
     telefonoComunidad: varchar('telefono_comunidad', { length: 15 }).notNull(),
-    // Campos de logística
-    tieneTransporte: boolean('tiene_transporte').notNull().default(false),
-    tieneRefrigerios: boolean('tiene_refrigerios').notNull().default(false),
-    tieneAgua: boolean('tiene_agua').notNull().default(false),
-    tieneEspacioCubierto: boolean('tiene_espacio_cubierto').notNull().default(false),
-    tieneMaterialEducativo: boolean('tiene_material_educativo').notNull().default(false),
-    notasLogistica: text('notas_logistica'),
 }, (table) => ({
     cedulaResponsableIdx: index('idx_cedula_responsable').on(table.cedulaResponsable),
 }));

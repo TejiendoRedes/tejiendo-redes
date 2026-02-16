@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, Activity } from 'lucide-react';
+import { Edit, Trash2, Activity } from 'lucide-react';
 import { Antecedente } from '@/db/schema/antecedentes';
 import { Paciente } from '@/db/schema/pacientes';
-import { createAntecedente, deleteAntecedente, updateAntecedente } from '@/actions/antecedentes-actions';
+import { createAntecedente, deleteAntecedente, updateAntecedente, getNextAntecedenteCodigo } from '@/actions/antecedentes-actions';
+import { getPacientes } from '@/actions/pacientes-actions';
+import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
 import {
     Dialog,
     DialogContent,
@@ -64,10 +66,18 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
         enfermedadesFamilia: '',
     });
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         setEditingAntecedente(null);
+        setIsLoading(true);
+
+        let nextCodigo = '';
+        const res = await getNextAntecedenteCodigo();
+        if (res.success && res.data) {
+            nextCodigo = res.data;
+        }
+
         setFormData({
-            codigoAntecedente: '',
+            codigoAntecedente: nextCodigo,
             cedulaPaciente: '',
             peso: '',
             talla: '',
@@ -78,7 +88,13 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
             alergias: '',
             enfermedadesFamilia: '',
         });
+        setIsLoading(false);
         setIsModalOpen(true);
+    };
+
+    const getInitialPatientName = () => {
+        if (!editingAntecedente || !editingAntecedente.paciente) return undefined;
+        return `${editingAntecedente.paciente.nombrePaciente} ${editingAntecedente.paciente.apellidoPaciente}`;
     };
 
     const handleEdit = (antecedente: AntecedenteWithPaciente) => {
@@ -221,6 +237,41 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(row => ({
+            codigo: row.codigoAntecedente,
+            paciente: `${row.paciente?.nombrePaciente} ${row.paciente?.apellidoPaciente} (${row.cedulaPaciente})`,
+            peso: `${row.peso} kg`,
+            talla: `${row.talla} m`,
+            temp: `${row.temperatura} °C`,
+            fc: row.FC,
+            ta: row.TA,
+            previas: row.enfermedadesPrevias,
+            alergias: row.alergias,
+            familia: row.enfermedadesFamilia,
+        }));
+
+        const headers = ['codigo', 'paciente', 'peso', 'talla', 'temp', 'fc', 'ta', 'previas', 'alergias', 'familia'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Paciente', dataKey: 'paciente' },
+            { header: 'Peso', dataKey: 'peso' },
+            { header: 'Talla', dataKey: 'talla' },
+            { header: 'Temp', dataKey: 'temp' },
+            { header: 'F.C.', dataKey: 'fc' },
+            { header: 'T.A.', dataKey: 'ta' },
+            { header: 'Previas', dataKey: 'previas' },
+            { header: 'Alergias', dataKey: 'alergias' },
+            { header: 'Familia', dataKey: 'familia' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'antecedentes'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'antecedentes', 'Reporte de Antecedentes Médicos'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -237,6 +288,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                     searchPlaceholder="Buscar por código o cédula..."
                     onAdd={handleAdd}
                     addLabel="Agregar Antecedente"
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -260,30 +312,26 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                         value={formData.codigoAntecedente}
                                         onChange={(e) => setFormData({ ...formData, codigoAntecedente: e.target.value })}
                                         required
-                                        disabled={!!editingAntecedente}
+                                        disabled={true}
                                         maxLength={10}
-                                        placeholder="ANT-000"
+                                        placeholder="Generando código..."
                                     />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="paciente">Paciente *</Label>
-                                    <Select
+                                    <AsyncSearchableSelect
+                                        fetcher={getPacientes}
                                         value={formData.cedulaPaciente}
                                         onValueChange={(value) => setFormData({ ...formData, cedulaPaciente: value })}
+                                        placeholder="Seleccione un paciente"
+                                        searchPlaceholder="Buscar por nombre o cédula..."
+                                        idField="cedulaPaciente"
+                                        labelField="nombrePaciente"
+                                        secondaryLabelField="cedulaPaciente"
                                         disabled={!!editingAntecedente}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un paciente" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {pacientes.map((p) => (
-                                                <SelectItem key={p.cedulaPaciente} value={p.cedulaPaciente}>
-                                                    {p.nombrePaciente} {p.apellidoPaciente} ({p.cedulaPaciente})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        initialLabel={getInitialPatientName()}
+                                    />
                                 </div>
 
                                 <div className="space-y-2">

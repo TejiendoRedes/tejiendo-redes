@@ -11,15 +11,15 @@ import {
     MapPin,
     Building2,
     Heart,
-    Pill,
     Activity,
+    ArrowRight,
 } from 'lucide-react';
+
 interface DataCard {
     title: string;
-    count: number;
     icon: React.ReactNode;
     path: string;
-    color: string;
+    description: string;
 }
 
 export default function DatosBasicosPage() {
@@ -28,74 +28,63 @@ export default function DatosBasicosPage() {
     const dataCards: DataCard[] = [
         {
             title: 'Tejedores',
-            count: 0,
-            icon: <Users className="w-8 h-8" />,
+            icon: <Users className="w-6 h-6" />,
             path: '/datos-basicos/tejedores',
-            color: 'bg-blue-500',
+            description: 'Voluntarios y colaboradores',
         },
         {
             title: 'Aspirantes',
-            count: 0,
-            icon: <Users className="w-8 h-8" />,
+            icon: <Users className="w-6 h-6" />,
             path: '/datos-basicos/aspirantes',
-            color: 'bg-blue-500',
+            description: 'Aspirantes a tejedores',
         },
         {
             title: 'Médicos',
-            count: 0,
-            icon: <Stethoscope className="w-8 h-8" />,
+            icon: <Stethoscope className="w-6 h-6" />,
             path: '/datos-basicos/medicos',
-            color: 'bg-green-500',
+            description: 'Personal médico registrado',
         },
         {
             title: 'Especialidades',
-            count: 0,
-            icon: <GraduationCap className="w-8 h-8" />,
+            icon: <GraduationCap className="w-6 h-6" />,
             path: '/datos-basicos/especialidades',
-            color: 'bg-purple-500',
+            description: 'Especialidades médicas',
         },
         {
             title: 'Responsables',
-            count: 0,
-            icon: <UserCheck className="w-8 h-8" />,
+            icon: <UserCheck className="w-6 h-6" />,
             path: '/datos-basicos/responsables',
-            color: 'bg-yellow-500',
+            description: 'Responsables comunitarios',
         },
         {
             title: 'Comunidades',
-            count: 0,
-            icon: <MapPin className="w-8 h-8" />,
+            icon: <MapPin className="w-6 h-6" />,
             path: '/datos-basicos/comunidades',
-            color: 'bg-red-500',
+            description: 'Comunidades registradas',
         },
         {
             title: 'Instituciones',
-            count: 0,
-            icon: <Building2 className="w-8 h-8" />,
+            icon: <Building2 className="w-6 h-6" />,
             path: '/datos-basicos/organismos',
-            color: 'bg-indigo-500',
+            description: 'Organismos e instituciones',
         },
         {
             title: 'Pacientes',
-            count: 0,
-            icon: <Heart className="w-8 h-8" />,
+            icon: <Heart className="w-6 h-6" />,
             path: '/datos-basicos/pacientes',
-            color: 'bg-pink-500',
+            description: 'Registro de pacientes',
         },
         {
             title: 'Enfermedades',
-            count: 0,
-            icon: <Activity className="w-8 h-8" />,
+            icon: <Activity className="w-6 h-6" />,
             path: '/datos-basicos/enfermedades',
-            color: 'bg-orange-500',
+            description: 'Catálogo de enfermedades',
         },
-
         {
             title: 'Consultas',
-            count: 0,
-            icon: <Stethoscope className="w-8 h-8" />,
+            icon: <Stethoscope className="w-6 h-6" />,
             path: '/datos-basicos/consultas',
-            color: 'bg-cyan-600',
+            description: 'Historial de consultas',
         },
     ];
 
@@ -104,27 +93,29 @@ export default function DatosBasicosPage() {
         <MainLayout>
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Datos Básicos</h1>
-                    <p className="text-gray-600">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Datos Básicos</h1>
+                    <p className="text-muted-foreground">
                         Gestión de catálogos y datos maestros del sistema
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {dataCards.map(card => (
                         <button
                             key={card.path}
                             onClick={() => router.push(card.path)}
-                            className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow text-left group"
+                            className="bg-card rounded-lg border border-border p-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 text-left group"
                         >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className={`${card.color} text-white p-3 rounded-lg group-hover:scale-110 transition-transform`}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="bg-primary/10 text-primary p-2.5 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                                     {card.icon}
                                 </div>
+                                <h3 className="text-base font-semibold text-foreground">{card.title}</h3>
                             </div>
-                            <h3 className="text-xl text-gray-900 mb-1">{card.title}</h3>
-                            <p className="text-3xl text-gray-900">{card.count}</p>
-                            <p className="text-sm text-gray-600 mt-2">Ver todos →</p>
+                            <p className="text-sm text-muted-foreground mb-3">{card.description}</p>
+                            <div className="flex items-center text-sm text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver todos <ArrowRight className="w-4 h-4 ml-1" />
+                            </div>
                         </button>
                     ))}
                 </div>

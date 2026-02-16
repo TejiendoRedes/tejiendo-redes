@@ -58,36 +58,34 @@ export function HistoryStation({ abordaje }: HistoryStationProps) {
                 </Card>
             </div>
 
-            {/* INFORMACIÓN LOGÍSTICA */}
+            {/* DETALLES ADICIONALES */}
             <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Información Logística</h3>
+                <h3 className="text-lg font-semibold mb-4">Detalles del Abordaje</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <p className="text-gray-600 mb-1">Transporte:</p>
-                        <p className="font-semibold">{abordaje.transporte ? '✅ Sí' : '❌ No'}</p>
-                    </div>
-                    <div>
-                        <p className="text-gray-600 mb-1">Refrigerios:</p>
-                        <p className="font-semibold">{abordaje.refrigerios ? '✅ Sí' : '❌ No'}</p>
-                    </div>
-                    <div>
-                        <p className="text-gray-600 mb-1">Espacio Cubierto:</p>
-                        <p className="font-semibold">{abordaje.espacioCubierto ? '✅ Sí' : '❌ No'}</p>
-                    </div>
                     <div>
                         <p className="text-gray-600 mb-1">Participantes Estimados:</p>
                         <p className="font-semibold">{abordaje.participantesEstimados || 'No especificado'}</p>
                     </div>
+                    <div>
+                        <p className="text-gray-600 mb-1">Tipo de Abordaje:</p>
+                        <p className="font-semibold">{abordaje.tipoAbordaje || 'No especificado'}</p>
+                    </div>
                     {abordaje.recursosAdicionales && (
-                        <div className="col-span-full">
-                            <p className="text-gray-600 mb-1">Recursos Adicionales:</p>
-                            <p className="font-semibold">{abordaje.recursosAdicionales}</p>
+                        <div className="col-span-full border-t pt-4">
+                            <p className="text-gray-600 mb-1 flex items-center gap-2">
+                                <FileText className="w-4 h-4" /> Recursos Adicionales:
+                            </p>
+                            <p className="font-medium bg-gray-50 p-3 rounded-md text-gray-800">
+                                {abordaje.recursosAdicionales}
+                            </p>
                         </div>
                     )}
-                    {abordaje.notasLogistica && (
-                        <div className="col-span-full">
-                            <p className="text-gray-600 mb-1">Notas de Logística:</p>
-                            <p className="font-semibold">{abordaje.notasLogistica}</p>
+                    {abordaje.notas && (
+                        <div className="col-span-full border-t pt-4">
+                            <p className="text-gray-600 mb-1">Observaciones Generales:</p>
+                            <p className="font-medium bg-gray-50 p-3 rounded-md text-gray-800">
+                                {abordaje.notas}
+                            </p>
                         </div>
                     )}
                 </div>

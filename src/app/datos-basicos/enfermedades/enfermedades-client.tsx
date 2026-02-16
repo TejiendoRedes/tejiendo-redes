@@ -107,7 +107,7 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
             key: 'acciones',
             label: 'Acciones',
             render: (enfermedad) => (
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2">
                     <Button
                         variant="ghost"
                         size="sm"
@@ -129,6 +129,29 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(e => ({
+            codigo: e.codigoEnfermedad,
+            nombre: e.nombreEnfermedad,
+            tipo: e.tipoPatologia || '-',
+            descripcion: e.descripcion || '-',
+        }));
+
+        const headers = ['codigo', 'nombre', 'tipo', 'descripcion'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Tipo Patología', dataKey: 'tipo' },
+            { header: 'Descripción', dataKey: 'descripcion' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'enfermedades'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'enfermedades', 'Reporte de Enfermedades'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -148,7 +171,7 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
                     searchPlaceholder="Buscar por código, nombre o tipo..."
                     onAdd={handleAdd}
                     addLabel="Agregar Enfermedad"
-                    onExport={(format) => toast.info(`Exportando ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

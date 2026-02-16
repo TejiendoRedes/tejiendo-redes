@@ -191,8 +191,8 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                         <TabsTrigger value="medicamentos">
                             Medicamentos ({medicamentosEntregados.length})
                         </TabsTrigger>
-                        <TabsTrigger value="logistica">
-                            Logística y Detalles
+                        <TabsTrigger value="detalles">
+                            Detalles
                         </TabsTrigger>
                     </TabsList>
 
@@ -369,80 +369,37 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                         )}
                     </TabsContent>
 
-                    <TabsContent value="logistica">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <Truck className="w-5 h-5 text-blue-600" />
-                                        Logística de Campo
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                            <Truck className="w-5 h-5 text-gray-400" />
-                                            <span className="text-sm font-medium">Transporte</span>
-                                        </div>
-                                        <Badge variant={abordajeData.transporte ? "default" : "outline"}>
-                                            {abordajeData.transporte ? "Sí" : "No"}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                            <Coffee className="w-5 h-5 text-gray-400" />
-                                            <span className="text-sm font-medium">Refrigerios</span>
-                                        </div>
-                                        <Badge variant={abordajeData.refrigerios ? "default" : "outline"}>
-                                            {abordajeData.refrigerios ? "Sí" : "No"}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <div className="flex items-center gap-3">
-                                            <Sun className="w-5 h-5 text-gray-400" />
-                                            <span className="text-sm font-medium">Espacio Cubierto</span>
-                                        </div>
-                                        <Badge variant={abordajeData.espacioCubierto ? "default" : "outline"}>
-                                            {abordajeData.espacioCubierto ? "Sí" : "No"}
-                                        </Badge>
-                                    </div>
-                                    {abordajeData.notasLogistica && (
-                                        <div className="pt-2">
-                                            <p className="text-sm text-gray-500 mb-1">Notas de Logística</p>
-                                            <p className="text-sm p-3 bg-blue-50 text-blue-800 rounded-lg">
-                                                {abordajeData.notasLogistica}
-                                            </p>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-
+                    <TabsContent value="detalles">
+                        <div className="grid grid-cols-1 gap-6">
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2">
                                         <Info className="w-5 h-5 text-blue-600" />
-                                        Información Adicional
+                                        Información y Observaciones
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-1">Tipo de Abordaje</p>
-                                        <p className="text-base font-medium">{abordajeData.tipoAbordaje || 'No especificado'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500 mb-1">Participantes Estimados</p>
-                                        <p className="text-base font-medium">{abordajeData.participantesEstimados || 'No especificado'}</p>
-                                    </div>
-                                    {abordajeData.recursosAdicionales && (
+                                <CardContent className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
+                                            <p className="text-sm text-gray-500 mb-1">Tipo de Abordaje</p>
+                                            <p className="text-base font-medium">{abordajeData.tipoAbordaje || 'No especificado'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Participantes Estimados</p>
+                                            <p className="text-base font-medium">{abordajeData.participantesEstimados || 'No especificado'}</p>
+                                        </div>
+                                    </div>
+
+                                    {abordajeData.recursosAdicionales && (
+                                        <div className="border-t pt-4">
                                             <p className="text-sm text-gray-500 mb-1">Recursos Adicionales</p>
-                                            <p className="text-sm">{abordajeData.recursosAdicionales}</p>
+                                            <p className="text-sm bg-gray-50 p-4 rounded-lg">{abordajeData.recursosAdicionales}</p>
                                         </div>
                                     )}
                                     {abordajeData.notas && (
-                                        <div>
+                                        <div className="border-t pt-4">
                                             <p className="text-sm text-gray-500 mb-1">Observaciones Generales</p>
-                                            <p className="text-sm">{abordajeData.notas}</p>
+                                            <p className="text-sm bg-gray-50 p-4 rounded-lg">{abordajeData.notas}</p>
                                         </div>
                                     )}
                                     {abordajeData.codigoSolicitud && (

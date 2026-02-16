@@ -6,6 +6,20 @@ import { antecedentes, type NewAntecedente, type Antecedente } from '@/db/schema
 import { pacientes } from '@/db/schema/pacientes';
 import { eq } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
+import { getNextCode } from '@/lib/id-generator';
+
+/**
+ * Obtener el siguiente código correlativo para un antecedente
+ */
+export async function getNextAntecedenteCodigo() {
+    try {
+        const nextCode = await getNextCode(antecedentes, antecedentes.codigoAntecedente, 'ANT-');
+        return { success: true, data: nextCode };
+    } catch (error) {
+        console.error('Error generating next code:', error);
+        return { success: false, error: 'Error al generar el siguiente código' };
+    }
+}
 
 /**
  * Obtener todos los antecedentes con la información del paciente

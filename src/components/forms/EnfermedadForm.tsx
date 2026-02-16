@@ -41,13 +41,14 @@ export function EnfermedadForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="codigo">Código</Label>
+                <Label htmlFor="codigo">Código *</Label>
                 <Input
                     id="codigo"
                     value={formData.codigoEnfermedad}
-                    disabled={true}
-                    placeholder="Generado automáticamente"
-                    className="bg-gray-100"
+                    onChange={(e) => setFormData({ ...formData, codigoEnfermedad: e.target.value.toUpperCase() })}
+                    placeholder="Ingrese el código (ej: ENF-001 o CIE-10)"
+                    required
+                    maxLength={10}
                 />
             </div>
 
@@ -72,6 +73,7 @@ export function EnfermedadForm({
                     searchPlaceholder="Buscar tipo de patología..."
                     idField="nombre"
                     labelField="nombre"
+                    id="tipo"
                 />
             </div>
 

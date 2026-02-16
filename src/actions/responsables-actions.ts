@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { responsable as responsables, type NewResponsable, type Responsable } from '@/db/schema/responsable';
-import { eq } from 'drizzle-orm';
+import { eq, like, or } from 'drizzle-orm';
 
 /**
  * Manejar errores de base de datos de forma específica
@@ -32,11 +32,25 @@ const handleDatabaseError = (error: any) => {
 };
 
 /**
- * Obtener todos los responsables
+ * Obtener todos los responsables (con búsqueda opcional)
  */
-export async function getResponsables() {
+export async function getResponsables(query?: string, limit: number = 50) {
     try {
-        const data = await db.select().from(responsables);
+        let queryBuilder = db.select()
+            .from(responsables)
+            .$dynamic();
+
+        if (query) {
+            queryBuilder = queryBuilder.where(
+                or(
+                    like(responsables.nombreResponsable, `%${query}%`),
+                    like(responsables.apellidoResponsable, `%${query}%`),
+                    like(responsables.cedulaResponsable, `%${query}%`)
+                )
+            );
+        }
+
+        const data = await queryBuilder.limit(limit);
         return { success: true, data };
     } catch (error) {
         console.error('Error fetching responsables:', error);

@@ -37,19 +37,19 @@ export function Breadcrumbs() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+    <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
       {breadcrumbs.map((crumb, index) => (
         <React.Fragment key={index}>
-          {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+          {index > 0 && <ChevronRight className="w-4 h-4 text-muted-foreground/60" />}
           {crumb.path ? (
             <Link
               href={crumb.path}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-primary transition-colors"
             >
               {crumb.label}
             </Link>
           ) : (
-            <span className="text-gray-900">{crumb.label}</span>
+            <span className="text-foreground font-medium">{crumb.label}</span>
           )}
         </React.Fragment>
       ))}

@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Abordaje } from '@/db/schema/abordajes';
 
 export interface AbordajeFormProps {
@@ -46,10 +45,6 @@ export function AbordajeForm({
         tipoAbordaje: initialData?.tipoAbordaje || '',
         participantesEstimados: initialData?.participantesEstimados || 0,
         recursosAdicionales: initialData?.recursosAdicionales || '',
-        transporte: initialData?.transporte || false,
-        refrigerios: initialData?.refrigerios || false,
-        espacioCubierto: initialData?.espacioCubierto || false,
-        notasLogistica: initialData?.notasLogistica || '',
         notas: initialData?.notas || ''
     });
 
@@ -60,10 +55,6 @@ export function AbordajeForm({
 
     const handleSelectChange = (value: string, name: string) => {
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleCheckboxChange = (checked: boolean, name: string) => {
-        setFormData(prev => ({ ...prev, [name]: checked }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -108,6 +99,7 @@ export function AbordajeForm({
                     idField="codigoComunidad"
                     labelField="nombreComunidad"
                     secondaryLabelField="municipio"
+                    id="comunidad-select"
                 />
             </div>
 
@@ -129,7 +121,7 @@ export function AbordajeForm({
                         value={formData.estado}
                         onValueChange={(val) => handleSelectChange(val, 'estado')}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger id="estado">
                             <SelectValue placeholder="Seleccionar estado" />
                         </SelectTrigger>
                         <SelectContent>
@@ -170,13 +162,22 @@ export function AbordajeForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="tipoAbordaje">Tipo de Abordaje</Label>
-                    <Input
-                        id="tipoAbordaje"
-                        name="tipoAbordaje"
-                        placeholder="Ej: Médico, Social, Educativo"
+                    <Select
                         value={formData.tipoAbordaje}
-                        onChange={handleChange}
-                    />
+                        onValueChange={(val) => handleSelectChange(val, 'tipoAbordaje')}
+                    >
+                        <SelectTrigger id="tipoAbordaje">
+                            <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Educativo">Educativo</SelectItem>
+                            <SelectItem value="Médico">Médico</SelectItem>
+                            <SelectItem value="Social">Social</SelectItem>
+                            <SelectItem value="Deportivo">Deportivo</SelectItem>
+                            <SelectItem value="Cultural">Cultural</SelectItem>
+                            <SelectItem value="Religioso">Religioso</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="participantesEstimados">Participantes Estimados</Label>
@@ -198,44 +199,6 @@ export function AbordajeForm({
                     placeholder="Materiales, equipos, etc."
                     rows={2}
                     value={formData.recursosAdicionales}
-                    onChange={handleChange}
-                />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-2 border-y bg-gray-50/50 -mx-1 px-3 rounded-md">
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="transporte"
-                        checked={formData.transporte || false}
-                        onCheckedChange={(checked) => handleCheckboxChange(!!checked, 'transporte')}
-                    />
-                    <Label htmlFor="transporte" className="text-sm font-normal cursor-pointer">Transporte</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="refrigerios"
-                        checked={formData.refrigerios || false}
-                        onCheckedChange={(checked) => handleCheckboxChange(!!checked, 'refrigerios')}
-                    />
-                    <Label htmlFor="refrigerios" className="text-sm font-normal cursor-pointer">Refrigerios</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="espacioCubierto"
-                        checked={formData.espacioCubierto || false}
-                        onCheckedChange={(checked) => handleCheckboxChange(!!checked, 'espacioCubierto')}
-                    />
-                    <Label htmlFor="espacioCubierto" className="text-sm font-normal cursor-pointer">Espacio Cubierto</Label>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="notasLogistica">Notas de Logística</Label>
-                <Textarea
-                    id="notasLogistica"
-                    name="notasLogistica"
-                    rows={2}
-                    value={formData.notasLogistica}
                     onChange={handleChange}
                 />
             </div>

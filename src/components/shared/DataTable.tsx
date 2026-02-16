@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { Search, Filter, Download, Plus } from 'lucide-react';
+import { Search, Download, Plus, Inbox } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export interface Column<T> {
   key: string;
@@ -59,17 +62,26 @@ export function DataTable<T extends Record<string, any>>({
   const [currentPage, setCurrentPage] = React.useState(1);
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
+  const tableRef = React.useRef<HTMLDivElement>(null);
+
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Filtrado
   const filteredData = React.useMemo(() => {
-    if (!searchQuery) return data;
+    if (!debouncedSearch) return data;
 
     return data.filter(row =>
       Object.values(row).some(value =>
-        String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        String(value).toLowerCase().includes(debouncedSearch.toLowerCase())
       )
     );
-  }, [data, searchQuery]);
+  }, [data, debouncedSearch]);
+
+  // Notify parent of search
+  React.useEffect(() => {
+    onSearch?.(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
 
   // Ordenamiento
   const sortedData = React.useMemo(() => {
@@ -104,15 +116,39 @@ export function DataTable<T extends Record<string, any>>({
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
-    onSearch?.(value);
+  };
+
+  // Scroll to top on page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Ellipsis pagination: show first, last, current ± 1
+  const getPageNumbers = (): (number | 'ellipsis')[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages: (number | 'ellipsis')[] = [];
+    const showStart = Math.max(2, currentPage - 1);
+    const showEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    pages.push(1);
+    if (showStart > 2) pages.push('ellipsis');
+    for (let i = showStart; i <= showEnd; i++) pages.push(i);
+    if (showEnd < totalPages - 1) pages.push('ellipsis');
+    if (totalPages > 1) pages.push(totalPages);
+
+    return pages;
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={tableRef}>
       {/* Barra de herramientas */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder={searchPlaceholder}
@@ -152,7 +188,7 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Contador de resultados */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         Mostrando {paginatedData.length} de {sortedData.length} resultados
       </div>
 
@@ -164,7 +200,7 @@ export function DataTable<T extends Record<string, any>>({
               {columns.map(column => (
                 <TableHead
                   key={column.key}
-                  className={column.sortable ? 'cursor-pointer select-none' : ''}
+                  className={column.sortable ? 'cursor-pointer select-none hover:bg-muted/50 transition-colors' : ''}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center gap-2">
@@ -184,14 +220,30 @@ export function DataTable<T extends Record<string, any>>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-8 text-gray-500"
+                  className="h-40"
                 >
-                  {emptyMessage}
+                  <div className="flex flex-col items-center justify-center text-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <Inbox className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{emptyMessage}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando un nuevo registro'}
+                      </p>
+                    </div>
+                    {!searchQuery && onAdd && (
+                      <Button size="sm" variant="outline" onClick={onAdd} className="mt-1">
+                        <Plus className="w-4 h-4 mr-1" />
+                        {addLabel}
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedData.map((row, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} className="hover:bg-muted/50 transition-colors">
                   {columns.map(column => (
                     <TableCell key={column.key}>
                       {column.render
@@ -206,35 +258,40 @@ export function DataTable<T extends Record<string, any>>({
         </Table>
       </div>
 
-      {/* Paginación */}
+      {/* Paginación mejorada con ellipsis */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
           >
             Anterior
           </Button>
 
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <Button
-                key={page}
-                variant={page === currentPage ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </Button>
-            ))}
+          <div className="flex items-center gap-1">
+            {getPageNumbers().map((page, idx) =>
+              page === 'ellipsis' ? (
+                <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground">…</span>
+              ) : (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                  className="min-w-[2rem]"
+                >
+                  {page}
+                </Button>
+              )
+            )}
           </div>
 
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
           >
             Siguiente
@@ -244,4 +301,3 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
-

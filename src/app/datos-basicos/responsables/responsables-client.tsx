@@ -155,6 +155,33 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(r => ({
+            cedula: r.cedulaResponsable,
+            nombre: `${r.nombreResponsable} ${r.apellidoResponsable}`,
+            cargo: r.cargo,
+            ubicacion: getLocationNames(r),
+            telefono: r.telefonoResponsable,
+            correo: r.correoResponsable,
+        }));
+
+        const headers = ['cedula', 'nombre', 'cargo', 'ubicacion', 'telefono', 'correo'];
+        const columnsData = [
+            { header: 'Cédula', dataKey: 'cedula' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Cargo', dataKey: 'cargo' },
+            { header: 'Ubicación', dataKey: 'ubicacion' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Correo', dataKey: 'correo' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'responsables'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'responsables', 'Reporte de Responsables'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -171,7 +198,7 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
                     searchPlaceholder="Buscar por nombre, cédula o cargo..."
                     onAdd={handleAdd}
                     addLabel="Agregar Responsable"
-                    onExport={(format) => toast.info(`Exportando en formato ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 {/* Modal Formulario */}

@@ -175,6 +175,31 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
         },
     ];
 
+    const handleExport = (format: 'csv' | 'pdf') => {
+        const exportData = initialData.map(m => ({
+            codigo: m.codigoMedicamento,
+            nombre: m.nombreMedicamento,
+            presentacion: m.presentacion,
+            existencia: m.existencia,
+            descripcion: m.descripcion || '-',
+        }));
+
+        const headers = ['codigo', 'nombre', 'presentacion', 'existencia', 'descripcion'];
+        const columnsData = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Presentación', dataKey: 'presentacion' },
+            { header: 'Existencia', dataKey: 'existencia' },
+            { header: 'Descripción', dataKey: 'descripcion' },
+        ];
+
+        if (format === 'csv') {
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'inventario-medicamentos'));
+        } else {
+            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'inventario-medicamentos', 'Reporte de Inventario de Medicamentos'));
+        }
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -263,7 +288,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     searchPlaceholder="Buscar por código, nombre o presentación..."
                     onAdd={handleAdd}
                     addLabel="Agregar Medicamento"
-                    onExport={(format) => toast.info(`Exportando inventario en ${format.toUpperCase()}...`)}
+                    onExport={handleExport}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

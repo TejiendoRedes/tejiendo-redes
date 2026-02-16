@@ -44,17 +44,21 @@ export async function createEnfermedad(data: NewEnfermedad) {
             return { success: false, error: 'El nombre de la enfermedad es requerido' };
         }
 
-        // Generación automática del código de enfermedad (ENF-001...)
-        const newCode = await getNextCode(enfermedades, enfermedades.codigoEnfermedad, 'ENF-');
+        // Generación automática del código si no se proporciona (o si viene vacío)
+        let finalCode = data.codigoEnfermedad?.trim();
+
+        if (!finalCode) {
+            finalCode = await getNextCode(enfermedades, enfermedades.codigoEnfermedad, 'ENF-');
+        }
 
         const finalData = {
             ...data,
-            codigoEnfermedad: newCode
+            codigoEnfermedad: finalCode.toUpperCase()
         };
 
         await db.insert(enfermedades).values(finalData);
         revalidatePath('/datos-basicos/enfermedades');
-        return { success: true, message: `Enfermedad creada correctamente con código ${newCode}` };
+        return { success: true, message: `Enfermedad creada correctamente con código ${finalCode}` };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'la enfermedad', 'crear');
         return { success: false, error: errorMessage };

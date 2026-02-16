@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Filter, Loader2 } from 'lucide-react';
 import { DataTable } from '@/components/shared/DataTable';
 import { toast } from 'sonner';
+import { utils, write, WORKBOOK_APPEND } from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { getEstadoNombre, getMunicipioNombre } from '@/data/venezuela-location';
 
 interface ReportesClientProps {
     comunidades: Array<{ codigo_comunidad: string; nombre_comunidad: string }>;
@@ -41,13 +46,13 @@ interface ReportesClientProps {
     reportePacientes: Array<{
         cedula_paciente: string;
         codigo_comunidad: string;
-        nombre_comunidad: string;
+        nombre_comunidad: string | null;
         nombre_paciente: string;
         apellido_paciente: string;
-        fecha_nacimiento: Date;
-        direccion_paciente: string;
-        telefono_paciente: string;
-        correo_paciente: string;
+        fecha_nacimiento: Date | null;
+        direccion_paciente: string | null;
+        telefono_paciente: string | null;
+        correo_paciente: string | null;
     }>;
     dataMorbilidad: Array<{
         codigo_enfermedad: string;
@@ -63,7 +68,7 @@ interface ReportesClientProps {
         nombre_medicamento: string;
         presentacion: string;
         existencia: number;
-        descripcion: string;
+        descripcion: string | null;
     }>;
 }
 
@@ -75,57 +80,158 @@ export default function ReportesClient({
     dataMorbilidad,
     reporteMedicamentos
 }: ReportesClientProps) {
-    const [fechaInicio, setFechaInicio] = React.useState('2025-01-01');
-    const [fechaFin, setFechaFin] = React.useState('2025-01-31');
-    const [comunidadFiltro, setComunidadFiltro] = React.useState('todas');
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const [isPending, startTransition] = useTransition();
 
-    const handleExport = (format: 'csv' | 'pdf', tabName: string) => {
-        toast.success(`Exportando ${tabName} en formato ${format.toUpperCase()}...`);
+    const [fechaInicio, setFechaInicio] = useState(searchParams.get('fechaInicio') || '');
+    const [fechaFin, setFechaFin] = useState(searchParams.get('fechaFin') || '');
+    const [comunidadFiltro, setComunidadFiltro] = useState(searchParams.get('codigoComunidad') || 'todas');
+
+    const updateFilters = () => {
+        const params = new URLSearchParams(searchParams.toString());
+
+        if (fechaInicio) params.set('fechaInicio', fechaInicio);
+        else params.delete('fechaInicio');
+
+        if (fechaFin) params.set('fechaFin', fechaFin);
+        else params.delete('fechaFin');
+
+        if (comunidadFiltro && comunidadFiltro !== 'todas') params.set('codigoComunidad', comunidadFiltro);
+        else params.delete('codigoComunidad');
+
+        startTransition(() => {
+            router.push(`${pathname}?${params.toString()}`);
+        });
+    };
+
+    const handleExport = (format: 'csv' | 'pdf', tabName: string, data: any[], columns: any[]) => {
+        try {
+            if (format === 'csv') {
+                const worksheet = utils.json_to_sheet(data);
+                const workbook = utils.book_new();
+                utils.book_append_sheet(workbook, worksheet, tabName);
+
+                // Generar nombre de archivo
+                const date = new Date().toLocaleDateString('es-VE').replace(/\//g, '-');
+                write(workbook, { bookType: 'csv', type: 'buffer' });
+                // @ts-ignore
+                import('xlsx').then(xlsx => {
+                    xlsx.writeFile(workbook, `Reporte_${tabName}_${date}.csv`);
+                });
+                toast.success(`Exportado correctamente a CSV`);
+            } else {
+                const doc = new jsPDF();
+
+                // Título
+                doc.setFontSize(18);
+                doc.text(`Reporte de ${tabName}`, 14, 22);
+                doc.setFontSize(11);
+                doc.text(`Generado el: ${new Date().toLocaleDateString('es-VE')}`, 14, 30);
+
+                // Filtros aplicados
+                let yPos = 38;
+                if (fechaInicio || fechaFin || comunidadFiltro !== 'todas') {
+                    doc.setFontSize(10);
+                    doc.text('Filtros aplicados:', 14, yPos);
+                    yPos += 5;
+                    if (fechaInicio) doc.text(`Desde: ${new Date(fechaInicio).toLocaleDateString('es-VE')}`, 20, yPos);
+                    if (fechaFin) doc.text(`Hasta: ${new Date(fechaFin).toLocaleDateString('es-VE')}`, 70, yPos);
+                    yPos += 5;
+                    if (comunidadFiltro !== 'todas') {
+                        const com = comunidades.find(c => c.codigo_comunidad === comunidadFiltro);
+                        doc.text(`Comunidad: ${com?.nombre_comunidad || comunidadFiltro}`, 20, yPos);
+                    }
+                    yPos += 10;
+                }
+
+                // Datos
+                const tableColumn = columns.map(c => c.label);
+                const tableRows = data.map(item => {
+                    return columns.map(col => {
+                        if (col.key === 'estado') {
+                            return getEstadoNombre(item[col.key]);
+                        }
+                        if (col.key === 'municipio') {
+                            return getMunicipioNombre(item.estado, item[col.key]);
+                        }
+                        if (col.render) {
+                            // Si tiene render, tratamos de ejecutarlo o obtener el valor raw
+                            // Esta es una simplificación, idealmente refactorizamos render para aceptar strings puros
+                            return String(item[col.key]);
+                        }
+                        return String(item[col.key] || '-');
+                    });
+                });
+
+                autoTable(doc, {
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: yPos,
+                });
+
+                doc.save(`Reporte_${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
+                toast.success(`Exportado correctamente a PDF`);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al exportar');
+        }
     };
 
     return (
-        <>
+        <div className="space-y-6">
             {/* Filtros Globales */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Filtros</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <Filter className="w-5 h-5" />
+                        Filtros de Reporte
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="fechaInicio">Fecha Inicio</Label>
-                            <Input
-                                id="fechaInicio"
-                                type="date"
-                                value={fechaInicio}
-                                onChange={(e) => setFechaInicio(e.target.value)}
-                            />
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                            <div className="space-y-2">
+                                <Label htmlFor="fechaInicio">Fecha Inicio</Label>
+                                <Input
+                                    id="fechaInicio"
+                                    type="date"
+                                    value={fechaInicio}
+                                    onChange={(e) => setFechaInicio(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="fechaFin">Fecha Fin</Label>
+                                <Input
+                                    id="fechaFin"
+                                    type="date"
+                                    value={fechaFin}
+                                    onChange={(e) => setFechaFin(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="comunidad">Comunidad</Label>
+                                <Select value={comunidadFiltro} onValueChange={setComunidadFiltro}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Seleccione comunidad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="todas">Todas las comunidades</SelectItem>
+                                        {comunidades.map((c) => (
+                                            <SelectItem key={c.codigo_comunidad} value={c.codigo_comunidad}>
+                                                {c.nombre_comunidad}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="fechaFin">Fecha Fin</Label>
-                            <Input
-                                id="fechaFin"
-                                type="date"
-                                value={fechaFin}
-                                onChange={(e) => setFechaFin(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="comunidad">Comunidad</Label>
-                            <Select value={comunidadFiltro} onValueChange={setComunidadFiltro}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="todas">Todas</SelectItem>
-                                    {comunidades.map((c) => (
-                                        <SelectItem key={c.codigo_comunidad} value={c.codigo_comunidad}>
-                                            {c.nombre_comunidad}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Button onClick={updateFilters} disabled={isPending} className="min-w-[120px]">
+                            {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            Aplicar
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
@@ -149,7 +255,13 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('csv', 'Abordajes')}
+                                    onClick={() => handleExport('csv', 'Abordajes', reporteAbordajes, [
+                                        { key: 'codigo_abordaje', label: 'Código' },
+                                        { key: 'fecha_abordaje', label: 'Fecha' },
+                                        { key: 'descripcion', label: 'Descripción' },
+                                        { key: 'comunidades', label: 'Comunidades' },
+                                        { key: 'pacientes_atendidos', label: 'Pacientes' }
+                                    ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
                                     CSV
@@ -157,7 +269,13 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('pdf', 'Abordajes')}
+                                    onClick={() => handleExport('pdf', 'Abordajes', reporteAbordajes, [
+                                        { key: 'codigo_abordaje', label: 'Código' },
+                                        { key: 'fecha_abordaje', label: 'Fecha' },
+                                        { key: 'descripcion', label: 'Descripción' },
+                                        { key: 'comunidades', label: 'Comunidades' },
+                                        { key: 'pacientes_atendidos', label: 'Pacientes' }
+                                    ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
                                     PDF
@@ -173,7 +291,7 @@ export default function ReportesClient({
                                         key: 'fecha_abordaje',
                                         label: 'Fecha',
                                         sortable: true,
-                                        render: (item: any) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE')
+                                        render: (item: any) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                     },
                                     { key: 'descripcion', label: 'Descripción' },
                                     { key: 'comunidades', label: 'Comunidades', sortable: true },
@@ -196,7 +314,14 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('csv', 'Comunidades')}
+                                    onClick={() => handleExport('csv', 'Comunidades', reporteComunidades, [
+                                        { key: 'codigo_comunidad', label: 'Código' },
+                                        { key: 'nombre_comunidad', label: 'Nombre' },
+                                        { key: 'estado', label: 'Estado' },
+                                        { key: 'municipio', label: 'Municipio' },
+                                        { key: 'cantidad_habitantes', label: 'Habitantes' },
+                                        { key: 'pacientes_tratados', label: 'Pacientes' }
+                                    ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
                                     CSV
@@ -204,7 +329,14 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('pdf', 'Comunidades')}
+                                    onClick={() => handleExport('pdf', 'Comunidades', reporteComunidades, [
+                                        { key: 'codigo_comunidad', label: 'Código' },
+                                        { key: 'nombre_comunidad', label: 'Nombre' },
+                                        { key: 'estado', label: 'Estado' },
+                                        { key: 'municipio', label: 'Municipio' },
+                                        { key: 'cantidad_habitantes', label: 'Habitantes' },
+                                        { key: 'pacientes_tratados', label: 'Pacientes' }
+                                    ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
                                     PDF
@@ -217,8 +349,18 @@ export default function ReportesClient({
                                 columns={[
                                     { key: 'codigo_comunidad', label: 'Código', sortable: true },
                                     { key: 'nombre_comunidad', label: 'Nombre Comunidad', sortable: true },
-                                    { key: 'estado', label: 'Estado', sortable: true },
-                                    { key: 'municipio', label: 'Municipio', sortable: true },
+                                    {
+                                        key: 'estado',
+                                        label: 'Estado',
+                                        sortable: true,
+                                        render: (item: any) => getEstadoNombre(item.estado)
+                                    },
+                                    {
+                                        key: 'municipio',
+                                        label: 'Municipio',
+                                        sortable: true,
+                                        render: (item: any) => getMunicipioNombre(item.estado, item.municipio)
+                                    },
                                     { key: 'cantidad_habitantes', label: 'Habitantes', sortable: true },
                                     {
                                         key: 'pacientes_tratados',
@@ -247,7 +389,13 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('csv', 'Pacientes')}
+                                    onClick={() => handleExport('csv', 'Pacientes', reportePacientes, [
+                                        { key: 'cedula_paciente', label: 'Cédula' },
+                                        { key: 'nombre_paciente', label: 'Nombre' },
+                                        { key: 'apellido_paciente', label: 'Apellido' },
+                                        { key: 'nombre_comunidad', label: 'Comunidad' },
+                                        { key: 'telefono_paciente', label: 'Teléfono' }
+                                    ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
                                     CSV
@@ -255,7 +403,13 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('pdf', 'Pacientes')}
+                                    onClick={() => handleExport('pdf', 'Pacientes', reportePacientes, [
+                                        { key: 'cedula_paciente', label: 'Cédula' },
+                                        { key: 'nombre_paciente', label: 'Nombre' },
+                                        { key: 'apellido_paciente', label: 'Apellido' },
+                                        { key: 'nombre_comunidad', label: 'Comunidad' },
+                                        { key: 'telefono_paciente', label: 'Teléfono' }
+                                    ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
                                     PDF
@@ -275,7 +429,7 @@ export default function ReportesClient({
                                         label: 'Fecha de Nacimiento',
                                         render: (p: any) =>
                                             p.fecha_nacimiento
-                                                ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE')
+                                                ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                                 : '-',
                                         sortable: true,
                                     },
@@ -298,7 +452,13 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('csv', 'Morbilidad')}
+                                    onClick={() => handleExport('csv', 'Morbilidad', dataMorbilidad, [
+                                        { key: 'codigo_enfermedad', label: 'Código' },
+                                        { key: 'nombre_enfermedad', label: 'Enfermedad' },
+                                        { key: 'tipo_patologia', label: 'Tipo' },
+                                        { key: 'total_casos', label: 'Casos' },
+                                        { key: 'porcentaje', label: '%' }
+                                    ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
                                     CSV
@@ -306,7 +466,13 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('pdf', 'Morbilidad')}
+                                    onClick={() => handleExport('pdf', 'Morbilidad', dataMorbilidad, [
+                                        { key: 'codigo_enfermedad', label: 'Código' },
+                                        { key: 'nombre_enfermedad', label: 'Enfermedad' },
+                                        { key: 'tipo_patologia', label: 'Tipo' },
+                                        { key: 'total_casos', label: 'Casos' },
+                                        { key: 'porcentaje', label: '%' }
+                                    ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
                                     PDF
@@ -333,7 +499,7 @@ export default function ReportesClient({
                                         label: 'Última Consulta',
                                         render: (d: any) =>
                                             d.ultima_consulta
-                                                ? new Date(d.ultima_consulta).toLocaleDateString('es-VE')
+                                                ? new Date(d.ultima_consulta).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                                 : '-',
                                         sortable: true,
                                     },
@@ -353,7 +519,12 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('csv', 'Medicamentos')}
+                                    onClick={() => handleExport('csv', 'Medicamentos', reporteMedicamentos, [
+                                        { key: 'codigo_medicamento', label: 'Código' },
+                                        { key: 'nombre_medicamento', label: 'Medicamento' },
+                                        { key: 'presentacion', label: 'Presentación' },
+                                        { key: 'existencia', label: 'Existencia' }
+                                    ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
                                     CSV
@@ -361,7 +532,12 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleExport('pdf', 'Medicamentos')}
+                                    onClick={() => handleExport('pdf', 'Medicamentos', reporteMedicamentos, [
+                                        { key: 'codigo_medicamento', label: 'Código' },
+                                        { key: 'nombre_medicamento', label: 'Medicamento' },
+                                        { key: 'presentacion', label: 'Presentación' },
+                                        { key: 'existencia', label: 'Existencia' }
+                                    ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
                                     PDF
@@ -384,6 +560,6 @@ export default function ReportesClient({
                     </Card>
                 </TabsContent>
             </Tabs>
-        </>
+        </div>
     );
 }

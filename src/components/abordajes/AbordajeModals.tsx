@@ -19,7 +19,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import {
     updateAbordaje,
@@ -48,38 +47,28 @@ export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordaje
     const [tipoAbordaje, setTipoAbordaje] = useState(abordaje.tipoAbordaje || '');
     const [participantesEstimados, setParticipantesEstimados] = useState(abordaje.participantesEstimados || 0);
     const [recursosAdicionales, setRecursosAdicionales] = useState(abordaje.recursosAdicionales || '');
-    const [transporte, setTransporte] = useState(abordaje.transporte || false);
-    const [refrigerios, setRefrigerios] = useState(abordaje.refrigerios || false);
-    const [espacioCubierto, setEspacioCubierto] = useState(abordaje.espacioCubierto || false);
-    const [notasLogistica, setNotasLogistica] = useState(abordaje.notasLogistica || '');
     const [notas, setNotas] = useState(abordaje.notas || '');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        {
-            const res = await updateAbordaje(abordaje.codigoAbordaje, {
-                descripcion,
-                estado,
-                horaInicio,
-                horaFin,
-                tipoAbordaje,
-                participantesEstimados: parseInt(participantesEstimados.toString()) || 0,
-                recursosAdicionales,
-                transporte,
-                refrigerios,
-                espacioCubierto,
-                notasLogistica,
-                notas
-            });
+        const res = await updateAbordaje(abordaje.codigoAbordaje, {
+            descripcion,
+            estado,
+            horaInicio,
+            horaFin,
+            tipoAbordaje,
+            participantesEstimados: parseInt(participantesEstimados.toString()) || 0,
+            recursosAdicionales,
+            notas
+        });
 
-            if (res.success) {
-                toast.success('Abordaje actualizado correctamente');
-                onOpenChange(false);
-            } else {
-                toast.error(res.error || 'Error al actualizar');
-            }
+        if (res.success) {
+            toast.success('Abordaje actualizado correctamente');
+            onOpenChange(false);
+        } else {
+            toast.error(res.error || 'Error al actualizar');
         }
         setLoading(false);
     };
@@ -163,30 +152,6 @@ export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordaje
                         />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 py-2 border-y bg-gray-50/50 -mx-6 px-6">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="transporte" checked={transporte} onCheckedChange={(checked) => setTransporte(!!checked)} />
-                            <Label htmlFor="transporte" className="text-sm font-normal cursor-pointer">Transporte</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="refrigerios" checked={refrigerios} onCheckedChange={(checked) => setRefrigerios(!!checked)} />
-                            <Label htmlFor="refrigerios" className="text-sm font-normal cursor-pointer">Refrigerios</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="espacioCubierto" checked={espacioCubierto} onCheckedChange={(checked) => setEspacioCubierto(!!checked)} />
-                            <Label htmlFor="espacioCubierto" className="text-sm font-normal cursor-pointer">Espacio Cubierto</Label>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Notas de Logística</Label>
-                        <Textarea
-                            value={notasLogistica}
-                            onChange={(e) => setNotasLogistica(e.target.value)}
-                            rows={2}
-                        />
-                    </div>
-
                     <div className="space-y-2">
                         <Label>Observaciones Generales</Label>
                         <Textarea
@@ -226,8 +191,6 @@ export function AddComunidadModal({ open, onOpenChange, abordajeId, existingIds 
         if (open) {
             getComunidades().then(res => {
                 if (res.success && res.data) {
-                    // Start filtering based on existing IDs if needed, or just let user check
-                    // Ideally filter out already added ones
                     setComunidades(res.data.filter((c: any) => !existingIds.includes(c.codigoComunidad)));
                 }
             });
@@ -242,7 +205,7 @@ export function AddComunidadModal({ open, onOpenChange, abordajeId, existingIds 
             onOpenChange(false);
             setSelectedId('');
         } else {
-            alert(res.error);
+            toast.error(res.error || 'Error al asignar comunidad');
         }
         setLoading(false);
     };
@@ -313,7 +276,7 @@ export function AddTejedorModal({ open, onOpenChange, abordajeId, existingIds }:
             setSelectedId('');
             setRol('');
         } else {
-            alert(res.error);
+            toast.error(res.error || 'Error al asignar tejedor');
         }
         setLoading(false);
     };
@@ -368,7 +331,7 @@ interface RegisterMedicamentoModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     abordajeId: string;
-    fechaAbordaje: string | Date; // Needed for the record
+    fechaAbordaje: string | Date;
 }
 
 export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fechaAbordaje }: RegisterMedicamentoModalProps) {
@@ -394,27 +357,25 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
         if (!selectedPaciente || !selectedMedicamento || !selectedTejedor) return;
         setLoading(true);
 
-        // Ensure fecha is a Date object
         const fecha = new Date(fechaAbordaje);
 
         const res = await registerMedicamentoEntrega({
             codigoMedicamento: selectedMedicamento,
             cedulaPaciente: selectedPaciente,
             cedulaTejedor: selectedTejedor,
-            codigoAbordaje: abordajeId, // Add this field
+            codigoAbordaje: abordajeId,
             fechaEntrega: fecha,
             cantidadEntregada: cantidad
         });
 
         if (res.success) {
             onOpenChange(false);
-            // Reset form
             setSelectedPaciente('');
             setSelectedMedicamento('');
             setSelectedTejedor('');
             setCantidad(1);
         } else {
-            alert(res.error);
+            toast.error(res.error || 'Error al registrar entrega');
         }
         setLoading(false);
     };
