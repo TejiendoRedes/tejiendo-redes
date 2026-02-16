@@ -92,6 +92,11 @@ const menuItems: MenuItem[] = [
     path: '/estadisticas',
     icon: <BarChart3 className="w-5 h-5" />,
   },
+  {
+    label: 'Mantenimiento',
+    path: '/mantenimiento',
+    icon: <Settings className="w-5 h-5" />,
+  },
 ];
 
 interface SidebarProps {
