@@ -2,7 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Truck } from 'lucide-react';
 
-export function LogisticsStation({ abordaje }: { abordaje: any }) {
+import { AbordajeWithRelations } from '@/types/app-types';
+
+export function LogisticsStation({ abordaje }: { abordaje: AbordajeWithRelations }) {
     return (
         <Card>
             <CardHeader>

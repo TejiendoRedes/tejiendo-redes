@@ -229,18 +229,17 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
             };
         });
 
-        const headers = ['cedula', 'nombre', 'especialidad', 'telefono', 'correo', 'ubicacion'];
         const columnsData = [
-            { header: 'Cédula', dataKey: 'cedula' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Especialidad', dataKey: 'especialidad' },
-            { header: 'Teléfono', dataKey: 'telefono' },
-            { header: 'Correo', dataKey: 'correo' },
-            { header: 'Ubicación', dataKey: 'ubicacion' },
+            { header: 'Cédula', dataKey: 'cedula' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Especialidad', dataKey: 'especialidad' as const },
+            { header: 'Teléfono', dataKey: 'telefono' as const },
+            { header: 'Correo', dataKey: 'correo' as const },
+            { header: 'Ubicación', dataKey: 'ubicacion' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'medicos'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'medicos'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'medicos', 'Reporte de Médicos'));
         }

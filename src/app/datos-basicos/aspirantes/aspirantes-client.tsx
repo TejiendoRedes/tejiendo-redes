@@ -188,16 +188,16 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
 
         const headers = ['cedula', 'nombre', 'profesion', 'direccion', 'telefono', 'estado'];
         const columnsData = [
-            { header: 'Cédula', dataKey: 'cedula' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Profesión', dataKey: 'profesion' },
-            { header: 'Dirección', dataKey: 'direccion' },
-            { header: 'Teléfono', dataKey: 'telefono' },
-            { header: 'Estado', dataKey: 'estado' },
+            { header: 'Cédula', dataKey: 'cedula' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Profesión', dataKey: 'profesion' as const },
+            { header: 'Dirección', dataKey: 'direccion' as const },
+            { header: 'Teléfono', dataKey: 'telefono' as const },
+            { header: 'Estado', dataKey: 'estado' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'aspirantes'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'aspirantes'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'aspirantes', 'Reporte de Aspirantes'));
         }

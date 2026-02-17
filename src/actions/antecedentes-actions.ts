@@ -7,12 +7,14 @@ import { pacientes } from '@/db/schema/pacientes';
 import { eq } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener el siguiente código correlativo para un antecedente
  */
 export async function getNextAntecedenteCodigo() {
     try {
+        await requireAuth();
         const nextCode = await getNextCode(antecedentes, antecedentes.codigoAntecedente, 'ANT-');
         return { success: true, data: nextCode };
     } catch (error) {
@@ -26,6 +28,7 @@ export async function getNextAntecedenteCodigo() {
  */
 export async function getAntecedentes() {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(antecedentes)
             .leftJoin(pacientes, eq(antecedentes.cedulaPaciente, pacientes.cedulaPaciente));
@@ -48,6 +51,7 @@ export async function getAntecedentes() {
  */
 export async function createAntecedente(data: NewAntecedente) {
     try {
+        await requireAuth();
         // Validaciones básicas
         if (!data.codigoAntecedente?.trim()) {
             return { success: false, error: 'El código de antecedente es requerido' };
@@ -76,6 +80,7 @@ export async function createAntecedente(data: NewAntecedente) {
  */
 export async function updateAntecedente(codigo: string, data: Partial<NewAntecedente>) {
     try {
+        await requireAuth();
         await db.update(antecedentes)
             .set(data)
             .where(eq(antecedentes.codigoAntecedente, codigo));
@@ -92,6 +97,7 @@ export async function updateAntecedente(codigo: string, data: Partial<NewAnteced
  */
 export async function deleteAntecedente(codigo: string) {
     try {
+        await requireAuth();
         await db.delete(antecedentes)
             .where(eq(antecedentes.codigoAntecedente, codigo));
         revalidatePath('/datos-basicos/antecedentes');

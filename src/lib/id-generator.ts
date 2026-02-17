@@ -1,12 +1,12 @@
 import { db } from '@/db';
 import { sql } from 'drizzle-orm';
-import { MySqlColumn } from 'drizzle-orm/mysql-core';
+import { MySqlColumn, MySqlTable } from 'drizzle-orm/mysql-core';
 
 /**
  * DB-05: Thread-safe code generator using MAX() + transaction
  */
 export async function getNextCode(
-    table: any,
+    table: MySqlTable,
     column: MySqlColumn,
     prefix: string,
     digitCount: number = 3
@@ -16,7 +16,12 @@ export async function getNextCode(
         return await db.transaction(async (tx) => {
             const result = await tx
                 .select({ maxCode: sql<string>`MAX(${column})` })
-                .from(table);
+                .from(table)
+                // Lock the rows to prevent race conditions.
+                // Note: In MySQL, this locks the rows scanned by the query. 
+                // Since it is a MAX() on the whole table (or index), it effectively serializes inserts 
+                // that rely on this generated ID, preventing duplicates.
+                .where(sql`1=1 FOR UPDATE`);
 
             const lastCode = result[0]?.maxCode;
             if (!lastCode) {

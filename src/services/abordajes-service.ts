@@ -92,6 +92,8 @@ export class AbordajesService {
                     cedulaMedico: consultas.cedulaMedico,
                     nombreMedico: sql<string>`concat(${tejedores.nombreTejedor}, ' ', ${tejedores.apellidoTejedor})`,
                     motivoConsulta: consultas.motivoConsulta,
+                    diagnosticoTexto: consultas.diagnosticoTexto,
+                    tensionArterial: consultas.tensionArterial,
                 })
                     .from(consultas)
                     .leftJoin(pacientes, eq(consultas.cedulaPaciente, pacientes.cedulaPaciente))
@@ -114,11 +116,18 @@ export class AbordajesService {
 
         if (!abordajeData) return null;
 
+        const consultasWithDate = consultasData.map(c => ({
+            ...c,
+            fechaConsulta: abordajeData.fechaAbordaje instanceof Date
+                ? abordajeData.fechaAbordaje.toISOString().split('T')[0]
+                : String(abordajeData.fechaAbordaje)
+        }));
+
         return {
             ...abordajeData,
             comunidades: comunidadesData,
             tejedores: tejedoresData,
-            consultas: consultasData,
+            consultas: consultasWithDate,
             medicamentos_entregados: medicamentosData,
             total_consultas: consultasData.length,
             pacientes_unicos: new Set(consultasData.map(c => c.cedulaPaciente)).size,

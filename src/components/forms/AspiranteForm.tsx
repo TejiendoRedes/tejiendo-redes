@@ -11,13 +11,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Aspirante } from '@/db/schema/aspirantes';
+import { Aspirante, NewAspirante } from '@/db/schema/aspirantes';
 import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
 import { Loader2 } from 'lucide-react';
 
+interface AspiranteFormData extends Omit<NewAspirante, 'fechaNacimiento' | 'fechaPostulacion'> {
+    fechaNacimiento: string;
+    fechaPostulacion: string;
+}
+
+interface LocationItem {
+    id: string;
+    nombre: string;
+}
+
 export interface AspiranteFormProps {
     initialData?: Aspirante;
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: AspiranteFormData) => Promise<void>;
     onCancel: () => void;
     isLoading?: boolean;
     submitLabel?: string;
@@ -30,7 +40,7 @@ export function AspiranteForm({
     isLoading = false,
     submitLabel
 }: AspiranteFormProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<AspiranteFormData>({
         cedulaAspirante: initialData?.cedulaAspirante || '',
         nombreAspirante: initialData?.nombreAspirante || '',
         apellidoAspirante: initialData?.apellidoAspirante || '',
@@ -46,8 +56,8 @@ export function AspiranteForm({
         estadoAspirante: initialData?.estadoAspirante || 'Pendiente',
     });
 
-    const [municipios, setMunicipios] = useState<any[]>([]);
-    const [parroquias, setParroquias] = useState<any[]>([]);
+    const [municipios, setMunicipios] = useState<LocationItem[]>([]);
+    const [parroquias, setParroquias] = useState<LocationItem[]>([]);
     const estados = getEstados();
 
     useEffect(() => {

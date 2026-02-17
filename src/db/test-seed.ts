@@ -232,9 +232,6 @@ async function seed() {
                 cantidadMayores: getRandomInt(40, 200),
                 cantidadMayores60: getRandomInt(20, 100),
                 telefonoComunidad: `0212-${getRandomInt(2000000, 9999999)}`,
-                tieneTransporte: Math.random() > 0.5,
-                tieneAgua: Math.random() > 0.5,
-                tieneEspacioCubierto: true,
             });
         }
 
@@ -293,8 +290,7 @@ async function seed() {
             tipoAbordaje: 'Médico-Asistencial',
             participantesEstimados: 100,
             estado: 'Ejecutado',
-            transporte: true,
-            refrigerios: true,
+            recursosAdicionales: 'Transporte, Refrigerios',
         });
 
         for (const tejedor of tejedoresList) {
@@ -360,8 +356,7 @@ async function seed() {
             tipoAbordaje: 'Pediátrico',
             participantesEstimados: 50,
             estado: 'Planificado',
-            transporte: true,
-            espacioCubierto: true,
+            recursosAdicionales: 'Transporte, Área techada',
         });
 
         console.log('✅ Seed completed successfully!');

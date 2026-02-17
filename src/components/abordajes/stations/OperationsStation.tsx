@@ -13,8 +13,10 @@ import { ConsultaForm } from '../ConsultaForm';
 import { EntregaMedicamentoForm } from '../EntregaMedicamentoForm';
 import { PatientHistoryDialog } from '../PatientHistoryDialog';
 
+import { AbordajeWithRelations } from '@/types/app-types';
+
 interface OperationsStationProps {
-    abordaje: any;
+    abordaje: AbordajeWithRelations;
 }
 
 export function OperationsStation({ abordaje }: OperationsStationProps) {

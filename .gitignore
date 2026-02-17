@@ -42,3 +42,10 @@ next-env.d.ts
 
 # drizzle
 /drizzle
+
+# temporary debug files
+*.log
+*.txt
+check_*.ts
+check_*.js
+a.txt

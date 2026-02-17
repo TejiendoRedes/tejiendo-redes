@@ -10,12 +10,14 @@ import { enfermedades } from '@/db/schema/enfermedades';
 import { medicamentos } from '@/db/schema/medicamentos';
 import { eq, sql, and, gte, lte, count, desc, like } from 'drizzle-orm';
 import { reportesFilterSchema } from '@/lib/validators/reportes';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * DB-04: Obtener datos para el Reporte de Abordajes
  */
 export async function getReporteAbordajes(params: unknown) {
     try {
+        await requireAuth();
         const validatedParams = reportesFilterSchema.safeParse(params);
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
@@ -74,6 +76,7 @@ export async function getReporteAbordajes(params: unknown) {
  */
 export async function getReporteComunidades(params: unknown) {
     try {
+        await requireAuth();
         const validatedParams = reportesFilterSchema.safeParse(params);
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
@@ -111,6 +114,7 @@ export async function getReporteComunidades(params: unknown) {
  */
 export async function getReportePacientes(params: unknown) {
     try {
+        await requireAuth();
         const validatedParams = reportesFilterSchema.safeParse(params);
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
@@ -151,6 +155,7 @@ export async function getReportePacientes(params: unknown) {
  */
 export async function getReporteMorbilidad(params: unknown) {
     try {
+        await requireAuth();
         const validatedParams = reportesFilterSchema.safeParse(params);
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
@@ -219,6 +224,7 @@ export async function getReporteMorbilidad(params: unknown) {
  */
 export async function getReporteMedicamentos() {
     try {
+        await requireAuth();
         const result = await db
             .select({
                 codigo_medicamento: medicamentos.codigoMedicamento,
@@ -242,6 +248,7 @@ export async function getReporteMedicamentos() {
  */
 export async function getComunidadesParaFiltro() {
     try {
+        await requireAuth();
         const result = await db
             .select({
                 codigo_comunidad: comunidades.codigoComunidad,

@@ -45,7 +45,7 @@ export default function EditarAbordajePage() {
 
                     // Looking at abordajes-actions.ts, it returns whatever service returns.
                     // Looking at AbordajeForm.tsx, it expects initialData to be an Abordaje type.
-                    setAbordaje(abordajeRes.data.abordaje || abordajeRes.data);
+                    setAbordaje(abordajeRes.data);
                 } else {
                     toast.error(abordajeRes.error || 'Error al cargar datos del abordaje');
                 }

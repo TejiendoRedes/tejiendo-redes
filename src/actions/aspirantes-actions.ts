@@ -6,12 +6,14 @@ import { aspirantes, type NewAspirante, type Aspirante } from '@/db/schema/aspir
 import { tejedores } from '@/db/schema/tejedores';
 import { eq } from 'drizzle-orm';
 import { getErrorMessage, isDuplicateKeyError } from '@/lib/error-handler';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todos los aspirantes
  */
 export async function getAspirantes() {
     try {
+        await requireAuth();
         const data = await db.select().from(aspirantes);
         return { success: true, data };
     } catch (error) {
@@ -25,6 +27,7 @@ export async function getAspirantes() {
  */
 export async function getAspirante(cedula: string) {
     try {
+        await requireAuth();
         const result = await db.select().from(aspirantes).where(eq(aspirantes.cedulaAspirante, cedula));
         if (result.length === 0) {
             return { success: false, error: 'Aspirante no encontrado' };
@@ -42,6 +45,7 @@ export async function getAspirante(cedula: string) {
  */
 export async function createAspirante(data: NewAspirante) {
     try {
+        await requireAuth();
         // Validaciones básicas
         if (!data.cedulaAspirante?.trim()) {
             return { success: false, error: 'La cédula es requerida' };
@@ -69,6 +73,7 @@ export async function createAspirante(data: NewAspirante) {
  */
 export async function updateAspirante(cedula: string, data: Partial<NewAspirante>) {
     try {
+        await requireAuth();
         // Verificar que el aspirante existe
         const existing = await db.select()
             .from(aspirantes)
@@ -95,6 +100,7 @@ export async function updateAspirante(cedula: string, data: Partial<NewAspirante
  */
 export async function deleteAspirante(cedula: string) {
     try {
+        await requireAuth();
         // Verificar que el aspirante existe antes de eliminar
         const existing = await db.select()
             .from(aspirantes)
@@ -121,6 +127,7 @@ export async function deleteAspirante(cedula: string) {
  */
 export async function promoverATejedor(aspirante: Aspirante) {
     try {
+        await requireAuth();
         // Verificar que no exista ya un tejedor con esta cédula
         const existingTejedor = await db.select()
             .from(tejedores)

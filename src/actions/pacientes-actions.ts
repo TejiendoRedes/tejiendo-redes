@@ -4,37 +4,34 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { pacientes, type NewPaciente, type Paciente } from '@/db/schema/pacientes';
 import { comunidades } from '@/db/schema/comunidades';
-import { eq } from 'drizzle-orm';
+import { eq, like, or, sql } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
+import { requireAuth } from '@/lib/auth';
+import { PacienteSchema } from '@/lib/validators/pacientes';
 
 /**
  * Obtener todos los pacientes con su comunidad (con búsqueda opcional)
  */
-import { like, or } from 'drizzle-orm';
-
 export async function getPacientes(query?: string, limit: number = 50) {
     try {
-        let queryBuilder = db.select()
+        await requireAuth();
+
+        const rawData = await db.select({
+            pacientes: pacientes,
+            comunidades: comunidades
+        })
             .from(pacientes)
             .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
-            .$dynamic();
+            .where(query ? or(
+                like(pacientes.nombrePaciente, `%${query}%`),
+                like(pacientes.apellidoPaciente, `%${query}%`),
+                like(pacientes.cedulaPaciente, `%${query}%`)
+            ) : undefined)
+            .limit(limit);
 
-        if (query) {
-            queryBuilder = queryBuilder.where(
-                or(
-                    like(pacientes.nombrePaciente, `%${query}%`),
-                    like(pacientes.apellidoPaciente, `%${query}%`),
-                    like(pacientes.cedulaPaciente, `%${query}%`)
-                )
-            );
-        }
-
-        const result = await queryBuilder.limit(limit);
-
-        // Transformar data para el cliente
-        const data = result.map(({ pacientes, comunidades }) => ({
-            ...pacientes,
-            comunidad: comunidades
+        const data = rawData.map(row => ({
+            ...row.pacientes,
+            comunidad: row.comunidades
         }));
 
         return { success: true, data };
@@ -47,24 +44,28 @@ export async function getPacientes(query?: string, limit: number = 50) {
 /**
  * Crear un nuevo paciente
  */
-export async function createPaciente(data: NewPaciente) {
+export async function createPaciente(data: unknown) {
     try {
-        // Validaciones básicas
-        if (!data.cedulaPaciente?.trim()) {
-            return { success: false, error: 'La cédula es requerida' };
-        }
-        if (!data.nombrePaciente?.trim()) {
-            return { success: false, error: 'El nombre es requerido' };
-        }
-        if (!data.apellidoPaciente?.trim()) {
-            return { success: false, error: 'El apellido es requerido' };
-        }
-        if (!data.codigoComunidad?.trim()) {
-            return { success: false, error: 'La comunidad es requerida' };
+        await requireAuth();
+
+        const validation = PacienteSchema.safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
         }
 
-        // DB-06: INSERT directly — FK constraint handles community validation
-        await db.insert(pacientes).values(data);
+        // Verificar si la comunidad existe
+        if (validation.data.codigoComunidad) {
+            const comunidadExists = await db.select({ id: comunidades.codigoComunidad })
+                .from(comunidades)
+                .where(eq(comunidades.codigoComunidad, validation.data.codigoComunidad))
+                .limit(1);
+
+            if (!comunidadExists.length) {
+                return { success: false, error: 'La comunidad seleccionada no existe' };
+            }
+        }
+
+        await db.insert(pacientes).values(validation.data);
         revalidatePath('/datos-basicos/pacientes');
         return { success: true, message: 'Paciente creado correctamente' };
     } catch (error) {
@@ -79,33 +80,39 @@ export async function createPaciente(data: NewPaciente) {
 /**
  * Actualizar un paciente
  */
-export async function updatePaciente(cedula: string, data: Partial<NewPaciente>) {
+export async function updatePaciente(cedula: string, data: unknown) {
     try {
-        // Verificar que el paciente existe
-        const existing = await db.select()
+        await requireAuth();
+
+        const validation = PacienteSchema.partial().safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
+        }
+
+        const existing = await db.select({ cedula: pacientes.cedulaPaciente })
             .from(pacientes)
             .where(eq(pacientes.cedulaPaciente, cedula))
             .limit(1);
 
-        if (!existing || existing.length === 0) {
+        if (!existing.length) {
             return { success: false, error: 'El paciente no fue encontrado' };
         }
 
-        // Si se está cambiando la comunidad, verificar que existe
-        if (data.codigoComunidad) {
-            const comunidadExists = await db.select()
+        if (validation.data.codigoComunidad) {
+            const comunidadExists = await db.select({ id: comunidades.codigoComunidad })
                 .from(comunidades)
-                .where(eq(comunidades.codigoComunidad, data.codigoComunidad))
+                .where(eq(comunidades.codigoComunidad, validation.data.codigoComunidad))
                 .limit(1);
 
-            if (!comunidadExists || comunidadExists.length === 0) {
+            if (!comunidadExists.length) {
                 return { success: false, error: 'La comunidad seleccionada no existe' };
             }
         }
 
         await db.update(pacientes)
-            .set(data)
+            .set(validation.data)
             .where(eq(pacientes.cedulaPaciente, cedula));
+
         revalidatePath('/datos-basicos/pacientes');
         return { success: true, message: 'Paciente actualizado correctamente' };
     } catch (error) {
@@ -119,6 +126,7 @@ export async function updatePaciente(cedula: string, data: Partial<NewPaciente>)
  */
 export async function deletePaciente(cedula: string) {
     try {
+        await requireAuth();
         // Verificar que el paciente existe antes de eliminar
         const existing = await db.select()
             .from(pacientes)
@@ -170,6 +178,7 @@ export async function deletePaciente(cedula: string) {
  */
 export async function getPaciente(cedula: string) {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(pacientes)
             .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))

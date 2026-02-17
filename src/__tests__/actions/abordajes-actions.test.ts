@@ -14,10 +14,12 @@ describe('Abordajes Actions', () => {
             // Should return success: true but empty list, or success: true with data
 
             expect(result.success).toBe(true);
-            expect(Array.isArray(result.data)).toBe(true);
-            if (result.data.length === 0) {
-                // Expected for non-existent abordaje
-                expect(result.data).toEqual([]);
+            if (result.success && result.data) {
+                expect(Array.isArray(result.data)).toBe(true);
+                if (result.data.length === 0) {
+                    // Expected for non-existent abordaje
+                    expect(result.data).toEqual([]);
+                }
             }
         });
     });

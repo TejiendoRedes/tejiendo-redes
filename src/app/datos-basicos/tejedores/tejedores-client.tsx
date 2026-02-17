@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Users } from 'lucide-react';
+import { Edit, Trash2, Users, History } from 'lucide-react';
 import { Tejedor } from '@/db/schema/tejedores';
 import { createTejedor, deleteTejedor, updateTejedor } from '@/actions/tejedores-actions';
 import {
@@ -109,6 +109,16 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                     <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => router.push(`/datos-basicos/tejedores/${t.cedulaTejedor}`)}
+                        title="Ver Historial"
+                        aria-label="Ver historial del tejedor"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                        <History className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(t)}
                         title="Editar"
                     >
@@ -138,15 +148,15 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
 
         const headers = ['cedula', 'nombre', 'profesion', 'tipo', 'telefono'];
         const columnsData = [
-            { header: 'Cédula', dataKey: 'cedula' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Profesión', dataKey: 'profesion' },
-            { header: 'Tipo Voluntario', dataKey: 'tipo' },
-            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Cédula', dataKey: 'cedula' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Profesión', dataKey: 'profesion' as const },
+            { header: 'Tipo Voluntario', dataKey: 'tipo' as const },
+            { header: 'Teléfono', dataKey: 'telefono' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'tejedores'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'tejedores'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'tejedores', 'Reporte de Tejedores'));
         }

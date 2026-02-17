@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Heart, MapPin } from 'lucide-react';
+import { Edit, Trash2, Heart, MapPin, History } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -171,6 +171,16 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                         <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => router.push(`/datos-basicos/pacientes/${p.cedulaPaciente}`)}
+                            title="Ver Historial"
+                            aria-label="Ver historial del paciente"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                            <History className="w-4 h-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleEdit(p)}
                             title="Editar"
                             aria-label="Editar paciente"
@@ -205,17 +215,17 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
         const headers = ['cedula', 'nombre', 'edad', 'sexo', 'comunidad', 'ubicacion', 'telefono'];
         const columnsData = [
-            { header: 'Cédula', dataKey: 'cedula' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Edad', dataKey: 'edad' },
-            { header: 'Sexo', dataKey: 'sexo' },
-            { header: 'Comunidad', dataKey: 'comunidad' },
-            { header: 'Ubicación', dataKey: 'ubicacion' },
-            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Cédula', dataKey: 'cedula' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Edad', dataKey: 'edad' as const },
+            { header: 'Sexo', dataKey: 'sexo' as const },
+            { header: 'Comunidad', dataKey: 'comunidad' as const },
+            { header: 'Ubicación', dataKey: 'ubicacion' as const },
+            { header: 'Teléfono', dataKey: 'telefono' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'pacientes'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'pacientes'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'pacientes', 'Reporte de Pacientes'));
         }

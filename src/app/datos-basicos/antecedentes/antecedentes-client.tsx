@@ -253,20 +253,20 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
 
         const headers = ['codigo', 'paciente', 'peso', 'talla', 'temp', 'fc', 'ta', 'previas', 'alergias', 'familia'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Paciente', dataKey: 'paciente' },
-            { header: 'Peso', dataKey: 'peso' },
-            { header: 'Talla', dataKey: 'talla' },
-            { header: 'Temp', dataKey: 'temp' },
-            { header: 'F.C.', dataKey: 'fc' },
-            { header: 'T.A.', dataKey: 'ta' },
-            { header: 'Previas', dataKey: 'previas' },
-            { header: 'Alergias', dataKey: 'alergias' },
-            { header: 'Familia', dataKey: 'familia' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Paciente', dataKey: 'paciente' as const },
+            { header: 'Peso', dataKey: 'peso' as const },
+            { header: 'Talla', dataKey: 'talla' as const },
+            { header: 'Temp', dataKey: 'temp' as const },
+            { header: 'F.C.', dataKey: 'fc' as const },
+            { header: 'T.A.', dataKey: 'ta' as const },
+            { header: 'Previas', dataKey: 'previas' as const },
+            { header: 'Alergias', dataKey: 'alergias' as const },
+            { header: 'Familia', dataKey: 'familia' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'antecedentes'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'antecedentes'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'antecedentes', 'Reporte de Antecedentes Médicos'));
         }

@@ -17,7 +17,7 @@ const dbConfig = {
     charset: 'utf8mb4',
     timezone: 'Z', // UTC
     // Enable multiple statements if needed
-    multipleStatements: true,
+    // multipleStatements: true, // Removed for security reasons (prevents SQL injection escalation)
     // Connection reuse settings
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,

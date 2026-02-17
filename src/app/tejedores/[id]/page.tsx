@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, Phone, Mail, User, Briefcase } from 'lucide-react';
-import { getEntityDetails, EntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/actions/global-search-actions';
+import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 
 export default function TejedorDetallePage() {
@@ -29,6 +30,8 @@ export default function TejedorDetallePage() {
     if (loading) return <MainLayout><div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div></MainLayout>;
 
     if (!details) return <MainLayout><div className="p-8 text-center">Tejedor no encontrado</div></MainLayout>;
+
+    if (details.type !== 'tejedor') return null;
 
     const { data } = details;
 

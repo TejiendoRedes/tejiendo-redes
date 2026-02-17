@@ -186,15 +186,15 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
 
         const headers = ['codigo', 'nombre', 'presentacion', 'existencia', 'descripcion'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Presentación', dataKey: 'presentacion' },
-            { header: 'Existencia', dataKey: 'existencia' },
-            { header: 'Descripción', dataKey: 'descripcion' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Presentación', dataKey: 'presentacion' as const },
+            { header: 'Existencia', dataKey: 'existencia' as const },
+            { header: 'Descripción', dataKey: 'descripcion' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'inventario-medicamentos'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'inventario-medicamentos'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'inventario-medicamentos', 'Reporte de Inventario de Medicamentos'));
         }

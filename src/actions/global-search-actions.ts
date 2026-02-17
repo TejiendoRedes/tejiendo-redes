@@ -13,6 +13,7 @@ import { consultas } from '@/db/schema/consultas';
 import { medicamentosPacientes } from '@/db/schema/relations';
 import { abordajeComunidad } from '@/db/schema/relations';
 import { like, or, eq, desc } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 export type SearchResult = {
     id: string;
@@ -34,6 +35,21 @@ export type GroupedSearchResults = {
 };
 
 export async function searchGlobal(query: string): Promise<GroupedSearchResults> {
+    try {
+        await requireAuth();
+    } catch (error) {
+        return {
+            pacientes: [],
+            comunidades: [],
+            medicamentos: [],
+            enfermedades: [],
+            abordajes: [],
+            tejedores: [],
+            responsables: [],
+            aspirantes: []
+        };
+    }
+
     if (!query || query.length < 2) {
         return {
             pacientes: [],
@@ -211,7 +227,7 @@ export async function searchGlobal(query: string): Promise<GroupedSearchResults>
             title: `${t.nombre} ${t.apellido}`,
             subtitle: `${t.profesion}`,
             type: 'tejedor',
-            url: `/tejedores/${t.id}`
+            url: `/datos-basicos/tejedores/${t.id}`
         })),
         responsables: responsablesResults.map(r => ({
             id: r.id,
@@ -232,15 +248,11 @@ export async function searchGlobal(query: string): Promise<GroupedSearchResults>
 
 // ------ Entity Details for Quick View ------
 
-export type EntityDetails = {
-    type: string;
-    data: any;
-    history: any[];
-    related?: any;
-}
+import { EntityDetails } from '@/types/app-types';
 
 export async function getEntityDetails(type: string, id: string): Promise<EntityDetails | null> {
     try {
+        await requireAuth();
         switch (type) {
             case 'paciente': {
                 const paciente = await db.select().from(pacientes).where(eq(pacientes.cedulaPaciente, id)).limit(1);
@@ -338,7 +350,28 @@ export async function getEntityDetails(type: string, id: string): Promise<Entity
             case 'tejedor': {
                 const tej = await db.select().from(tejedores).where(eq(tejedores.cedulaTejedor, id)).limit(1);
                 if (!tej.length) return null;
-                return { type, data: tej[0], history: [] };
+
+                // Historial: Participaciones en abordajes
+                const { tejedoresAbordaje } = await import('@/db/schema/relations');
+                const historialParticipacion = await db.select({
+                    codigo: abordaje.codigoAbordaje,
+                    fecha: abordaje.fechaAbordaje,
+                    descripcion: abordaje.descripcion
+                })
+                    .from(tejedoresAbordaje)
+                    .innerJoin(abordaje, eq(tejedoresAbordaje.codigoAbordaje, abordaje.codigoAbordaje))
+                    .where(eq(tejedoresAbordaje.cedulaTejedor, id))
+                    .orderBy(desc(abordaje.fechaAbordaje))
+                    .limit(5);
+
+                return {
+                    type,
+                    data: tej[0],
+                    history: historialParticipacion.map(h => ({
+                        descripcion: `Abordaje: ${h.descripcion}`,
+                        fecha: h.fecha
+                    }))
+                };
             }
             case 'responsable': {
                 const resp = await db.select().from(responsable).where(eq(responsable.cedulaResponsable, id)).limit(1);
@@ -347,7 +380,7 @@ export async function getEntityDetails(type: string, id: string): Promise<Entity
                 // History: Comunidades a cargo
                 const comunidadesACargo = await db.select().from(comunidades).where(eq(comunidades.cedulaResponsable, id));
 
-                return { type, data: resp[0], history: comunidadesACargo };
+                return { type, data: resp[0], related: comunidadesACargo, history: [] };
             }
             case 'aspirante': {
                 const asp = await db.select().from(aspirantes).where(eq(aspirantes.cedulaAspirante, id)).limit(1);

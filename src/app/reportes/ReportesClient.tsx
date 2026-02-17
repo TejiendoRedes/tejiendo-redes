@@ -17,59 +17,18 @@ import {
 import { Download, FileText, Filter, Loader2 } from 'lucide-react';
 import { DataTable } from '@/components/shared/DataTable';
 import { toast } from 'sonner';
-import { utils, write, WORKBOOK_APPEND } from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { exportToCSV, exportToPDF, ExportColumn } from '@/lib/export-utils';
 import { getEstadoNombre, getMunicipioNombre } from '@/data/venezuela-location';
+
+import { ReporteAbordajeItem, ReporteComunidadItem, ReportePacienteItem, ReporteMorbilidadItem, ReporteMedicamentoItem } from '@/types/app-types';
 
 interface ReportesClientProps {
     comunidades: Array<{ codigo_comunidad: string; nombre_comunidad: string }>;
-    reporteAbordajes: Array<{
-        codigo_abordaje: string;
-        fecha_abordaje: Date;
-        descripcion: string;
-        comunidades: string;
-        pacientes_atendidos: number;
-        hora_inicio: string;
-        hora_fin: string;
-    }>;
-    reporteComunidades: Array<{
-        codigo_comunidad: string;
-        nombre_comunidad: string;
-        estado: string;
-        municipio: string;
-        cantidad_habitantes: number;
-        pacientes_tratados: number;
-        abordajes_realizados: number;
-        total_consultas: number;
-    }>;
-    reportePacientes: Array<{
-        cedula_paciente: string;
-        codigo_comunidad: string;
-        nombre_comunidad: string | null;
-        nombre_paciente: string;
-        apellido_paciente: string;
-        fecha_nacimiento: Date | null;
-        direccion_paciente: string | null;
-        telefono_paciente: string | null;
-        correo_paciente: string | null;
-    }>;
-    dataMorbilidad: Array<{
-        codigo_enfermedad: string;
-        nombre_enfermedad: string;
-        tipo_patologia: string;
-        total_casos: number;
-        pacientes_afectados: number;
-        porcentaje: string;
-        ultima_consulta: Date | null;
-    }>;
-    reporteMedicamentos: Array<{
-        codigo_medicamento: string;
-        nombre_medicamento: string;
-        presentacion: string;
-        existencia: number;
-        descripcion: string | null;
-    }>;
+    reporteAbordajes: ReporteAbordajeItem[];
+    reporteComunidades: ReporteComunidadItem[];
+    reportePacientes: ReportePacienteItem[];
+    dataMorbilidad: ReporteMorbilidadItem[];
+    reporteMedicamentos: ReporteMedicamentoItem[];
 }
 
 export default function ReportesClient({
@@ -108,75 +67,26 @@ export default function ReportesClient({
 
     const handleExport = (format: 'csv' | 'pdf', tabName: string, data: any[], columns: any[]) => {
         try {
+            const exportColumns: ExportColumn<any>[] = columns.map(col => ({
+                header: col.label,
+                key: col.key,
+                render: col.render
+            }));
+
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `reporte-${tabName}-${timestamp}`;
+            const title = `Reporte de ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`;
+
             if (format === 'csv') {
-                const worksheet = utils.json_to_sheet(data);
-                const workbook = utils.book_new();
-                utils.book_append_sheet(workbook, worksheet, tabName);
-
-                // Generar nombre de archivo
-                const date = new Date().toLocaleDateString('es-VE').replace(/\//g, '-');
-                write(workbook, { bookType: 'csv', type: 'buffer' });
-                // @ts-ignore
-                import('xlsx').then(xlsx => {
-                    xlsx.writeFile(workbook, `Reporte_${tabName}_${date}.csv`);
-                });
-                toast.success(`Exportado correctamente a CSV`);
+                exportToCSV(data, exportColumns, filename);
+                toast.success('Reporte CSV exportado exitosamente');
             } else {
-                const doc = new jsPDF();
-
-                // Título
-                doc.setFontSize(18);
-                doc.text(`Reporte de ${tabName}`, 14, 22);
-                doc.setFontSize(11);
-                doc.text(`Generado el: ${new Date().toLocaleDateString('es-VE')}`, 14, 30);
-
-                // Filtros aplicados
-                let yPos = 38;
-                if (fechaInicio || fechaFin || comunidadFiltro !== 'todas') {
-                    doc.setFontSize(10);
-                    doc.text('Filtros aplicados:', 14, yPos);
-                    yPos += 5;
-                    if (fechaInicio) doc.text(`Desde: ${new Date(fechaInicio).toLocaleDateString('es-VE')}`, 20, yPos);
-                    if (fechaFin) doc.text(`Hasta: ${new Date(fechaFin).toLocaleDateString('es-VE')}`, 70, yPos);
-                    yPos += 5;
-                    if (comunidadFiltro !== 'todas') {
-                        const com = comunidades.find(c => c.codigo_comunidad === comunidadFiltro);
-                        doc.text(`Comunidad: ${com?.nombre_comunidad || comunidadFiltro}`, 20, yPos);
-                    }
-                    yPos += 10;
-                }
-
-                // Datos
-                const tableColumn = columns.map(c => c.label);
-                const tableRows = data.map(item => {
-                    return columns.map(col => {
-                        if (col.key === 'estado') {
-                            return getEstadoNombre(item[col.key]);
-                        }
-                        if (col.key === 'municipio') {
-                            return getMunicipioNombre(item.estado, item[col.key]);
-                        }
-                        if (col.render) {
-                            // Si tiene render, tratamos de ejecutarlo o obtener el valor raw
-                            // Esta es una simplificación, idealmente refactorizamos render para aceptar strings puros
-                            return String(item[col.key]);
-                        }
-                        return String(item[col.key] || '-');
-                    });
-                });
-
-                autoTable(doc, {
-                    head: [tableColumn],
-                    body: tableRows,
-                    startY: yPos,
-                });
-
-                doc.save(`Reporte_${tabName}_${new Date().toISOString().split('T')[0]}.pdf`);
-                toast.success(`Exportado correctamente a PDF`);
+                exportToPDF(data, exportColumns, filename, title);
+                toast.success('Reporte PDF exportado exitosamente');
             }
         } catch (error) {
-            console.error(error);
-            toast.error('Error al exportar');
+            console.error('Error exportando:', error);
+            toast.error('Error al exportar el reporte');
         }
     };
 
@@ -257,7 +167,7 @@ export default function ReportesClient({
                                     size="sm"
                                     onClick={() => handleExport('csv', 'Abordajes', reporteAbordajes, [
                                         { key: 'codigo_abordaje', label: 'Código' },
-                                        { key: 'fecha_abordaje', label: 'Fecha' },
+                                        { key: 'fecha_abordaje', label: 'Fecha', render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' }) },
                                         { key: 'descripcion', label: 'Descripción' },
                                         { key: 'comunidades', label: 'Comunidades' },
                                         { key: 'pacientes_atendidos', label: 'Pacientes' }
@@ -271,7 +181,7 @@ export default function ReportesClient({
                                     size="sm"
                                     onClick={() => handleExport('pdf', 'Abordajes', reporteAbordajes, [
                                         { key: 'codigo_abordaje', label: 'Código' },
-                                        { key: 'fecha_abordaje', label: 'Fecha' },
+                                        { key: 'fecha_abordaje', label: 'Fecha', render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' }) },
                                         { key: 'descripcion', label: 'Descripción' },
                                         { key: 'comunidades', label: 'Comunidades' },
                                         { key: 'pacientes_atendidos', label: 'Pacientes' }
@@ -291,7 +201,7 @@ export default function ReportesClient({
                                         key: 'fecha_abordaje',
                                         label: 'Fecha',
                                         sortable: true,
-                                        render: (item: any) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' })
+                                        render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                     },
                                     { key: 'descripcion', label: 'Descripción' },
                                     { key: 'comunidades', label: 'Comunidades', sortable: true },
@@ -317,8 +227,8 @@ export default function ReportesClient({
                                     onClick={() => handleExport('csv', 'Comunidades', reporteComunidades, [
                                         { key: 'codigo_comunidad', label: 'Código' },
                                         { key: 'nombre_comunidad', label: 'Nombre' },
-                                        { key: 'estado', label: 'Estado' },
-                                        { key: 'municipio', label: 'Municipio' },
+                                        { key: 'estado', label: 'Estado', render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado) },
+                                        { key: 'municipio', label: 'Municipio', render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio) },
                                         { key: 'cantidad_habitantes', label: 'Habitantes' },
                                         { key: 'pacientes_tratados', label: 'Pacientes' }
                                     ])}
@@ -332,8 +242,8 @@ export default function ReportesClient({
                                     onClick={() => handleExport('pdf', 'Comunidades', reporteComunidades, [
                                         { key: 'codigo_comunidad', label: 'Código' },
                                         { key: 'nombre_comunidad', label: 'Nombre' },
-                                        { key: 'estado', label: 'Estado' },
-                                        { key: 'municipio', label: 'Municipio' },
+                                        { key: 'estado', label: 'Estado', render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado) },
+                                        { key: 'municipio', label: 'Municipio', render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio) },
                                         { key: 'cantidad_habitantes', label: 'Habitantes' },
                                         { key: 'pacientes_tratados', label: 'Pacientes' }
                                     ])}
@@ -353,13 +263,13 @@ export default function ReportesClient({
                                         key: 'estado',
                                         label: 'Estado',
                                         sortable: true,
-                                        render: (item: any) => getEstadoNombre(item.estado)
+                                        render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado)
                                     },
                                     {
                                         key: 'municipio',
                                         label: 'Municipio',
                                         sortable: true,
-                                        render: (item: any) => getMunicipioNombre(item.estado, item.municipio)
+                                        render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio)
                                     },
                                     { key: 'cantidad_habitantes', label: 'Habitantes', sortable: true },
                                     {
@@ -427,7 +337,7 @@ export default function ReportesClient({
                                     {
                                         key: 'fecha_nacimiento',
                                         label: 'Fecha de Nacimiento',
-                                        render: (p: any) =>
+                                        render: (p: ReportePacienteItem) =>
                                             p.fecha_nacimiento
                                                 ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                                 : '-',
@@ -457,7 +367,7 @@ export default function ReportesClient({
                                         { key: 'nombre_enfermedad', label: 'Enfermedad' },
                                         { key: 'tipo_patologia', label: 'Tipo' },
                                         { key: 'total_casos', label: 'Casos' },
-                                        { key: 'porcentaje', label: '%' }
+                                        { key: 'porcentaje', label: '%', render: (item: ReporteMorbilidadItem) => `${item.porcentaje}%` }
                                     ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
@@ -471,7 +381,7 @@ export default function ReportesClient({
                                         { key: 'nombre_enfermedad', label: 'Enfermedad' },
                                         { key: 'tipo_patologia', label: 'Tipo' },
                                         { key: 'total_casos', label: 'Casos' },
-                                        { key: 'porcentaje', label: '%' }
+                                        { key: 'porcentaje', label: '%', render: (item: ReporteMorbilidadItem) => `${item.porcentaje}%` }
                                     ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
@@ -491,13 +401,13 @@ export default function ReportesClient({
                                     {
                                         key: 'porcentaje',
                                         label: 'Porcentaje del Total',
-                                        render: (d: any) => `${d.porcentaje}%`,
+                                        render: (d: ReporteMorbilidadItem) => `${d.porcentaje}%`,
                                         sortable: true,
                                     },
                                     {
                                         key: 'ultima_consulta',
                                         label: 'Última Consulta',
-                                        render: (d: any) =>
+                                        render: (d: ReporteMorbilidadItem) =>
                                             d.ultima_consulta
                                                 ? new Date(d.ultima_consulta).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                                 : '-',

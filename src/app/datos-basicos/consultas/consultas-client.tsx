@@ -210,18 +210,18 @@ export default function ConsultasClient({
 
         const headers = ['codigo', 'paciente', 'medico', 'abordaje', 'motivo', 'diagnostico', 'tratamiento', 'recomendaciones'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Paciente', dataKey: 'paciente' },
-            { header: 'Médico', dataKey: 'medico' },
-            { header: 'Abordaje', dataKey: 'abordaje' },
-            { header: 'Motivo', dataKey: 'motivo' },
-            { header: 'Diagnóstico', dataKey: 'diagnostico' },
-            { header: 'Tratamiento', dataKey: 'tratamiento' },
-            { header: 'Recomendaciones', dataKey: 'recomendaciones' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Paciente', dataKey: 'paciente' as const },
+            { header: 'Médico', dataKey: 'medico' as const },
+            { header: 'Abordaje', dataKey: 'abordaje' as const },
+            { header: 'Motivo', dataKey: 'motivo' as const },
+            { header: 'Diagnóstico', dataKey: 'diagnostico' as const },
+            { header: 'Tratamiento', dataKey: 'tratamiento' as const },
+            { header: 'Recomendaciones', dataKey: 'recomendaciones' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'consultas'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'consultas'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'consultas', 'Reporte de Consultas Médicas'));
         }

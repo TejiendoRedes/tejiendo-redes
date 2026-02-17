@@ -139,14 +139,14 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
 
         const headers = ['codigo', 'nombre', 'tipo', 'descripcion'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Tipo Patología', dataKey: 'tipo' },
-            { header: 'Descripción', dataKey: 'descripcion' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Tipo Patología', dataKey: 'tipo' as const },
+            { header: 'Descripción', dataKey: 'descripcion' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'enfermedades'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'enfermedades'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'enfermedades', 'Reporte de Enfermedades'));
         }

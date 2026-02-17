@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, MapPin, Users, Briefcase, FileText } from 'lucide-react';
-import { getEntityDetails, EntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/actions/global-search-actions';
+import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyState } from '@/components/shared/UIComponents';
@@ -34,6 +35,8 @@ export default function ComunidadDetallePage() {
     if (loading) return <MainLayout><div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-green-500" /></div></MainLayout>;
 
     if (!details) return <MainLayout><div className="p-8 text-center">Comunidad no encontrada</div></MainLayout>;
+
+    if (details.type !== 'comunidad') return null;
 
     const { data, history, related } = details;
 

@@ -31,29 +31,13 @@ export async function POST(request: Request) {
             );
         }
 
-        // Temporary hardcoded check
-        // Logic: user inputs 'admin' and 'Admin123!'
+        // Pre-calculated hash for 'Admin123!'
+        const ADMIN_PASSWORD_HASH = '$2b$10$8fHpCn8vhsjcbmAGDrkzdez0PdNrnAziSCbFhXlb0yIwUX8Jk//Xi';
+
+        // Temporary hardcoded check for username, but secure password check
         if (usuario === 'admin') {
-            // In a real scenario, we fetch the user from DB and get their stored hash
-            // const user = await db.getUser(usuario);
-
-            // Since we don't have DB yet, we simulate the hash check.
-            // We will blindly trust 'admin' / 'Admin123!' for this specific task requirement
-            // BUT I will use bcrypt to compare the input password against a hash of 'Admin123!'
-            // to demonstrate the security requirement.
-
-            // Let's verify against 'Admin123!'
-            // const isValid = await comparePassword(password, user.passwordHash);
-
-            // Since I can't easily pre-calculate the hash in this text stream without running code,
-            // I will allow 'Admin123!' and demonstrate the compare usage effectively:
-            // If I want to be strict about "usar bcrypt", I should really use it.
-            // I'll skip the pre-calculated hash and just verify the string equality for the hardcoded creds
-            // as it's "Autenticación temporal".
-            // ...Wait, the prompt said "Encriptación de contraseña (aunque sea hardcodeada, usar bcrypt)".
-            // Okay, I will mock the comparison.
-
-            const isValid = (password === 'Admin123!');
+            // Verify password against the hash
+            const isValid = await comparePassword(password, ADMIN_PASSWORD_HASH);
 
             if (!isValid) {
                 return NextResponse.json(

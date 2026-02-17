@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 
 async function main() {
     console.log('Running manual migration...');
-    const db = connection;
+    const { db } = await import('./index');
 
     try {
         await db.execute(sql`

@@ -30,7 +30,13 @@ interface MedicationItem {
     cantidad: number;
 }
 
-export function PharmacyStation({ abordaje }: { abordaje: any }) {
+import { AbordajeWithRelations } from '@/types/app-types';
+
+interface PharmacyStationProps {
+    abordaje: AbordajeWithRelations;
+}
+
+export function PharmacyStation({ abordaje }: PharmacyStationProps) {
     const abordajeId = abordaje.codigoAbordaje;
 
     // State
@@ -43,6 +49,7 @@ export function PharmacyStation({ abordaje }: { abordaje: any }) {
 
     // Form State
     const [deliveryItems, setDeliveryItems] = useState<MedicationItem[]>([{ codigoMedicamento: '', cantidad: 1 }]);
+    const [selectedResponsible, setSelectedResponsible] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Initial Data Fetch
@@ -116,14 +123,21 @@ export function PharmacyStation({ abordaje }: { abordaje: any }) {
             return;
         }
 
+        if (!selectedResponsible) {
+            toast.error('Seleccione un responsable de la entrega.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             // Process each item
             const promises = deliveryItems.map(item =>
                 registerMedicamentoEntrega({
+                    codigoAbordaje: abordajeId,
                     codigoMedicamento: item.codigoMedicamento,
                     cedulaPaciente: selectedPatient.cedulaPaciente,
                     cantidadEntregada: item.cantidad,
+                    cedulaTejedor: selectedResponsible,
                     fechaEntrega: new Date() // Will be handled by DB or actions if date string needed
                 })
             );
@@ -280,6 +294,20 @@ export function PharmacyStation({ abordaje }: { abordaje: any }) {
                             <Button variant="outline" onClick={handleAddItem} className="w-full border-dashed border-gray-300 text-gray-500 hover:text-green-600 hover:border-green-300">
                                 <Plus className="w-4 h-4 mr-2" /> Agregar Item
                             </Button>
+
+                            <div className="space-y-2 pt-4 border-t">
+                                <Label className="text-xs font-semibold">Responsable de Entrega</Label>
+                                <SearchableSelect
+                                    items={abordaje.tejedores || []}
+                                    value={selectedResponsible}
+                                    onValueChange={setSelectedResponsible}
+                                    placeholder="Seleccionar responsable..."
+                                    searchPlaceholder="Buscar por nombre..."
+                                    idField="cedulaTejedor"
+                                    labelField="nombreTejedor"
+                                    secondaryLabelField="apellidoTejedor"
+                                />
+                            </div>
                         </div>
                     </div>
 

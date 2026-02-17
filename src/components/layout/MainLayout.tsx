@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Topbar } from '@/components/layout/Topbar';
@@ -9,15 +9,20 @@ import { cn } from '@/components/ui/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { GlobalEditManager } from '@/components/shared/GlobalEditManager';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { isDesktop, isMobile, isTablet } = useBreakpoint();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -37,11 +42,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   if (!user) {
-    // If not loading and no user, but we are here, it means AuthContext doesn't have the user.
-    // Middleware might have allowed us (cookie exists), but client-side fetch failed or hasn't updated.
-    // To avoid infinite loop (redirecting to login, which redirects back here), show a message or manual retry.
-    // Or we can rely on proper sync. 
-    // IF we are in a loop, it's better to show a button.
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-slate-50 gap-4">
         <p className="text-slate-500 font-medium">No se pudo verificar la sesión.</p>
@@ -53,23 +53,51 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+    <div className="min-h-screen bg-muted/30 pb-16 md:pb-0">
+
+      {/* Desktop Sidebar */}
+      {isDesktop && (
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      )}
+
+      {/* Mobile/Tablet Sheet Sidebar (triggered by menu button) */}
+      {!isDesktop && (
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetContent side="left" className="p-0 w-72">
+            <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
+            <Sidebar
+              collapsed={false}
+              onToggle={() => setIsSheetOpen(false)}
+              variant="drawer"
+              hideToggle
+              className="border-none"
+            />
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {/* Topbar: passes menu click handler if not desktop (for Tablet) */}
+      <Topbar
+        sidebarCollapsed={sidebarCollapsed}
+        onMenuClick={!isDesktop ? () => setIsSheetOpen(true) : undefined}
       />
-      <Topbar sidebarCollapsed={sidebarCollapsed} />
 
       <main
         className={cn(
-          'pt-20 pb-8 px-6 transition-all duration-300',
-          sidebarCollapsed ? 'ml-16' : 'ml-64'
+          'pt-20 px-4 md:px-6 transition-all duration-300',
+          isDesktop ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'
         )}
       >
         <Breadcrumbs />
         <GlobalEditManager />
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && <MobileBottomNav onMenuClick={() => setIsSheetOpen(true)} />}
     </div>
   );
 }

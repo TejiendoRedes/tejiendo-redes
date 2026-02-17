@@ -25,8 +25,9 @@ describe('Enfermedades Actions', () => {
             // In a real test environment, you'd seed test data first
             const allEnfermedades = await getEnfermedades();
 
-            if (allEnfermedades.success && allEnfermedades.data.length > 0) {
-                const firstCode = allEnfermedades.data[0].codigoEnfermedad;
+            if (allEnfermedades.success && allEnfermedades.data && allEnfermedades.data.length > 0) {
+                const firstEntity = allEnfermedades.data[0];
+                const firstCode = firstEntity.codigoEnfermedad;
                 const result = await getEnfermedad(firstCode);
 
                 expect(result.success).toBe(true);
@@ -78,7 +79,7 @@ describe('Enfermedades Actions', () => {
             // First, get an existing enfermedad
             const allEnfermedades = await getEnfermedades();
 
-            if (allEnfermedades.success && allEnfermedades.data.length > 0) {
+            if (allEnfermedades.success && allEnfermedades.data && allEnfermedades.data.length > 0) {
                 const existingCode = allEnfermedades.data[0].codigoEnfermedad;
 
                 const updateData = {
@@ -102,7 +103,7 @@ describe('Enfermedades Actions', () => {
 
             const allEnfermedades = await getEnfermedades();
 
-            if (allEnfermedades.success && allEnfermedades.data.length > 0) {
+            if (allEnfermedades.success && allEnfermedades.data && allEnfermedades.data.length > 0) {
                 const codeToDelete = allEnfermedades.data[0].codigoEnfermedad;
                 const result = await deleteEnfermedad(codeToDelete);
 

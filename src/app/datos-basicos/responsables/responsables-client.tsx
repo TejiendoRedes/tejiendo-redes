@@ -167,16 +167,16 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
 
         const headers = ['cedula', 'nombre', 'cargo', 'ubicacion', 'telefono', 'correo'];
         const columnsData = [
-            { header: 'Cédula', dataKey: 'cedula' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Cargo', dataKey: 'cargo' },
-            { header: 'Ubicación', dataKey: 'ubicacion' },
-            { header: 'Teléfono', dataKey: 'telefono' },
-            { header: 'Correo', dataKey: 'correo' },
+            { header: 'Cédula', dataKey: 'cedula' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Cargo', dataKey: 'cargo' as const },
+            { header: 'Ubicación', dataKey: 'ubicacion' as const },
+            { header: 'Teléfono', dataKey: 'telefono' as const },
+            { header: 'Correo', dataKey: 'correo' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'responsables'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'responsables'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'responsables', 'Reporte de Responsables'));
         }

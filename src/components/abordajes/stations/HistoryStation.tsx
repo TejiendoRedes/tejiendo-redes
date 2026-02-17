@@ -11,12 +11,13 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
+import { AbordajeWithRelations } from '@/types/app-types';
 
 interface HistoryStationProps {
-    abordaje: any;
+    abordaje: AbordajeWithRelations;
 }
 
-export function HistoryStation({ abordaje }: HistoryStationProps) {
+export function HistoryStation({ abordaje }: { abordaje: AbordajeWithRelations }) {
     const totalComunidades = abordaje.comunidades?.length || 0;
     const totalTejedores = abordaje.tejedores?.length || 0;
     const totalConsultas = abordaje.consultas?.length || 0;
@@ -90,7 +91,7 @@ export function HistoryStation({ abordaje }: HistoryStationProps) {
         doc.setFont('helvetica', 'normal');
         doc.text(`Fecha: ${format(new Date(abordaje.fechaAbordaje), 'dd/MM/yyyy')}`, 20, 48);
         doc.text(`Tipo: ${abordaje.tipoAbordaje || 'Normal'}`, 20, 54);
-        doc.text(`Estado: ${abordaje.estatus || 'N/A'}`, 20, 60);
+        doc.text(`Estado: ${abordaje.estado || 'N/A'}`, 20, 60);
 
         // Stats Summary
         doc.setFontSize(10);

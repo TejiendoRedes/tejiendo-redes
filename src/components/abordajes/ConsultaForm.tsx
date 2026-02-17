@@ -23,6 +23,9 @@ interface ConsultaFormProps {
     onSuccess?: () => void;
     onCancel?: () => void;
     isInline?: boolean;
+    pacientes?: any[];
+    medicos?: any[];
+    enfermedades?: any[];
 }
 
 export function ConsultaForm({

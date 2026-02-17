@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { addComunidadToAbordaje, removeComunidadFromAbordaje } from '@/actions/abordajes-actions';
 import { getComunidades } from '@/actions/comunidades-actions';
+import { AbordajeWithRelations } from '@/types/app-types';
 
 interface CommunityStationProps {
     abordaje: any;

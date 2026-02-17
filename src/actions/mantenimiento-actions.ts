@@ -1,12 +1,14 @@
 'use server'
 
 import { revalidatePath } from 'next/cache';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * MOCK: Obtener la configuración actual de backup (Ejemplo visual)
  */
 export async function getConfiguracionBackup() {
     try {
+        await requireAuth();
         // Retornar datos de ejemplo para demostración visual
         const mockConfig = {
             id: 1,
@@ -32,6 +34,7 @@ export async function updateConfiguracionBackup(data: {
     proximaCopia?: Date;
 }) {
     try {
+        await requireAuth();
         console.log('MOCK: Actualizando configuración con:', data);
         revalidatePath('/mantenimiento');
         return { success: true, message: 'Configuración actualizada (Ejemplo)' };
@@ -45,6 +48,7 @@ export async function updateConfiguracionBackup(data: {
  */
 export async function triggerManualBackup() {
     try {
+        await requireAuth();
         // Simulamos un retraso para que se vea el cargando
         await new Promise(resolve => setTimeout(resolve, 2000));
 

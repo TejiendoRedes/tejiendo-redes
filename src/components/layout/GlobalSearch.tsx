@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Search, X, Edit, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, X, Edit, Loader2, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchGlobal, type SearchResult, type GroupedSearchResults } from '@/actions/global-search-actions';
@@ -27,6 +28,7 @@ export function GlobalSearch() {
     const inputRef = React.useRef<HTMLInputElement>(null);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const debouncedQuery = useDebounce(query, 300);
+    const router = useRouter();
     const { openEditModal } = useEditModalStore();
 
     // Ctrl+K / Cmd+K keyboard shortcut
@@ -87,6 +89,13 @@ export function GlobalSearch() {
         return Object.values(results).reduce((sum, arr) => sum + arr.length, 0);
     }, [results]);
 
+    const handleViewHistory = (result: SearchResult) => {
+        const basePath = result.type === 'paciente' ? 'pacientes' : 'tejedores';
+        router.push(`/datos-basicos/${basePath}/${result.id}`);
+        setIsOpen(false);
+        setQuery('');
+    };
+
     const handleEdit = (result: SearchResult) => {
         openEditModal(result.type, result.id);
         setIsOpen(false);
@@ -141,17 +150,42 @@ export function GlobalSearch() {
                                         {categoryLabels[type] || type}
                                     </div>
                                     {items.map((item: SearchResult) => (
-                                        <button
+                                        <div
                                             key={`${item.type}-${item.id}`}
                                             onClick={() => handleEdit(item)}
-                                            className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors group"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    handleEdit(item);
+                                                }
+                                            }}
+                                            role="button"
+                                            tabIndex={0}
+                                            className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-foreground hover:bg-accent transition-colors group cursor-pointer focus:bg-accent focus:outline-none"
                                         >
                                             <div className="text-left truncate">
                                                 <span className="block truncate">{item.title}</span>
                                                 <span className="block text-xs text-muted-foreground truncate">{item.subtitle}</span>
                                             </div>
-                                            <Edit className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
-                                        </button>
+                                            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                                                {(type === 'pacientes' || type === 'tejedores') && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewHistory(item);
+                                                        }}
+                                                        className="p-1 hover:bg-muted rounded-full text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title="Ver Historial"
+                                                        aria-label="Ver historial"
+                                                    >
+                                                        <History className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                                <div className="p-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Edit className="w-3.5 h-3.5" />
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             );

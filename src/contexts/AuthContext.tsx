@@ -78,7 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasRole = (roles: string[]): boolean => {
-    return !!user;
+    if (!user) return false;
+    const userRole = (user as any).role || user.tipodeVoluntario || '';
+    return roles.includes(userRole);
   };
 
   return (

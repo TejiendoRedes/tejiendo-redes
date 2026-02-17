@@ -6,6 +6,7 @@ import { enfermedades, type NewEnfermedad, type Enfermedad } from '@/db/schema/e
 import { eq } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todas las enfermedades (con búsqueda opcional)
@@ -14,6 +15,7 @@ import { like, or } from 'drizzle-orm';
 
 export async function getEnfermedades(query?: string, limit: number = 50) {
     try {
+        await requireAuth();
         let queryBuilder = db.select().from(enfermedades).$dynamic();
 
         if (query) {
@@ -37,8 +39,9 @@ export async function getEnfermedades(query?: string, limit: number = 50) {
 /**
  * Crear una nueva enfermedad
  */
-export async function createEnfermedad(data: NewEnfermedad) {
+export async function createEnfermedad(data: Omit<NewEnfermedad, 'codigoEnfermedad'> & { codigoEnfermedad?: string }) {
     try {
+        await requireAuth();
         // Validaciones básicas de campos obligatorios
         if (!data.nombreEnfermedad?.trim()) {
             return { success: false, error: 'El nombre de la enfermedad es requerido' };
@@ -70,6 +73,7 @@ export async function createEnfermedad(data: NewEnfermedad) {
  */
 export async function updateEnfermedad(codigo: string, data: Partial<NewEnfermedad>) {
     try {
+        await requireAuth();
         await db.update(enfermedades)
             .set(data)
             .where(eq(enfermedades.codigoEnfermedad, codigo));
@@ -86,6 +90,7 @@ export async function updateEnfermedad(codigo: string, data: Partial<NewEnfermed
  */
 export async function deleteEnfermedad(codigo: string) {
     try {
+        await requireAuth();
         await db.delete(enfermedades)
             .where(eq(enfermedades.codigoEnfermedad, codigo));
         revalidatePath('/datos-basicos/enfermedades');
@@ -101,6 +106,7 @@ export async function deleteEnfermedad(codigo: string) {
  */
 export async function getEnfermedad(codigo: string) {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(enfermedades)
             .where(eq(enfermedades.codigoEnfermedad, codigo))

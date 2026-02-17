@@ -18,64 +18,83 @@ export const MySQLErrorCodes = {
     TIMEOUT: 'ETIMEDOUT',
 } as const;
 
+interface DatabaseError {
+    code?: string;
+    errno?: number;
+    message?: string;
+    sqlMessage?: string;
+}
+
+function toDbError(error: unknown): DatabaseError {
+    if (typeof error === 'object' && error !== null) {
+        return error as DatabaseError;
+    }
+    return {};
+}
+
 /**
  * Detecta si el error es una restricción de clave foránea
  */
-export function isForeignKeyError(error: any): boolean {
+export function isForeignKeyError(error: unknown): boolean {
+    const e = toDbError(error);
     return (
-        error?.code === MySQLErrorCodes.FOREIGN_KEY_CONSTRAINT ||
-        error?.errno === 1451 ||
-        error?.message?.includes('foreign key constraint') ||
-        error?.message?.includes('Cannot delete or update a parent row')
+        e.code === MySQLErrorCodes.FOREIGN_KEY_CONSTRAINT ||
+        e.errno === 1451 ||
+        (e.message?.includes('foreign key constraint') ?? false) ||
+        (e.message?.includes('Cannot delete or update a parent row') ?? false)
     );
 }
 
 /**
  * Detecta si el error es por clave duplicada
  */
-export function isDuplicateKeyError(error: any): boolean {
+export function isDuplicateKeyError(error: unknown): boolean {
+    const e = toDbError(error);
     return (
-        error?.code === MySQLErrorCodes.DUPLICATE_ENTRY ||
-        error?.errno === 1062 ||
-        error?.message?.includes('Duplicate entry')
+        e.code === MySQLErrorCodes.DUPLICATE_ENTRY ||
+        e.errno === 1062 ||
+        (e.message?.includes('Duplicate entry') ?? false)
     );
 }
 
 /**
  * Detecta si el error es por campo requerido sin valor
  */
-export function isRequiredFieldError(error: any): boolean {
+export function isRequiredFieldError(error: unknown): boolean {
+    const e = toDbError(error);
     return (
-        error?.code === MySQLErrorCodes.NO_DEFAULT_FOR_FIELD ||
-        error?.code === MySQLErrorCodes.BAD_NULL_ERROR ||
-        error?.errno === 1364 ||
-        error?.errno === 1048 ||
-        error?.message?.includes('doesn\'t have a default value') ||
-        error?.message?.includes('cannot be null')
+        e.code === MySQLErrorCodes.NO_DEFAULT_FOR_FIELD ||
+        e.code === MySQLErrorCodes.BAD_NULL_ERROR ||
+        e.errno === 1364 ||
+        e.errno === 1048 ||
+        (e.message?.includes('doesn\'t have a default value') ?? false) ||
+        (e.message?.includes('cannot be null') ?? false)
     );
 }
 
 /**
  * Detecta si el error es de conexión a base de datos
  */
-export function isConnectionError(error: any): boolean {
+export function isConnectionError(error: unknown): boolean {
+    const e = toDbError(error);
     return (
-        error?.code === MySQLErrorCodes.CONNECTION_ERROR ||
-        error?.code === MySQLErrorCodes.TIMEOUT ||
-        error?.message?.includes('Connection') ||
-        error?.message?.includes('ETIMEDOUT') ||
-        error?.message?.includes('ECONNREFUSED')
+        e.code === MySQLErrorCodes.CONNECTION_ERROR ||
+        e.code === MySQLErrorCodes.TIMEOUT ||
+        (e.message?.includes('Connection') ?? false) ||
+        (e.message?.includes('ETIMEDOUT') ?? false) ||
+        (e.message?.includes('ECONNREFUSED') ?? false)
     );
 }
 
 /**
  * Detecta si el error es por referencia inválida (FK que no existe)
  */
-export function isInvalidReferenceError(error: any): boolean {
+export function isInvalidReferenceError(error: unknown): boolean {
+    const e = toDbError(error);
     return (
-        error?.code === MySQLErrorCodes.NO_REFERENCED_ROW ||
-        error?.errno === 1452 ||
-        error?.message?.includes('Cannot add or update a child row')
+        e.code === MySQLErrorCodes.NO_REFERENCED_ROW ||
+        e.errno === 1452 ||
+        (e.message?.includes('Cannot add or update a child row') ?? false)
     );
 }
 
@@ -173,7 +192,7 @@ function translateFieldName(fieldName: string): string {
  * @returns Mensaje de error legible en español
  */
 export function getErrorMessage(
-    error: any,
+    error: unknown,
     entityName: string,
     operation: 'crear' | 'actualizar' | 'eliminar' | 'obtener' | 'confirmar' | 'rechazar',
     customMessages?: {
@@ -208,7 +227,8 @@ export function getErrorMessage(
         }
 
         // Extraer el valor duplicado si es posible
-        const duplicateMatch = error?.message?.match(/Duplicate entry '([^']+)'/);
+        const e = toDbError(error);
+        const duplicateMatch = e.message?.match(/Duplicate entry '([^']+)'/);
         const duplicateValue = duplicateMatch ? duplicateMatch[1] : '';
 
         if (duplicateValue) {
@@ -220,7 +240,8 @@ export function getErrorMessage(
 
     // Error de campo requerido
     if (isRequiredFieldError(error)) {
-        const fieldName = extractFieldName(error?.message || '');
+        const e = toDbError(error);
+        const fieldName = extractFieldName(e.message || '');
         const translatedField = fieldName ? translateFieldName(fieldName) : 'un campo requerido';
 
         if (customMessages?.requiredField) {

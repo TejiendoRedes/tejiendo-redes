@@ -25,7 +25,6 @@ export async function middleware(request: NextRequest) {
     const isLoginPage = request.nextUrl.pathname.startsWith('/login');
     const isPublicApi = request.nextUrl.pathname.startsWith('/api/auth');
     const isStaticAsset = request.nextUrl.pathname.startsWith('/_next') ||
-        request.nextUrl.pathname.includes('.') || // simple check for extensions
         request.nextUrl.pathname === '/'; // root might be landing, but let's assume root redirects to dashboard or login
 
     // If user is already logged in and tries to access login page, redirect to dashboard
@@ -44,5 +43,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

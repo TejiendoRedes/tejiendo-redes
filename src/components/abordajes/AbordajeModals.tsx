@@ -31,12 +31,23 @@ import { getTejedores } from '@/actions/tejedores-actions';
 import { getMedicamentos } from '@/actions/medicamentos-actions';
 import { getPacientes } from '@/actions/pacientes-actions';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
+import { AbordajeWithRelations } from '@/types/app-types';
+import { Comunidad } from '@/db/schema/comunidades';
+import { Tejedor } from '@/db/schema/tejedores';
+import { Medicamento } from '@/db/schema/medicamentos';
+
+// Interface for Paciente Option since getPacientes returns a joined object that doesn't strictly match Paciente schema
+interface PacienteOption {
+    cedulaPaciente: string;
+    nombre: string;
+    apellido: string;
+}
 
 // --- Edit Abordaje Modal ---
 interface EditAbordajeModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    abordaje: any;
+    abordaje: AbordajeWithRelations;
 }
 
 export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordajeModalProps) {
@@ -183,7 +194,7 @@ interface AddComunidadModalProps {
 }
 
 export function AddComunidadModal({ open, onOpenChange, abordajeId, existingIds }: AddComunidadModalProps) {
-    const [comunidades, setComunidades] = useState<any[]>([]);
+    const [comunidades, setComunidades] = useState<Comunidad[]>([]);
     const [selectedId, setSelectedId] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -191,7 +202,7 @@ export function AddComunidadModal({ open, onOpenChange, abordajeId, existingIds 
         if (open) {
             getComunidades().then(res => {
                 if (res.success && res.data) {
-                    setComunidades(res.data.filter((c: any) => !existingIds.includes(c.codigoComunidad)));
+                    setComunidades((res.data as Comunidad[]).filter(c => !existingIds.includes(c.codigoComunidad)));
                 }
             });
         }
@@ -252,7 +263,7 @@ interface AddTejedorModalProps {
 }
 
 export function AddTejedorModal({ open, onOpenChange, abordajeId, existingIds }: AddTejedorModalProps) {
-    const [tejedores, setTejedores] = useState<any[]>([]);
+    const [tejedores, setTejedores] = useState<Tejedor[]>([]);
     const [selectedId, setSelectedId] = useState('');
     const [rol, setRol] = useState('');
     const [loading, setLoading] = useState(false);
@@ -261,7 +272,7 @@ export function AddTejedorModal({ open, onOpenChange, abordajeId, existingIds }:
         if (open) {
             getTejedores().then(res => {
                 if (res.success && res.data) {
-                    setTejedores(res.data.filter((t: any) => !existingIds.includes(t.cedulaTejedor)));
+                    setTejedores((res.data as Tejedor[]).filter(t => !existingIds.includes(t.cedulaTejedor)));
                 }
             });
         }
@@ -335,9 +346,9 @@ interface RegisterMedicamentoModalProps {
 }
 
 export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fechaAbordaje }: RegisterMedicamentoModalProps) {
-    const [pacientes, setPacientes] = useState<any[]>([]);
-    const [medicamentos, setMedicamentos] = useState<any[]>([]);
-    const [tejedores, setTejedores] = useState<any[]>([]);
+    const [pacientes, setPacientes] = useState<PacienteOption[]>([]);
+    const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
+    const [tejedores, setTejedores] = useState<Tejedor[]>([]);
 
     const [selectedPaciente, setSelectedPaciente] = useState('');
     const [selectedMedicamento, setSelectedMedicamento] = useState('');
@@ -347,9 +358,9 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
 
     useEffect(() => {
         if (open) {
-            getPacientes().then(res => { if (res.success) setPacientes(res.data || []) });
-            getMedicamentos().then(res => { if (res.success) setMedicamentos(res.data || []) });
-            getTejedores().then(res => { if (res.success) setTejedores(res.data || []) });
+            getPacientes().then(res => { if (res.success) setPacientes((res.data || []) as unknown as PacienteOption[]) });
+            getMedicamentos().then(res => { if (res.success) setMedicamentos((res.data || []) as Medicamento[]) });
+            getTejedores().then(res => { if (res.success) setTejedores((res.data || []) as Tejedor[]) });
         }
     }, [open]);
 
@@ -357,7 +368,8 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
         if (!selectedPaciente || !selectedMedicamento || !selectedTejedor) return;
         setLoading(true);
 
-        const fecha = new Date(fechaAbordaje);
+        // Ensure date is a valid Date object
+        const fecha = typeof fechaAbordaje === 'string' ? new Date(fechaAbordaje) : fechaAbordaje;
 
         const res = await registerMedicamentoEntrega({
             codigoMedicamento: selectedMedicamento,
@@ -396,7 +408,7 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
                             placeholder="Seleccionar paciente"
                             searchPlaceholder="Buscar por nombre o cédula..."
                             idField="cedulaPaciente"
-                            labelField="nombre"
+                            labelField="nombre" // Ensure your API returns 'nombre' not 'nombrePaciente' if that's what SearchableSelect expects, or update this
                             secondaryLabelField="apellido"
                         />
                     </div>

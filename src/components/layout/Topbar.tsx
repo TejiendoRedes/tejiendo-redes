@@ -1,8 +1,11 @@
+'use client';
+
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,14 +15,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { SheetTrigger } from '@/components/ui/sheet';
 
 interface TopbarProps {
   sidebarCollapsed: boolean;
+  onMenuClick?: () => void;
 }
 
-export function Topbar({ sidebarCollapsed }: TopbarProps) {
+export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { isDesktop } = useBreakpoint();
   const [searchQuery, setSearchQuery] = React.useState('');
 
   const handleLogout = () => {
@@ -36,11 +42,16 @@ export function Topbar({ sidebarCollapsed }: TopbarProps) {
   return (
     <header
       className="fixed top-0 right-0 h-16 bg-card border-b border-border z-30 transition-all duration-300"
-      style={{ left: sidebarCollapsed ? '4rem' : '16rem' }}
+      style={{ left: isDesktop ? (sidebarCollapsed ? '4rem' : '16rem') : '0' }}
     >
       <div className="flex items-center justify-between h-full px-6">
-        {/* Búsqueda Global */}
-        <div className="flex-1 max-w-xl mx-4">
+        <div className="flex items-center gap-4 flex-1 max-w-xl">
+          {onMenuClick && (
+            <Button variant="ghost" size="icon" onClick={onMenuClick} className="mr-2" aria-label="Abrir menú de navegación">
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
+          {/* Búsqueda Global */}
           <GlobalSearch />
         </div>
 

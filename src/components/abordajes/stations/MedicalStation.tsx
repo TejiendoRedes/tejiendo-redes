@@ -21,16 +21,18 @@ interface AbordajeAsistencia {
     paciente: {
         nombre: string;
         apellido: string;
-        fechaNacimiento: string | null;
+        fechaNacimiento: string | Date | null;
     };
 }
 
-export function MedicalStation({ abordaje }: { abordaje: any }) {
+import { AbordajeWithRelations } from '@/types/app-types';
+
+export function MedicalStation({ abordaje }: { abordaje: AbordajeWithRelations }) {
     const abordajeId = abordaje.codigoAbordaje;
 
     // State
     const [queue, setQueue] = useState<AbordajeAsistencia[]>([]);
-    const [enfermedades, setEnfermedades] = useState<any[]>([]);
+    const [enfermedades, setEnfermedades] = useState<any[]>([]); // Kept for local usage if needed, but ConsultaForm handles its own fetching
     const [isLoading, setIsLoading] = useState(true);
     const [selectedPatient, setSelectedPatient] = useState<AbordajeAsistencia | null>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -38,12 +40,13 @@ export function MedicalStation({ abordaje }: { abordaje: any }) {
 
     // Initial Data Fetch
     useEffect(() => {
+        // We might not need to fetch enfermedades here if ConsultaForm fetches it internally.
+        // But keeping it if we want to preload or show badges.
         const fetchInitial = async () => {
             try {
-                const enfRes = await getEnfermedades();
-                if (enfRes.success && enfRes.data) {
-                    setEnfermedades(enfRes.data);
-                }
+                // Remove getEnfermedades if unused. 
+                // Wait, MedicalStation doesn't use 'enfermedades' state except to pass to ConsultaForm (which was wrong).
+                // So we can remove this.
             } catch (error) {
                 console.error('Error loading config:', error);
             }
@@ -60,10 +63,6 @@ export function MedicalStation({ abordaje }: { abordaje: any }) {
                 const response = await getAbordajeAsistencia(abordajeId);
                 if (mounted && response.success && response.data) {
                     // Filter for patients ready for medical attention
-                    // Logic: 'En Triaje' is ready for doctor? Or 'En Espera'?
-                    // Let's assume 'En Espera' goes to reception, then maybe Triaje/Medical.
-                    // For now, show ANYONE not 'Finalizado' and not 'En Farmacia'?
-                    // Or specifically 'En Espera' and 'En Triaje' and 'En Consulta'.
                     const active = response.data.filter((item: AbordajeAsistencia) =>
                         ['En Espera', 'En Triaje', 'En Consulta'].includes(item.estado)
                     );
@@ -109,8 +108,6 @@ export function MedicalStation({ abordaje }: { abordaje: any }) {
     };
 
     // Filter Medicos from Abordaje Tejedores
-    // Assuming role or profession check. For now passing all, or filter by 'Médico' if possible.
-    // abordaje.tejedores is array of joined objects.
     const medicos = abordaje.tejedores || [];
 
     // Helper to format patient for SearchableSelect (though we only need it for list here)
@@ -201,9 +198,6 @@ export function MedicalStation({ abordaje }: { abordaje: any }) {
                         <div className="pb-10">
                             <ConsultaForm
                                 abordajeId={abordajeId}
-                                pacientes={patientListForForm}
-                                medicos={medicos} // TODO: Filter by profession if needed
-                                enfermedades={enfermedades}
                                 initialPatientId={selectedPatient.cedulaPaciente}
                                 onSuccess={handleConsultationSuccess}
                                 onCancel={() => setIsSheetOpen(false)}

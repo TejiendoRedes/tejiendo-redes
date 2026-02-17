@@ -6,7 +6,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Edit, Phone, Home, Briefcase } from 'lucide-react';
-import { getEntityDetails, EntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/actions/global-search-actions';
+import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,6 +30,8 @@ export default function ResponsableDetallePage() {
     if (loading) return <MainLayout><div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-500" /></div></MainLayout>;
 
     if (!details) return <MainLayout><div className="p-8 text-center">Responsable no encontrado</div></MainLayout>;
+
+    if (details.type !== 'responsable') return null;
 
     const { data, history } = details;
 

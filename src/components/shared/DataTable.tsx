@@ -35,6 +35,11 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
+// ... imports ...
+import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { cn } from '@/components/ui/utils';
+
+// ... interface DataTableProps ...
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
@@ -45,6 +50,7 @@ interface DataTableProps<T> {
   onExport?: (format: 'csv' | 'pdf') => void;
   emptyMessage?: string;
   itemsPerPage?: number;
+  mobileCardRenderer?: (row: T) => React.ReactNode;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -57,12 +63,14 @@ export function DataTable<T extends Record<string, any>>({
   onExport,
   emptyMessage = 'No hay registros para mostrar',
   itemsPerPage = 10,
+  mobileCardRenderer,
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
   const tableRef = React.useRef<HTMLDivElement>(null);
+  const { isMobile } = useBreakpoint();
 
   // Debounce search for performance
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -143,10 +151,23 @@ export function DataTable<T extends Record<string, any>>({
     return pages;
   };
 
+  const DefaultMobileCard = ({ row }: { row: T }) => (
+    <div className="bg-card border rounded-lg p-4 space-y-3 shadow-sm">
+      {columns.map(col => (
+        <div key={col.key} className="flex justify-between items-start text-sm border-b border-muted pb-2 last:border-0 last:pb-0">
+          <span className="font-semibold text-muted-foreground mr-2">{col.label}:</span>
+          <span className="text-right font-medium break-words max-w-[60%]">
+            {col.render ? col.render(row) : String(row[col.key] || '-')}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <div className="space-y-4" ref={tableRef}>
       {/* Barra de herramientas */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -154,7 +175,8 @@ export function DataTable<T extends Record<string, any>>({
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-11 sm:h-10" // Taller input on mobile
+            aria-label="Buscar en la tabla"
           />
         </div>
 
@@ -162,16 +184,16 @@ export function DataTable<T extends Record<string, any>>({
           {onExport && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size={isMobile ? "default" : "sm"} className="flex-1 sm:flex-none">
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => onExport('csv')}>
+                <DropdownMenuItem onClick={() => onExport('csv')} className="h-11">
                   Exportar CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onExport('pdf')}>
+                <DropdownMenuItem onClick={() => onExport('pdf')} className="h-11">
                   Exportar PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -179,7 +201,7 @@ export function DataTable<T extends Record<string, any>>({
           )}
 
           {onAdd && (
-            <Button onClick={onAdd} size="sm">
+            <Button onClick={onAdd} size={isMobile ? "default" : "sm"} className="flex-1 sm:flex-none">
               <Plus className="w-4 h-4 mr-2" />
               {addLabel}
             </Button>
@@ -192,78 +214,95 @@ export function DataTable<T extends Record<string, any>>({
         Mostrando {paginatedData.length} de {sortedData.length} resultados
       </div>
 
-      {/* Tabla */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map(column => (
-                <TableHead
-                  key={column.key}
-                  className={column.sortable ? 'cursor-pointer select-none hover:bg-muted/50 transition-colors' : ''}
-                  onClick={() => column.sortable && handleSort(column.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    {column.label}
-                    {column.sortable && sortColumn === column.key && (
-                      <span className="text-xs">
-                        {sortDirection === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedData.length === 0 ? (
+      {/* Tabla vs Cards */}
+      {isMobile ? (
+        <div className="flex flex-col gap-4">
+          {paginatedData.length === 0 ? (
+            <div className="p-8 text-center border rounded-lg bg-card border-dashed">
+              <Inbox className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="font-medium">{emptyMessage}</p>
+            </div>
+          ) : (
+            paginatedData.map((row, index) => (
+              <div key={index}>
+                {mobileCardRenderer ? mobileCardRenderer(row) : <DefaultMobileCard row={row} />}
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-40"
-                >
-                  <div className="flex flex-col items-center justify-center text-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                      <Inbox className="w-6 h-6 text-muted-foreground" />
+                {columns.map(column => (
+                  <TableHead
+                    key={column.key}
+                    className={column.sortable ? 'cursor-pointer select-none hover:bg-muted/50 transition-colors' : ''}
+                    onClick={() => column.sortable && handleSort(column.key)}
+                  >
+                    <div className="flex items-center gap-2">
+                      {column.label}
+                      {column.sortable && sortColumn === column.key && (
+                        <span className="text-xs">
+                          {sortDirection === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{emptyMessage}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando un nuevo registro'}
-                      </p>
-                    </div>
-                    {!searchQuery && onAdd && (
-                      <Button size="sm" variant="outline" onClick={onAdd} className="mt-1">
-                        <Plus className="w-4 h-4 mr-1" />
-                        {addLabel}
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
+                  </TableHead>
+                ))}
               </TableRow>
-            ) : (
-              paginatedData.map((row, index) => (
-                <TableRow key={index} className="hover:bg-muted/50 transition-colors">
-                  {columns.map(column => (
-                    <TableCell key={column.key}>
-                      {column.render
-                        ? column.render(row)
-                        : String(row[column.key] || '-')}
-                    </TableCell>
-                  ))}
+            </TableHeader>
+            <TableBody>
+              {paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-40"
+                  >
+                    <div className="flex flex-col items-center justify-center text-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                        <Inbox className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{emptyMessage}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando un nuevo registro'}
+                        </p>
+                      </div>
+                      {!searchQuery && onAdd && (
+                        <Button size="sm" variant="outline" onClick={onAdd} className="mt-1">
+                          <Plus className="w-4 h-4 mr-1" />
+                          {addLabel}
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                paginatedData.map((row, index) => (
+                  <TableRow key={index} className="hover:bg-muted/50 transition-colors">
+                    {columns.map(column => (
+                      <TableCell key={column.key}>
+                        {column.render
+                          ? column.render(row)
+                          : String(row[column.key] || '-')}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Paginación mejorada con ellipsis */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
           <Button
             variant="outline"
-            size="sm"
+            size={isMobile ? "default" : "sm"}
             onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
           >
@@ -278,9 +317,9 @@ export function DataTable<T extends Record<string, any>>({
                 <Button
                   key={page}
                   variant={page === currentPage ? 'default' : 'outline'}
-                  size="sm"
+                  size={isMobile ? "default" : "sm"}
                   onClick={() => handlePageChange(page)}
-                  className="min-w-[2rem]"
+                  className={cn(isMobile ? "min-w-[44px]" : "min-w-[2rem]")}
                 >
                   {page}
                 </Button>
@@ -290,7 +329,7 @@ export function DataTable<T extends Record<string, any>>({
 
           <Button
             variant="outline"
-            size="sm"
+            size={isMobile ? "default" : "sm"}
             onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
           >

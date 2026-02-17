@@ -26,7 +26,7 @@ export interface Tejedor {
   correoTejedor: string;
   profesionTejedor: string;
   fechaIngreso: string;
-  tipoVoluntario: string;
+  tipodeVoluntario: string;
 }
 
 export interface Especialidad {
@@ -197,7 +197,7 @@ export interface KPI {
 export interface ChartData {
   name: string;
   value: number;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 export interface ReporteAbordaje {

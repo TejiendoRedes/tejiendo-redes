@@ -6,6 +6,8 @@ import { medicamentos, medicamentosPacientes, peticiones, type NewMedicamento, t
 import { eq, sum } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
+import { MedicamentoSchema } from '@/lib/validators/medicamentos';
 
 /**
  * Obtener todos los medicamentos (con búsqueda opcional)
@@ -14,6 +16,7 @@ import { like, or } from 'drizzle-orm';
 
 export async function getMedicamentos(query?: string, limit: number = 50) {
     try {
+        await requireAuth();
         let queryBuilder = db.select().from(medicamentos).$dynamic();
 
         if (query) {
@@ -38,10 +41,17 @@ export async function getMedicamentos(query?: string, limit: number = 50) {
 /**
  * Crear un nuevo medicamento
  */
-export async function createMedicamento(data: NewMedicamento) {
+export async function createMedicamento(data: unknown) {
     try {
+        await requireAuth();
+
+        const validation = MedicamentoSchema.safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
+        }
+
         // Validaciones básicas de campos obligatorios
-        if (!data.nombreMedicamento?.trim()) {
+        if (!validation.data.nombreMedicamento?.trim()) {
             return { success: false, error: 'El nombre del medicamento es requerido' };
         }
 
@@ -49,7 +59,7 @@ export async function createMedicamento(data: NewMedicamento) {
         const newCode = await getNextCode(medicamentos, medicamentos.codigoMedicamento, 'MED-');
 
         const finalData = {
-            ...data,
+            ...validation.data,
             codigoMedicamento: newCode
         };
 
@@ -65,10 +75,17 @@ export async function createMedicamento(data: NewMedicamento) {
 /**
  * Actualizar un medicamento
  */
-export async function updateMedicamento(codigo: string, data: Partial<NewMedicamento>) {
+export async function updateMedicamento(codigo: string, data: unknown) {
     try {
+        await requireAuth();
+
+        const validation = MedicamentoSchema.partial().safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
+        }
+
         await db.update(medicamentos)
-            .set(data)
+            .set(validation.data)
             .where(eq(medicamentos.codigoMedicamento, codigo));
         revalidatePath('/farmacia/medicamentos');
         return { success: true, message: 'Medicamento actualizado correctamente' };
@@ -83,6 +100,7 @@ export async function updateMedicamento(codigo: string, data: Partial<NewMedicam
  */
 export async function deleteMedicamento(codigo: string) {
     try {
+        await requireAuth();
         await db.delete(medicamentos)
             .where(eq(medicamentos.codigoMedicamento, codigo));
         revalidatePath('/farmacia/medicamentos');
@@ -117,6 +135,7 @@ export async function deleteMedicamento(codigo: string) {
  */
 export async function getMedicamentosEntregados() {
     try {
+        await requireAuth();
         const solicitudes = await db
             .select({
                 codigoMedicamento: peticiones.codigoMedicamento,
@@ -152,6 +171,7 @@ export async function getMedicamentosEntregados() {
  */
 export async function getMedicamento(codigo: string) {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(medicamentos)
             .where(eq(medicamentos.codigoMedicamento, codigo))

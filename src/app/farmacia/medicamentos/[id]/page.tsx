@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, Pill, Package, Truck } from 'lucide-react';
-import { getEntityDetails, EntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/actions/global-search-actions';
+import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/UIComponents';
 
@@ -30,6 +31,8 @@ export default function MedicamentoDetallePage() {
     if (loading) return <MainLayout><div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div></MainLayout>;
 
     if (!details) return <MainLayout><div className="p-8 text-center">Medicamento no encontrado</div></MainLayout>;
+
+    if (details.type !== 'medicamento') return null;
 
     const { data, history } = details;
 
@@ -66,7 +69,7 @@ export default function MedicamentoDetallePage() {
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Stock Actual</p>
-                                    <p className="text-2xl font-bold text-gray-900">{data.cantidadDisponible}</p>
+                                    <p className="text-2xl font-bold text-gray-900">{data.existencia}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">

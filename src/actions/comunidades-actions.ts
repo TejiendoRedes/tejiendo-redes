@@ -7,12 +7,14 @@ import { responsable } from '@/db/schema/responsable';
 import { eq } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todas las comunidades con sus responsables
  */
 export async function getComunidades() {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(comunidades)
             .leftJoin(responsable, eq(comunidades.cedulaResponsable, responsable.cedulaResponsable));
@@ -35,6 +37,7 @@ export async function getComunidades() {
  */
 export async function createComunidad(data: NewComunidad) {
     try {
+        await requireAuth();
         // Validaciones básicas de campos obligatorios
         if (!data.nombreComunidad?.trim()) {
             return { success: false, error: 'El nombre de la comunidad es requerido' };
@@ -64,6 +67,7 @@ export async function createComunidad(data: NewComunidad) {
  */
 export async function updateComunidad(codigo: string, data: Partial<NewComunidad>) {
     try {
+        await requireAuth();
         // Verificar que la comunidad existe
         const existing = await db.select()
             .from(comunidades)
@@ -90,6 +94,7 @@ export async function updateComunidad(codigo: string, data: Partial<NewComunidad
  */
 export async function deleteComunidad(codigo: string) {
     try {
+        await requireAuth();
         // Verificar que la comunidad existe antes de eliminar
         const existing = await db.select()
             .from(comunidades)
@@ -134,6 +139,7 @@ export async function deleteComunidad(codigo: string) {
  */
 export async function getComunidad(codigo: string) {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(comunidades)
             .where(eq(comunidades.codigoComunidad, codigo))

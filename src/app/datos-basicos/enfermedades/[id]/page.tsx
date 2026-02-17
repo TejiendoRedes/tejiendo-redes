@@ -6,7 +6,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Edit, Stethoscope, Activity } from 'lucide-react';
-import { getEntityDetails, EntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/actions/global-search-actions';
+import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 
 export default function EnfermedadDetallePage() {
@@ -28,6 +29,8 @@ export default function EnfermedadDetallePage() {
     if (loading) return <MainLayout><div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-red-500" /></div></MainLayout>;
 
     if (!details) return <MainLayout><div className="p-8 text-center">Enfermedad no encontrada</div></MainLayout>;
+
+    if (details.type !== 'enfermedad') return null;
 
     const { data } = details;
 

@@ -1,98 +1,96 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
+import { spawn } from 'child_process';
 import fs from 'fs';
+import path from 'path';
+import { getSession } from '@/lib/auth';
 import os from 'os';
-
-const execAsync = promisify(exec);
 
 export async function GET(request: Request) {
     try {
-        const host = process.env.DATABASE_HOST || 'localhost';
-        const user = process.env.DATABASE_USER || 'root';
-        const password = process.env.DATABASE_PASSWORD || '';
-        const database = process.env.DATABASE_NAME || 'bd_sistema_abordajes';
-        const port = process.env.DATABASE_PORT || '3306';
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
 
-        // Create a temporary file path
+        const host = process.env.DB_HOST || 'localhost';
+        const user = process.env.DB_USER || 'root';
+        const password = process.env.DB_PASSWORD || '';
+        const database = process.env.DB_NAME || 'tejiendo_redes';
+        const port = process.env.DB_PORT || '3306';
+
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `backup-${database}-${timestamp}.sql`;
         const tempFilePath = path.join(os.tmpdir(), filename);
 
-        // Determine mysqldump executable path
-        // Priority 1: Environment variable (Best for Server/Docker)
-        // Priority 2: Common Windows Paths (XAMPP/MySQL Server) (Best for Local Dev)
-        // Priority 3: Global command (Best for properly configured Linux/Windows envs)
-
-        let dumpCommand = 'mysqldump'; // Default fallback
-
+        // Find mysqldump path
+        let dumpCommand = 'mysqldump';
         if (process.env.MYSQLDUMP_PATH && fs.existsSync(process.env.MYSQLDUMP_PATH)) {
-            dumpCommand = `"${process.env.MYSQLDUMP_PATH}"`;
+            dumpCommand = process.env.MYSQLDUMP_PATH;
         } else {
-            // Check common local paths if env var is not set
             const possiblePaths = [
                 'C:\\xampp\\mysql\\bin\\mysqldump.exe',
                 'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqldump.exe',
-                '/usr/bin/mysqldump', // Common Linux path
-                '/usr/local/bin/mysqldump' // MacOS/Linux
+                '/usr/bin/mysqldump',
+                '/usr/local/bin/mysqldump'
             ];
-
             for (const p of possiblePaths) {
                 if (fs.existsSync(p)) {
-                    dumpCommand = `"${p}"`;
+                    dumpCommand = p;
                     break;
                 }
             }
         }
 
-        // Construct the mysqldump command
-        // We add --column-statistics=0 to avoid issues with some mysql versions
-        // We use --no-tablespaces to avoid permission issues
-        const command = `${dumpCommand} -h ${host} -P ${port} -u ${user} ${password ? `-p${password}` : ''} --column-statistics=0 --no-tablespaces ${database} > "${tempFilePath}"`;
+        const args = [
+            '-h', host,
+            '-P', port,
+            '-u', user,
+            ...(password ? [`-p${password}`] : []),
+            '--column-statistics=0',
+            '--no-tablespaces',
+            `--result-file=${tempFilePath}`,
+            database
+        ];
 
-        console.log('Starting database backup...');
-        // Log command for debugging (masking password)
-        console.log('Command:', command.replace(password, '****'));
+        console.log('Starting backup process with command:', dumpCommand);
 
-        // Execute the command
-        await execAsync(command);
-        console.log('Backup created at:', tempFilePath);
-
-        // Check if we should return the file or just a success message
-        const { searchParams } = new URL(request.url);
-        const shouldDownload = searchParams.get('download') === 'true';
-
-        if (!shouldDownload) {
-            // If not downloading, we might want to move it to a persistent location
-            // or just confirm it was created. For now, we'll delete it and return success
-            // as the user requested "gestionara el tiempo" and "boton para refresh"
-            fs.unlinkSync(tempFilePath);
-            return NextResponse.json({
-                success: true,
-                message: 'Copia de seguridad generada correctamente',
-                filename
+        await new Promise<void>((resolve, reject) => {
+            const child = spawn(dumpCommand, args, {
+                shell: false,
+                stdio: 'ignore'
             });
+
+            child.on('error', (err) => {
+                reject(new Error(`Failed to start mysqldump: ${err.message}`));
+            });
+
+            child.on('close', (code) => {
+                if (code === 0) {
+                    resolve();
+                } else {
+                    reject(new Error(`mysqldump exited with code ${code}`));
+                }
+            });
+        });
+
+        const fileBuffer = fs.readFileSync(tempFilePath);
+        try {
+            fs.unlinkSync(tempFilePath);
+        } catch (e) {
+            console.warn('Failed to delete temp file:', e);
         }
 
-        // Read the file for download
-        const fileBuffer = fs.readFileSync(tempFilePath);
-
-        // Delete the temp file after reading
-        fs.unlinkSync(tempFilePath);
-
-        // Return the file as a download
         return new NextResponse(fileBuffer, {
             headers: {
+                'Content-Disposition': `attachment; filename=${filename}`,
                 'Content-Type': 'application/sql',
-                'Content-Disposition': `attachment; filename="${filename}"`,
             },
         });
 
     } catch (error: any) {
-        console.error('Backup failed:', error);
+        console.error('Backup error:', error);
         return NextResponse.json(
-            { error: 'Failed to create backup', details: error.message },
+            { error: 'Error al generar el respaldo', details: error.message },
             { status: 500 }
         );
     }

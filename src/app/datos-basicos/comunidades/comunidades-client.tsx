@@ -162,14 +162,14 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
 
         const headers = ['codigo', 'nombre', 'ubicacion', 'tipo'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Ubicación', dataKey: 'ubicacion' },
-            { header: 'Tipo', dataKey: 'tipo' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Ubicación', dataKey: 'ubicacion' as const },
+            { header: 'Tipo', dataKey: 'tipo' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'comunidades'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'comunidades'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'comunidades', 'Reporte de Comunidades'));
         }

@@ -285,17 +285,17 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
 
         const headers = ['codigo', 'nombre', 'tipo', 'tejedor', 'correo', 'telefono', 'ubicacion'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Tipo', dataKey: 'tipo' },
-            { header: 'Tejedor Enlace', dataKey: 'tejedor' },
-            { header: 'Correo', dataKey: 'correo' },
-            { header: 'Teléfono', dataKey: 'telefono' },
-            { header: 'Ubicación', dataKey: 'ubicacion' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Tipo', dataKey: 'tipo' as const },
+            { header: 'Tejedor Enlace', dataKey: 'tejedor' as const },
+            { header: 'Correo', dataKey: 'correo' as const },
+            { header: 'Teléfono', dataKey: 'telefono' as const },
+            { header: 'Ubicación', dataKey: 'ubicacion' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'instituciones'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'instituciones'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'instituciones', 'Reporte de Instituciones'));
         }

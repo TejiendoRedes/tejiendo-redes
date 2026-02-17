@@ -1,108 +1,22 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Home,
-  Database,
-  Activity,
-  FileText,
-  BarChart3,
-  Settings,
-  Users,
-  Stethoscope,
-  GraduationCap,
-  UserCheck,
-  MapPin,
-  Building2,
-  Heart,
-  FileHeart,
-  Pill,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  CheckCircle,
-  FileClock,
-  ClipboardList,
-  FileQuestion,
-  UserPlus,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { menuItems, MenuItem } from '@/config/navigation';
 import Image from 'next/image';
 import { cn } from '@/components/ui/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface MenuItem {
-  label: string;
-  path: string;
-  icon: React.ReactNode;
-  roles?: string[];
-  children?: MenuItem[];
-}
-
-const menuItems: MenuItem[] = [
-  {
-    label: 'Inicio',
-    path: '/dashboard',
-    icon: <Home className="w-5 h-5" />,
-  },
-  {
-    label: 'Datos Básicos',
-    path: '/datos-basicos',
-    icon: <Database className="w-5 h-5" />,
-    children: [
-      { label: 'Tejedores', path: '/datos-basicos/tejedores', icon: <Users className="w-4 h-4" /> },
-      { label: 'Aspirantes', path: '/datos-basicos/aspirantes', icon: <UserPlus className="w-4 h-4" /> },
-      { label: 'Médicos', path: '/datos-basicos/medicos', icon: <Stethoscope className="w-4 h-4" /> },
-      { label: 'Especialidades', path: '/datos-basicos/especialidades', icon: <GraduationCap className="w-4 h-4" /> },
-      { label: 'Responsables Comunitarios', path: '/datos-basicos/responsables', icon: <UserCheck className="w-4 h-4" /> },
-      { label: 'Comunidades', path: '/datos-basicos/comunidades', icon: <MapPin className="w-4 h-4" /> },
-      { label: 'Instituciones', path: '/datos-basicos/organismos', icon: <Building2 className="w-4 h-4" /> },
-      { label: 'Pacientes', path: '/datos-basicos/pacientes', icon: <Heart className="w-4 h-4" /> },
-      { label: 'Enfermedades', path: '/datos-basicos/enfermedades', icon: <Activity className="w-4 h-4" /> },
-      { label: 'Antecedentes', path: '/datos-basicos/antecedentes', icon: <FileClock className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Abordajes',
-    path: '/abordajes',
-    icon: <ClipboardList className="w-5 h-5" />,
-    children: [
-      { label: 'Solicitudes', path: '/abordajes/solicitudes-abordajes', icon: <Clock className="w-4 h-4" /> },
-      { label: 'Abordajes Confirmados', path: '/abordajes', icon: <CheckCircle className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Farmacia',
-    path: '/farmacia',
-    icon: <Pill className="w-4 h-4" />,
-    children: [
-      { label: 'Medicamentos', path: '/farmacia/medicamentos', icon: <Heart className="w-4 h-4" /> },
-      { label: 'Peticiones', path: '/farmacia/peticiones', icon: <FileQuestion className="w-4 h-4" /> },
-    ],
-  },
-  {
-    label: 'Reportes',
-    path: '/reportes',
-    icon: <FileText className="w-5 h-5" />,
-  },
-  {
-    label: 'Estadísticas',
-    path: '/estadisticas',
-    icon: <BarChart3 className="w-5 h-5" />,
-  },
-  {
-    label: 'Mantenimiento',
-    path: '/mantenimiento',
-    icon: <Settings className="w-5 h-5" />,
-  },
-];
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  variant?: 'sidebar' | 'drawer';
+  hideToggle?: boolean;
+  className?: string;
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, variant = 'sidebar', hideToggle = false, className }: SidebarProps) {
   const pathname = usePathname();
   const { hasRole } = useAuth();
   const [expandedMenus, setExpandedMenus] = React.useState<string[]>([]);
@@ -113,22 +27,26 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     );
   };
 
-  const isActive = (path: string) => {
-    return pathname === path || pathname.startsWith(path + '/');
+  const isActive = (path: string, items?: MenuItem[]) => {
+    const isMatch = pathname === path || pathname.startsWith(path + '/');
+    if (!isMatch) return false;
+
+    // If peer items are provided, check if any peer is a more specific (longer) match
+    if (items) {
+      const moreSpecificMatch = items.some(peer =>
+        peer.path !== path &&
+        peer.path.length > path.length &&
+        (pathname === peer.path || pathname.startsWith(peer.path + '/'))
+      );
+      if (moreSpecificMatch) return false;
+    }
+
+    return isMatch;
   };
 
-  const shouldShowItem = (item: MenuItem) => {
-    return true;
-  };
-
-  return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 z-40',
-        collapsed ? 'w-16' : 'w-64'
-      )}
-    >
-      {/* Logo y Toggle */}
+  const NavContent = () => (
+    <>
+      {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
@@ -159,8 +77,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
           {menuItems.map(item => {
-            if (!shouldShowItem(item)) return null;
-
             const hasChildren = item.children && item.children.length > 0;
             const isExpanded = expandedMenus.includes(item.path);
             const itemActive = isActive(item.path);
@@ -200,7 +116,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                               href={child.path}
                               className={cn(
                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
-                                isActive(child.path)
+                                isActive(child.path, item.children)
                                   ? 'bg-primary/10 text-primary'
                                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                               )}
@@ -233,19 +149,42 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           })}
         </ul>
       </nav>
+    </>
+  );
+
+  if (variant === 'drawer') {
+    return (
+      <aside className={cn('h-full w-full bg-card flex flex-col', className)}>
+        <NavContent />
+      </aside>
+    )
+  }
+
+  return (
+    <aside
+      className={cn(
+        'fixed left-0 top-0 h-screen bg-card border-r border-border transition-all duration-300 z-40 flex flex-col',
+        collapsed ? 'w-16' : 'w-64',
+        className
+      )}
+    >
+      <NavContent />
 
       {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-        className="absolute -right-3 top-20 bg-card border border-border rounded-full p-1 shadow-md hover:shadow-lg transition-shadow"
-      >
-        {collapsed ? (
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        ) : (
-          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-        )}
-      </button>
+      {!hideToggle && (
+        <button
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+          className="absolute -right-3 top-20 bg-card border border-border rounded-full p-1 shadow-md hover:shadow-lg transition-shadow"
+        >
+          {collapsed ? (
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
+      )}
     </aside>
   );
 }
+

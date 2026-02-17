@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/db';
 import { eq } from 'drizzle-orm';
+import { getSession } from '@/lib/auth';
+import { z } from 'zod';
+
+// Schema for Tejedor validation
+const TejedorSchema = z.object({
+    cedulaTejedor: z.string().min(1, 'La cédula es requerida'),
+    nombreTejedor: z.string().min(1, 'El nombre es requerido'),
+    apellidoTejedor: z.string().min(1, 'El apellido es requerido'),
+    fechaNacimiento: z.coerce.date({ required_error: 'Fecha de nacimiento requerida' }),
+    direccionTejedor: z.string().min(1, 'La dirección es requerida'),
+    municipioTejedor: z.string().min(1, 'El municipio es requerido'),
+    estadoTejedor: z.string().min(1, 'El estado es requerido'),
+    parroquiaTejedor: z.string().min(1, 'La parroquia es requerida'),
+    telefonoTejedor: z.string().default(''),
+    correoTejedor: z.string().email('Correo inválido').optional().or(z.literal('')).default(''),
+    profesionTejedor: z.string().default(''),
+    fechaIngreso: z.coerce.date({ required_error: 'Fecha de ingreso requerida' }),
+    tipodeVoluntario: z.string().default(''),
+});
 
 /**
  * GET /api/tejedores
@@ -8,6 +27,11 @@ import { eq } from 'drizzle-orm';
  */
 export async function GET(request: NextRequest) {
     try {
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
         const searchParams = request.nextUrl.searchParams;
         const cedula = searchParams.get('cedula');
 
@@ -29,7 +53,13 @@ export async function GET(request: NextRequest) {
         }
 
         // Obtener todos los tejedores
-        const tejedores = await db.select().from(schema.tejedores);
+        const tejedores = await db.select({
+            cedulaTejedor: schema.tejedores.cedulaTejedor,
+            nombreTejedor: schema.tejedores.nombreTejedor,
+            apellidoTejedor: schema.tejedores.apellidoTejedor,
+            profesionTejedor: schema.tejedores.profesionTejedor,
+            tipodeVoluntario: schema.tejedores.tipodeVoluntario,
+        }).from(schema.tejedores);
 
         return NextResponse.json(tejedores);
     } catch (error) {
@@ -47,37 +77,36 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-
-        // Validación básica
-        const required = [
-            'cedulaTejedor',
-            'nombreTejedor',
-            'apellidoTejedor',
-            'fechaNacimiento',
-            'direccionTejedor',
-            'telefonoTejedor',
-            'correoTejedor',
-            'profesionTejedor',
-            'fechaIngreso',
-            'tipoVoluntario'
-        ];
-
-        for (const field of required) {
-            if (!body[field]) {
-                return NextResponse.json(
-                    { error: `Campo requerido: ${field}` },
-                    { status: 400 }
-                );
-            }
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        // Convertir strings de fecha a objetos Date
-        const newTejedor = {
-            ...body,
-            fechaNacimiento: new Date(body.fechaNacimiento),
-            fechaIngreso: new Date(body.fechaIngreso)
-        };
+        const body = await request.json();
+
+        // Validar con Zod
+        const validation = TejedorSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: 'Datos inválidos', details: validation.error.errors },
+                { status: 400 }
+            );
+        }
+
+        const newTejedor = validation.data;
+
+        // Validar duplicados (aunque la DB lo hará, es mejor chequear antes para mensaje claro)
+        const existing = await db.select({ cedula: schema.tejedores.cedulaTejedor })
+            .from(schema.tejedores)
+            .where(eq(schema.tejedores.cedulaTejedor, newTejedor.cedulaTejedor))
+            .limit(1);
+
+        if (existing.length > 0) {
+            return NextResponse.json(
+                { error: 'Ya existe un tejedor con esa cédula' },
+                { status: 409 }
+            );
+        }
 
         // Insertar en la base de datos
         await db.insert(schema.tejedores).values(newTejedor);
@@ -101,6 +130,11 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
     try {
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
         const searchParams = request.nextUrl.searchParams;
         const cedula = searchParams.get('cedula');
 
@@ -113,17 +147,21 @@ export async function PUT(request: NextRequest) {
 
         const body = await request.json();
 
-        // Convertir fechas si están presentes
-        if (body.fechaNacimiento) {
-            body.fechaNacimiento = new Date(body.fechaNacimiento);
+        // Validar cuerpo parcial con Zod
+        const validation = TejedorSchema.partial().safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: 'Datos inválidos', details: validation.error.errors },
+                { status: 400 }
+            );
         }
-        if (body.fechaIngreso) {
-            body.fechaIngreso = new Date(body.fechaIngreso);
-        }
+
+        // No permitir actualizar la cédula por esta vía (clave primaria)
+        const { cedulaTejedor, ...updateData } = validation.data;
 
         // Actualizar en la base de datos
         await db.update(schema.tejedores)
-            .set(body)
+            .set(updateData)
             .where(eq(schema.tejedores.cedulaTejedor, cedula));
 
         return NextResponse.json({
@@ -144,6 +182,11 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
     try {
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
         const searchParams = request.nextUrl.searchParams;
         const cedula = searchParams.get('cedula');
 

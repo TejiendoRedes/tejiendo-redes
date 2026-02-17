@@ -12,6 +12,8 @@ import { eq, inArray, sql, desc } from 'drizzle-orm';
 import { tejedores } from '@/db/schema/tejedores';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
+import { ConsultaSchema } from '@/lib/validators/consultas';
 
 // Eliminado: checkCodeExists (ahora se genera automáticamente)
 
@@ -20,6 +22,7 @@ import { getNextCode } from '@/lib/id-generator';
  */
 export async function getConsultas() {
     try {
+        await requireAuth();
         // En un caso real masiva, esto deberia tener paginacion y filtros
         const data = await db.select({
             consulta: consultas,
@@ -49,6 +52,7 @@ export async function getConsultas() {
  */
 export async function getPatientHistory(cedulaPaciente: string) {
     try {
+        await requireAuth();
         const data = await db.select({
             consulta: consultas,
             nombreMedico: sql<string>`concat(${tejedores.nombreTejedor}, ' ', ${tejedores.apellidoTejedor})`,
@@ -77,6 +81,7 @@ export async function getPatientHistory(cedulaPaciente: string) {
  */
 export async function getPatientMedicationHistory(cedulaPaciente: string) {
     try {
+        await requireAuth();
         const { medicamentos } = await import('@/db/schema/medicamentos');
         const { medicamentosPacientes } = await import('@/db/schema/relations');
 
@@ -105,6 +110,7 @@ export async function getPatientMedicationHistory(cedulaPaciente: string) {
  */
 export async function getEnfermedadesByConsulta(codigoConsulta: string) {
     try {
+        await requireAuth();
         const data = await db.select()
             .from(consultasEnfermedades)
             .where(eq(consultasEnfermedades.codigoConsulta, codigoConsulta));
@@ -123,6 +129,13 @@ export async function createConsulta(
     enfermedadesIds: string[]
 ) {
     try {
+        await requireAuth();
+
+        const validation = ConsultaSchema.safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
+        }
+
         // Generación automática del código de consulta (CON-001...)
         const newCode = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
 
@@ -164,6 +177,13 @@ export async function updateConsulta(
     enfermedadesIds: string[]
 ) {
     try {
+        await requireAuth();
+
+        const validation = ConsultaSchema.partial().safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
+        }
+
         await db.transaction(async (tx) => {
             // 1. Update Consulta
             await tx.update(consultas)
@@ -197,6 +217,7 @@ export async function updateConsulta(
  */
 export async function deleteConsulta(codigo: string) {
     try {
+        await requireAuth();
         // Cascade delete should handle children, but explicit delete is safer sometimes depending on DB config
         // defined in schema as cascade, so just deleting parent is enough.
         await db.delete(consultas)

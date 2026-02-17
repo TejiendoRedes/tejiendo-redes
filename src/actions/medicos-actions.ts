@@ -11,9 +11,11 @@ import { eq } from 'drizzle-orm';
  * Obtener todos los médicos con sus relaciones (con búsqueda opcional)
  */
 import { like, or } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 export async function getMedicos(query?: string, limit: number = 50) {
     try {
+        await requireAuth();
         let queryBuilder = db.select()
             .from(medicos)
             .leftJoin(tejedores, eq(medicos.cedulaTejedor, tejedores.cedulaTejedor))
@@ -53,6 +55,7 @@ export async function getMedicos(query?: string, limit: number = 50) {
  */
 export async function createMedico(data: NewMedico) {
     try {
+        await requireAuth();
         await db.insert(medicos).values(data);
         revalidatePath('/datos-basicos/medicos');
         return { success: true, message: 'Médico asignado correctamente' };
@@ -67,6 +70,7 @@ export async function createMedico(data: NewMedico) {
  */
 export async function updateMedico(cedula: string, data: Partial<NewMedico>) {
     try {
+        await requireAuth();
         await db.update(medicos)
             .set(data)
             .where(eq(medicos.cedulaTejedor, cedula));
@@ -83,6 +87,7 @@ export async function updateMedico(cedula: string, data: Partial<NewMedico>) {
  */
 export async function deleteMedico(cedula: string) {
     try {
+        await requireAuth();
         await db.delete(medicos)
             .where(eq(medicos.cedulaTejedor, cedula));
         revalidatePath('/datos-basicos/medicos');

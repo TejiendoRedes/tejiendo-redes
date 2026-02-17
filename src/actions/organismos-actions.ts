@@ -7,12 +7,14 @@ import { tejedores } from '@/db/schema/tejedores';
 import { eq } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todos los organismos con sus tejedores responsables
  */
 export async function getOrganismos() {
     try {
+        await requireAuth();
         const result = await db.select()
             .from(organismos)
             .leftJoin(tejedores, eq(organismos.cedulaTejedor, tejedores.cedulaTejedor));
@@ -35,6 +37,7 @@ export async function getOrganismos() {
  */
 export async function createOrganismo(data: NewOrganismo) {
     try {
+        await requireAuth();
         // Validaciones básicas de campos obligatorios
         if (!data.nombreOrganismo?.trim()) {
             return { success: false, error: 'El nombre del organismo es requerido' };
@@ -62,6 +65,7 @@ export async function createOrganismo(data: NewOrganismo) {
  */
 export async function updateOrganismo(codigo: string, data: Partial<NewOrganismo>) {
     try {
+        await requireAuth();
         await db.update(organismos)
             .set(data)
             .where(eq(organismos.codigoOrganismo, codigo));
@@ -78,6 +82,7 @@ export async function updateOrganismo(codigo: string, data: Partial<NewOrganismo
  */
 export async function deleteOrganismo(codigo: string) {
     try {
+        await requireAuth();
         await db.delete(organismos)
             .where(eq(organismos.codigoOrganismo, codigo));
         revalidatePath('/datos-basicos/organismos');

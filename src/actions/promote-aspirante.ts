@@ -5,12 +5,14 @@ import { db } from '@/db';
 import { aspirantes } from '@/db/schema/aspirantes';
 import { tejedores } from '@/db/schema/tejedores';
 import { eq } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Promover un aspirante a tejedor
  */
 export async function promoteAspiranteToTejedor(cedulaAspirante: string) {
     try {
+        await requireAuth();
         // Primero obtener los datos del aspirante
         const aspiranteData = await db.select()
             .from(aspirantes)

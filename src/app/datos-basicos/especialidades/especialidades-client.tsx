@@ -146,13 +146,13 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
 
         const headers = ['codigo', 'nombre', 'descripcion'];
         const columnsData = [
-            { header: 'Código', dataKey: 'codigo' },
-            { header: 'Nombre', dataKey: 'nombre' },
-            { header: 'Descripción', dataKey: 'descripcion' },
+            { header: 'Código', dataKey: 'codigo' as const },
+            { header: 'Nombre', dataKey: 'nombre' as const },
+            { header: 'Descripción', dataKey: 'descripcion' as const },
         ];
 
         if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, headers, 'especialidades'));
+            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'especialidades'));
         } else {
             import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'especialidades', 'Reporte de Especialidades'));
         }

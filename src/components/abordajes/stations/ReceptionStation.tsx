@@ -26,7 +26,9 @@ interface AbordajeAsistencia {
     };
 }
 
-export function ReceptionStation({ abordaje }: { abordaje: any }) {
+import { AbordajeWithRelations } from '@/types/app-types';
+
+export function ReceptionStation({ abordaje }: { abordaje: AbordajeWithRelations }) {
     const params = useParams();
     const router = useRouter();
     const abordajeId = abordaje.codigoAbordaje;

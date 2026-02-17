@@ -13,8 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { addTejedorToAbordaje, removeTejedorFromAbordaje } from '@/actions/abordajes-actions';
 import { getTejedores } from '@/actions/tejedores-actions';
 
+import { AbordajeWithRelations } from '@/types/app-types';
+
 interface TeamStationProps {
-    abordaje: any;
+    abordaje: AbordajeWithRelations;
 }
 
 export function TeamStation({ abordaje }: TeamStationProps) {

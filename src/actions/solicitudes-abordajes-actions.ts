@@ -7,12 +7,14 @@ import { AbordajesService } from '@/services/abordajes-service';
 import { eq, and, desc } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todas las solicitudes de abordajes con información de comunidades
  */
 export async function getSolicitudesAbordajes() {
     try {
+        await requireAuth();
         const result = await db.select({
             solicitud: solicitudesAbordajes,
             comunidad: comunidades,
@@ -39,6 +41,7 @@ export async function getSolicitudesAbordajes() {
  */
 export async function getComunidadesParaSolicitud() {
     try {
+        await requireAuth();
         const data = await db.select()
             .from(comunidades)
             .orderBy(comunidades.nombreComunidad);
@@ -55,6 +58,7 @@ export async function getComunidadesParaSolicitud() {
  */
 export async function createSolicitudAbordaje(data: NewSolicitudAbordaje) {
     try {
+        await requireAuth();
         // Validar datos requeridos
         if (!data.codigoComunidad) {
             return { success: false, error: 'La comunidad es requerida' };
@@ -98,6 +102,7 @@ export async function createSolicitudAbordaje(data: NewSolicitudAbordaje) {
  */
 export async function confirmarSolicitudAbordaje(id: number) {
     try {
+        await requireAuth();
         // Obtener la solicitud
         const solicitud = await db.select()
             .from(solicitudesAbordajes)
@@ -147,6 +152,7 @@ export async function confirmarSolicitudAbordaje(id: number) {
  */
 export async function rechazarSolicitudAbordaje(id: number, motivo?: string) {
     try {
+        await requireAuth();
         await db.update(solicitudesAbordajes)
             .set({
                 estado: 'rechazado',
@@ -167,6 +173,7 @@ export async function rechazarSolicitudAbordaje(id: number, motivo?: string) {
  */
 export async function deleteSolicitudAbordaje(id: number) {
     try {
+        await requireAuth();
         await db.delete(solicitudesAbordajes)
             .where(eq(solicitudesAbordajes.id, id));
 

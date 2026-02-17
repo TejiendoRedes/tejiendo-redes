@@ -7,12 +7,14 @@ import { abordaje, medicamentosPacientes } from '@/db/schema'; // Import types i
 import { DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { MedicamentoEntregaSchema, CreateAbordajeSchema, UpdateAbordajeSchema } from '@/lib/validators/abordajes';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todos los abordajes
  */
 export async function getAbordajes() {
     try {
+        await requireAuth();
         const data = await AbordajesService.getAll();
         return createResponse(true, data);
     } catch (error) {
@@ -26,6 +28,7 @@ export async function getAbordajes() {
  */
 export async function getAbordajeById(id: string) {
     try {
+        await requireAuth();
         const data = await AbordajesService.getById(id);
         if (!data) return createResponse(false, null, 'El abordaje no fue encontrado');
         return createResponse(true, data);
@@ -40,6 +43,7 @@ export async function getAbordajeById(id: string) {
  */
 export async function createAbordaje(data: typeof abordaje.$inferInsert) {
     try {
+        await requireAuth();
         const validation = CreateAbordajeSchema.safeParse(data);
         if (!validation.success) {
             return createResponse(false, null, validation.error.errors[0].message);
@@ -73,6 +77,7 @@ export async function createAbordaje(data: typeof abordaje.$inferInsert) {
  */
 export async function updateAbordaje(id: string, data: Partial<typeof abordaje.$inferInsert>) {
     try {
+        await requireAuth();
         const validation = UpdateAbordajeSchema.safeParse(data);
         if (!validation.success) {
             return createResponse(false, null, validation.error.errors[0].message);
@@ -95,6 +100,7 @@ export async function updateAbordaje(id: string, data: Partial<typeof abordaje.$
  */
 export async function addComunidadToAbordaje(codigoAbordaje: string, codigoComunidad: string) {
     try {
+        await requireAuth();
         await AbordajesService.addComunidad(codigoAbordaje, codigoComunidad);
         revalidatePath(`/abordajes/${codigoAbordaje}`);
         return createResponse(true);
@@ -109,6 +115,7 @@ export async function addComunidadToAbordaje(codigoAbordaje: string, codigoComun
  */
 export async function removeComunidadFromAbordaje(codigoAbordaje: string, codigoComunidad: string) {
     try {
+        await requireAuth();
         await AbordajesService.removeComunidad(codigoAbordaje, codigoComunidad);
         revalidatePath(`/abordajes/${codigoAbordaje}`);
         return createResponse(true);
@@ -123,6 +130,7 @@ export async function removeComunidadFromAbordaje(codigoAbordaje: string, codigo
  */
 export async function addTejedorToAbordaje(codigoAbordaje: string, cedulaTejedor: string, rol: string) {
     try {
+        await requireAuth();
         await AbordajesService.addTejedor(codigoAbordaje, cedulaTejedor, rol);
         revalidatePath(`/abordajes/${codigoAbordaje}`);
         return createResponse(true);
@@ -137,6 +145,7 @@ export async function addTejedorToAbordaje(codigoAbordaje: string, cedulaTejedor
  */
 export async function removeTejedorFromAbordaje(codigoAbordaje: string, cedulaTejedor: string) {
     try {
+        await requireAuth();
         await AbordajesService.removeTejedor(codigoAbordaje, cedulaTejedor);
         revalidatePath(`/abordajes/${codigoAbordaje}`);
         return createResponse(true);
@@ -151,6 +160,7 @@ export async function removeTejedorFromAbordaje(codigoAbordaje: string, cedulaTe
  */
 export async function deleteAbordaje(id: string) {
     try {
+        await requireAuth();
         await AbordajesService.delete(id);
         revalidatePath('/abordajes');
         return createResponse(true);
@@ -165,6 +175,7 @@ export async function deleteAbordaje(id: string) {
  */
 export async function registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
     try {
+        await requireAuth();
         const validation = MedicamentoEntregaSchema.safeParse(data);
         if (!validation.success) {
             return createResponse(false, null, validation.error.errors[0].message);
@@ -188,6 +199,7 @@ export async function registerMedicamentoEntrega(data: typeof medicamentosPacien
  */
 export async function getAbordajeAsistencia(abordajeId: string) {
     try {
+        await requireAuth();
         const data = await AbordajesService.getAsistencia(abordajeId);
         return createResponse(true, data);
     } catch (error) {
@@ -201,6 +213,7 @@ export async function getAbordajeAsistencia(abordajeId: string) {
  */
 export async function checkInPatient(codigoAbordaje: string, cedulaPaciente: string) {
     try {
+        await requireAuth();
         await AbordajesService.checkInPatient(codigoAbordaje, cedulaPaciente);
         revalidatePath(`/abordajes/${codigoAbordaje}`);
         return createResponse(true, null, 'Paciente registrado correctamente en el abordaje');
@@ -215,6 +228,7 @@ export async function checkInPatient(codigoAbordaje: string, cedulaPaciente: str
  */
 export async function updateAbordajeAsistencia(id: number, data: any) {
     try {
+        await requireAuth();
         await AbordajesService.updateAsistencia(id, data);
         revalidatePath('/abordajes');
         return createResponse(true, null, 'Asistencia actualizada');

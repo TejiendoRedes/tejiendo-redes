@@ -6,12 +6,15 @@ import { peticiones, medicamentos, pacientes, type NewPeticion, type Peticion } 
 import { eq, and, gt, sql } from 'drizzle-orm';
 import { comunidades } from '@/db/schema/comunidades';
 import { getErrorMessage } from '@/lib/error-handler';
+import { requireAuth } from '@/lib/auth';
+import { PeticionSchema } from '@/lib/validators/peticiones';
 
 /**
  * Obtener todas las peticiones con información de paciente y medicamento
  */
 export async function getPeticiones() {
     try {
+        await requireAuth();
         const result = await db.select({
             id: peticiones.id,
             codigoPeticion: sql<string>`CAST(${peticiones.id} AS CHAR)`, // Convertir a string para compatibilidad
@@ -46,6 +49,7 @@ export async function getPeticiones() {
  */
 export async function getPacientes() {
     try {
+        await requireAuth();
         const data = await db.select()
             .from(pacientes)
             .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad));
@@ -67,6 +71,7 @@ export async function getPacientes() {
  */
 export async function getMedicamentosDisponibles() {
     try {
+        await requireAuth();
         // FIX: Cambiar lt a gt para obtener medicamentos con existencia > 0
         const data = await db.select()
             .from(medicamentos)
@@ -84,6 +89,7 @@ export async function getMedicamentosDisponibles() {
  */
 export async function getPacientesForSelect() {
     try {
+        await requireAuth();
         const data = await db.select({
             cedulaPaciente: pacientes.cedulaPaciente,
             nombrePaciente: pacientes.nombrePaciente,
@@ -103,6 +109,7 @@ export async function getPacientesForSelect() {
  */
 export async function getMedicamentosForSelect() {
     try {
+        await requireAuth();
         const data = await db.select({
             codigoMedicamento: medicamentos.codigoMedicamento,
             nombreMedicamento: medicamentos.nombreMedicamento,
@@ -121,26 +128,22 @@ export async function getMedicamentosForSelect() {
 /**
  * Crear una nueva petición (sin restar existencias hasta aprobación)
  */
-export async function createPeticion(data: NewPeticion) {
+export async function createPeticion(data: unknown) {
     try {
-        // Validar datos requeridos
-        if (!data.codigoPaciente) {
-            return { success: false, error: 'Debe seleccionar un paciente' };
-        }
-        if (!data.codigoMedicamento) {
-            return { success: false, error: 'Debe seleccionar un medicamento' };
-        }
-        if (!data.cantidad || data.cantidad < 1) {
-            return { success: false, error: 'La cantidad debe ser mayor a 0' };
+        await requireAuth();
+
+        const validation = PeticionSchema.safeParse(data);
+        if (!validation.success) {
+            return { success: false, error: validation.error.errors[0].message };
         }
 
         // DB-06: INSERT directly — let DB validate FK constraints
         const peticionData = {
-            codigoPaciente: data.codigoPaciente,
-            codigoMedicamento: data.codigoMedicamento,
-            cantidad: data.cantidad,
-            estado: data.estado || 'pendiente',
-            notas: data.notas || null,
+            codigoPaciente: validation.data.codigoPaciente,
+            codigoMedicamento: validation.data.codigoMedicamento,
+            cantidad: validation.data.cantidad,
+            estado: 'pendiente',
+            notas: validation.data.notas || null,
         };
 
         await db.insert(peticiones).values(peticionData);
@@ -169,6 +172,7 @@ export async function createPeticion(data: NewPeticion) {
  */
 export async function updatePeticionEstado(id: number, estado: string) {
     try {
+        await requireAuth();
         // Obtener la petición actual
         const peticion = await db.select()
             .from(peticiones)
@@ -274,6 +278,7 @@ export async function updatePeticionEstado(id: number, estado: string) {
  */
 export async function marcarComoEntregada(codigoPeticion: string) {
     try {
+        await requireAuth();
         const id = parseInt(codigoPeticion);
         return await updatePeticionEstado(id, 'entregado');
     } catch (error) {
@@ -287,6 +292,7 @@ export async function marcarComoEntregada(codigoPeticion: string) {
  */
 export async function deletePeticion(id: number) {
     try {
+        await requireAuth();
         // Obtener la petición antes de eliminarla
         const peticion = await db.select()
             .from(peticiones)

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { responsable as responsables, type NewResponsable, type Responsable } from '@/db/schema/responsable';
 import { eq, like, or } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Manejar errores de base de datos de forma específica
@@ -36,6 +37,7 @@ const handleDatabaseError = (error: any) => {
  */
 export async function getResponsables(query?: string, limit: number = 50) {
     try {
+        await requireAuth();
         let queryBuilder = db.select()
             .from(responsables)
             .$dynamic();
@@ -63,6 +65,7 @@ export async function getResponsables(query?: string, limit: number = 50) {
  */
 export async function createResponsable(data: NewResponsable) {
     try {
+        await requireAuth();
         await db.insert(responsables).values(data);
         revalidatePath('/datos-basicos/responsables');
         return { success: true, message: 'Responsable creado correctamente' };
@@ -77,6 +80,7 @@ export async function createResponsable(data: NewResponsable) {
  */
 export async function updateResponsable(cedula: string, data: Partial<NewResponsable>) {
     try {
+        await requireAuth();
         await db.update(responsables)
             .set(data)
             .where(eq(responsables.cedulaResponsable, cedula));
@@ -93,6 +97,7 @@ export async function updateResponsable(cedula: string, data: Partial<NewRespons
  */
 export async function deleteResponsable(cedula: string) {
     try {
+        await requireAuth();
         await db.delete(responsables)
             .where(eq(responsables.cedulaResponsable, cedula));
         revalidatePath('/datos-basicos/responsables');
@@ -108,6 +113,7 @@ export async function deleteResponsable(cedula: string) {
  */
 export async function getResponsable(cedula: string) {
     try {
+        await requireAuth();
         const result = await db.select().from(responsables).where(eq(responsables.cedulaResponsable, cedula));
         if (result.length === 0) {
             return { success: false, error: 'Responsable no encontrado' };

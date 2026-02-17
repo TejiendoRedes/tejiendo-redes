@@ -6,12 +6,14 @@ import { especialidades, type NewEspecialidad, type Especialidad } from '@/db/sc
 import { eq } from 'drizzle-orm';
 import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * Obtener todas las especialidades
  */
 export async function getEspecialidades() {
     try {
+        await requireAuth();
         const data = await db.select().from(especialidades);
         return { success: true, data };
     } catch (error) {
@@ -25,6 +27,7 @@ export async function getEspecialidades() {
  */
 export async function createEspecialidad(data: NewEspecialidad) {
     try {
+        await requireAuth();
         // Validaciones básicas de campos obligatorios
         if (!data.nombreEspecialidad?.trim()) {
             return { success: false, error: 'El nombre de la especialidad es requerido' };
@@ -52,6 +55,7 @@ export async function createEspecialidad(data: NewEspecialidad) {
  */
 export async function updateEspecialidad(codigo: string, data: Partial<NewEspecialidad>) {
     try {
+        await requireAuth();
         await db.update(especialidades)
             .set(data)
             .where(eq(especialidades.codigoEspecialidad, codigo));
@@ -68,6 +72,7 @@ export async function updateEspecialidad(codigo: string, data: Partial<NewEspeci
  */
 export async function deleteEspecialidad(codigo: string) {
     try {
+        await requireAuth();
         await db.delete(especialidades)
             .where(eq(especialidades.codigoEspecialidad, codigo));
         revalidatePath('/datos-basicos/especialidades');

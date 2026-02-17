@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/UIComponents';
 import { getEntityDetails } from '@/actions/global-search-actions';
+import { EntityDetails } from '@/types/app-types';
 import { getPatientHistory, getPatientMedicationHistory } from '@/actions/consultas-actions';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
