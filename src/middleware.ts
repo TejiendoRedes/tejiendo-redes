@@ -20,12 +20,14 @@ export async function middleware(request: NextRequest) {
     // - /login (public, but redirects to dashboard if logged in)
     // - /api/auth/* (public endpoints)
     // - /_next/* (static files)
-    // - /favicon.ico, /logo.png (assets)
+    // - /favicon.ico, /logo.png, /minilogo.png (assets)
 
     const isLoginPage = request.nextUrl.pathname.startsWith('/login');
     const isPublicApi = request.nextUrl.pathname.startsWith('/api/auth');
-    const isStaticAsset = request.nextUrl.pathname.startsWith('/_next') ||
-        request.nextUrl.pathname === '/'; // root might be landing, but let's assume root redirects to dashboard or login
+    const isStaticAsset =
+        request.nextUrl.pathname.startsWith('/_next') ||
+        request.nextUrl.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/) ||
+        request.nextUrl.pathname === '/';
 
     // If user is already logged in and tries to access login page, redirect to dashboard
     if (isLoginPage && session) {
@@ -43,5 +45,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png|.*\\.svg).*)'],
 };
