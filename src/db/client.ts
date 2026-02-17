@@ -21,6 +21,10 @@ const dbConfig = {
     // Connection reuse settings
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+    // SSL configuration for Aiven
+    ssl: {
+        rejectUnauthorized: false
+    }
 };
 
 // Create MySQL connection pool
