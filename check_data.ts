@@ -1,5 +1,5 @@
 import { db } from './src/db';
-import { comunidades, medicamentos, organismos, abordajes } from './src/db/schema';
+import { comunidades, medicamentos, organismos, abordaje } from './src/db/schema';
 
 async function checkData() {
     try {
@@ -12,7 +12,7 @@ async function checkData() {
         const orgs = await db.select().from(organismos).limit(5);
         console.log('Organismos:', orgs.map(o => o.codigoOrganismo));
 
-        const abor = await db.select().from(abordajes).limit(5);
+        const abor = await db.select().from(abordaje).limit(5);
         console.log('Abordajes:', abor.map(a => a.codigoAbordaje));
 
         process.exit(0);
