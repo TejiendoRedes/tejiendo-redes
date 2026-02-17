@@ -44,8 +44,17 @@ export async function getReporteAbordajes(params: unknown) {
                 descripcion: abordaje.descripcion,
                 hora_inicio: abordaje.horaInicio,
                 hora_fin: abordaje.horaFin,
-                comunidades: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_abordaje = ${abordaje.codigoAbordaje})`,
-                pacientes_atendidos: sql<number>`(SELECT COUNT(DISTINCT c.cedula_paciente) FROM consultas c WHERE c.codigo_abordaje = ${abordaje.codigoAbordaje})`,
+                comunidades: sql<string>`(
+                    SELECT GROUP_CONCAT(c.nombre_comunidad SEPARATOR ', ')
+                    FROM abordaje_comunidad ac
+                    JOIN comunidades c ON ac.codigo_comunidad = c.codigo_comunidad
+                    WHERE ac.codigo_abordaje = abordaje.codigo_abordaje
+                )`,
+                pacientes_atendidos: sql<number>`(
+                    SELECT COUNT(DISTINCT c.cedula_paciente)
+                    FROM consultas c
+                    WHERE c.codigo_abordaje = abordaje.codigo_abordaje
+                )`,
             })
             .from(abordaje)
             .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -83,9 +92,9 @@ export async function getReporteComunidades(params: unknown) {
                 estado: comunidades.estado,
                 municipio: comunidades.municipio,
                 cantidad_habitantes: comunidades.cantidadHabitantes,
-                pacientes_tratados: sql<number>`(SELECT COUNT(*) FROM pacientes p WHERE p.codigo_comunidad = ${comunidades.codigoComunidad})`,
-                abordajes_realizados: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_comunidad = ${comunidades.codigoComunidad})`,
-                total_consultas: sql<number>`(SELECT COUNT(*) FROM consultas c INNER JOIN pacientes p ON c.cedula_paciente = p.cedula_paciente WHERE p.codigo_comunidad = ${comunidades.codigoComunidad})`,
+                pacientes_tratados: sql<number>`(SELECT COUNT(*) FROM pacientes p WHERE p.codigo_comunidad = comunidades.codigo_comunidad)`,
+                abordajes_realizados: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_comunidad = comunidades.codigo_comunidad)`,
+                total_consultas: sql<number>`(SELECT COUNT(*) FROM consultas c INNER JOIN pacientes p ON c.cedula_paciente = p.cedula_paciente WHERE p.codigo_comunidad = comunidades.codigo_comunidad)`,
             })
             .from(comunidades)
             .where(conditions.length > 0 ? and(...conditions) : undefined);

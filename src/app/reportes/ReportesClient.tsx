@@ -28,7 +28,7 @@ interface ReportesClientProps {
         codigo_abordaje: string;
         fecha_abordaje: Date;
         descripcion: string;
-        comunidades: number;
+        comunidades: string;
         pacientes_atendidos: number;
         hora_inicio: string;
         hora_fin: string;

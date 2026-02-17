@@ -156,32 +156,6 @@ export async function deleteAbordaje(id: string) {
         return createResponse(true);
     } catch (error: any) {
         console.error('Error deleting abordaje:', error);
-
-        // Detectar tipo específico de FK constraint
-        // En Drizzle, el error de MySQL está en error.cause
-        const mysqlError = error?.cause || error;
-        const errorCode = mysqlError?.code || error.code;
-        const errorMsg = mysqlError?.sqlMessage || mysqlError?.message || error.message || '';
-
-        if (errorCode === 'ER_ROW_IS_REFERENCED_2' || errorMsg.includes('foreign key constraint')) {
-
-            if (errorMsg.includes('consultas')) {
-                return createResponse(false, null, DeleteErrorMessages.abordaje.conConsultas());
-            }
-            if (errorMsg.includes('abordaje_comunidad') || errorMsg.includes('ab_com_')) {
-                return createResponse(false, null, DeleteErrorMessages.abordaje.conComunidades());
-            }
-            if (errorMsg.includes('tejedores_abordaje') || errorMsg.includes('tej_ab_')) {
-                return createResponse(false, null, DeleteErrorMessages.abordaje.conTejedores());
-            }
-            if (errorMsg.includes('medicamentos_pacientes') || errorMsg.includes('med_pac_')) {
-                return createResponse(false, null, 'No se puede eliminar este abordaje porque tiene entregas de medicamentos registradas en el sistema.');
-            }
-
-            // Mensaje genérico
-            return createResponse(false, null, DeleteErrorMessages.abordaje.generic());
-        }
-
         return createResponse(false, null, 'Error al eliminar el abordaje. Por favor, intenta nuevamente.');
     }
 }

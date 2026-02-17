@@ -60,6 +60,12 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
     const [peticiones, setPeticiones] = React.useState<Peticion[]>(initialData);
+
+    // Sincronizar estado local cuando los datos del servidor cambian (router.refresh())
+    React.useEffect(() => {
+        setPeticiones(initialData);
+    }, [initialData]);
+
     const [pacientes, setPacientes] = React.useState<Paciente[]>([]);
     const [medicamentos, setMedicamentos] = React.useState<Medicamento[]>([]);
     const [selectedPaciente, setSelectedPaciente] = React.useState<string>('');

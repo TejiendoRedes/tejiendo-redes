@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Community {
     codigoComunidad: string;
@@ -27,7 +27,7 @@ export function DashboardFilters({ communities }: DashboardFiltersProps) {
     const [comunidad, setComunidad] = useState(searchParams.get('comunidad') || 'todas');
 
     const applyFilters = () => {
-        const params = new URLSearchParams(searchParams);
+        const params = new URLSearchParams(searchParams.toString());
         if (fechaInicio) params.set('fechaInicio', fechaInicio);
         else params.delete('fechaInicio');
 
@@ -37,7 +37,8 @@ export function DashboardFilters({ communities }: DashboardFiltersProps) {
         if (comunidad && comunidad !== 'todas') params.set('comunidad', comunidad);
         else params.delete('comunidad');
 
-        router.push(`/dashboard?${params.toString()}`);
+        // ABD-03: Corregir redirección para mantenerse en la página de estadísticas
+        router.push(`/estadisticas?${params.toString()}`);
     };
 
     return (

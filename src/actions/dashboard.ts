@@ -11,8 +11,10 @@ import {
     comunidades,
     antecedentes,
     enfermedades,
+    especialidades,
+    medicos,
 } from '@/db/schema';
-import { eq, and, gte, lte, sql, desc, count, sum, avg, asc, not } from 'drizzle-orm';
+import { eq, and, or, gte, lte, sql, desc, count, sum, avg, asc, not, inArray } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 
 // --- Shared Types ---
@@ -26,11 +28,17 @@ export type DashboardFilters = {
 function getBaseFilters(filters: DashboardFilters, dateField: any, communityField: any) {
     const conditions = [];
 
-    if (filters.fechaInicio) {
-        conditions.push(gte(dateField, new Date(filters.fechaInicio)));
+    if (filters.fechaInicio && filters.fechaInicio.trim() !== '') {
+        const d = new Date(filters.fechaInicio);
+        if (!isNaN(d.getTime())) {
+            conditions.push(gte(dateField, d));
+        }
     }
-    if (filters.fechaFin) {
-        conditions.push(lte(dateField, new Date(filters.fechaFin)));
+    if (filters.fechaFin && filters.fechaFin.trim() !== '') {
+        const d = new Date(filters.fechaFin);
+        if (!isNaN(d.getTime())) {
+            conditions.push(lte(dateField, d));
+        }
     }
     if (filters.comunidad && filters.comunidad !== 'todas') {
         conditions.push(eq(communityField, filters.comunidad));
@@ -43,8 +51,14 @@ function getBaseFilters(filters: DashboardFilters, dateField: any, communityFiel
 
 export async function getExecutiveKPIs(filters: DashboardFilters) {
     const pacientesConditions = [];
-    if (filters.fechaInicio) pacientesConditions.push(gte(abordaje.fechaAbordaje, new Date(filters.fechaInicio)));
-    if (filters.fechaFin) pacientesConditions.push(lte(abordaje.fechaAbordaje, new Date(filters.fechaFin)));
+    if (filters.fechaInicio && filters.fechaInicio.trim() !== '') {
+        const d = new Date(filters.fechaInicio);
+        if (!isNaN(d.getTime())) pacientesConditions.push(gte(abordaje.fechaAbordaje, d));
+    }
+    if (filters.fechaFin && filters.fechaFin.trim() !== '') {
+        const d = new Date(filters.fechaFin);
+        if (!isNaN(d.getTime())) pacientesConditions.push(lte(abordaje.fechaAbordaje, d));
+    }
     if (filters.comunidad && filters.comunidad !== 'todas') pacientesConditions.push(eq(abordaje.codigoComunidad, filters.comunidad));
 
     const totalPacientesQuery = await db
@@ -56,23 +70,33 @@ export async function getExecutiveKPIs(filters: DashboardFilters) {
     const totalPacientes = totalPacientesQuery[0]?.count || 0;
 
 
-    // 2. Total Abordajes Realizados (status = 'Ejecutado')
-    const abordajeConditions = [eq(abordaje.estado, 'Ejecutado')];
-    if (filters.fechaInicio) abordajeConditions.push(gte(abordaje.fechaAbordaje, new Date(filters.fechaInicio)));
-    if (filters.fechaFin) abordajeConditions.push(lte(abordaje.fechaAbordaje, new Date(filters.fechaFin)));
-    if (filters.comunidad && filters.comunidad !== 'todas') abordajeConditions.push(eq(abordaje.codigoComunidad, filters.comunidad));
-
+    // 2. Total Abordajes Realizados (status in ['Finalizado', 'En Curso'] OR has consultations)
     const totalAbordajesQuery = await db
-        .select({ count: count() })
+        .select({ count: sql<number>`count(distinct ${abordaje.codigoAbordaje})` })
         .from(abordaje)
-        .where(and(...abordajeConditions));
+        .leftJoin(consultas, eq(abordaje.codigoAbordaje, consultas.codigoAbordaje))
+        .where(
+            and(
+                pacientesConditions.length > 0 ? and(...pacientesConditions) : undefined,
+                or(
+                    inArray(abordaje.estado, ['Finalizado', 'En Curso']),
+                    sql`${consultas.codigoConsulta} IS NOT NULL`
+                )
+            )
+        );
 
-    const totalAbordajes = totalAbordajesQuery[0]?.count || 0;
+    const totalAbordajes = Number(totalAbordajesQuery[0]?.count || 0);
 
     // 3. Medicamentos Entregados
     const medsWhere = [];
-    if (filters.fechaInicio) medsWhere.push(gte(abordaje.fechaAbordaje, new Date(filters.fechaInicio)));
-    if (filters.fechaFin) medsWhere.push(lte(abordaje.fechaAbordaje, new Date(filters.fechaFin)));
+    if (filters.fechaInicio && filters.fechaInicio.trim() !== '') {
+        const d = new Date(filters.fechaInicio);
+        if (!isNaN(d.getTime())) medsWhere.push(gte(abordaje.fechaAbordaje, d));
+    }
+    if (filters.fechaFin && filters.fechaFin.trim() !== '') {
+        const d = new Date(filters.fechaFin);
+        if (!isNaN(d.getTime())) medsWhere.push(lte(abordaje.fechaAbordaje, d));
+    }
     if (filters.comunidad && filters.comunidad !== 'todas') medsWhere.push(eq(abordaje.codigoComunidad, filters.comunidad));
 
     const totalMedicamentosQuery = await db
@@ -83,8 +107,8 @@ export async function getExecutiveKPIs(filters: DashboardFilters) {
 
     const totalMedicamentos = Number(totalMedicamentosQuery[0]?.sum || 0);
 
-    // 4. Promedio Atenciones por Jornada
-    const avgAtenciones = totalAbordajes > 0 ? Math.round(totalPacientes / totalAbordajes) : 0;
+    // 4. Promedio Atenciones por Jornada (allow decimals for accuracy)
+    const avgAtenciones = totalAbordajes > 0 ? totalPacientes / totalAbordajes : 0;
 
     // 5. Evolución de Atenciones (Group by Month)
     const evolutionWrap = sql`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`;
@@ -121,8 +145,8 @@ export async function getExecutiveKPIs(filters: DashboardFilters) {
             totalMedicamentos,
             avgAtenciones,
         },
-        evolution: evolutionQuery,
-        geo: geoQuery,
+        evolution: evolutionQuery || [],
+        geo: geoQuery || [],
     };
 }
 
@@ -130,8 +154,14 @@ export async function getExecutiveKPIs(filters: DashboardFilters) {
 
 export async function getEpidemiologicalData(filters: DashboardFilters) {
     const baseConditions = [];
-    if (filters.fechaInicio) baseConditions.push(gte(abordaje.fechaAbordaje, new Date(filters.fechaInicio)));
-    if (filters.fechaFin) baseConditions.push(lte(abordaje.fechaAbordaje, new Date(filters.fechaFin)));
+    if (filters.fechaInicio && filters.fechaInicio.trim() !== '') {
+        const d = new Date(filters.fechaInicio);
+        if (!isNaN(d.getTime())) baseConditions.push(gte(abordaje.fechaAbordaje, d));
+    }
+    if (filters.fechaFin && filters.fechaFin.trim() !== '') {
+        const d = new Date(filters.fechaFin);
+        if (!isNaN(d.getTime())) baseConditions.push(lte(abordaje.fechaAbordaje, d));
+    }
     if (filters.comunidad && filters.comunidad !== 'todas') baseConditions.push(eq(abordaje.codigoComunidad, filters.comunidad));
 
     // 1. Top 10 Patologías
@@ -242,8 +272,14 @@ export async function getEpidemiologicalData(filters: DashboardFilters) {
 
 export async function getPharmacyData(filters: DashboardFilters) {
     const baseConditions = [];
-    if (filters.fechaInicio) baseConditions.push(gte(abordaje.fechaAbordaje, new Date(filters.fechaInicio)));
-    if (filters.fechaFin) baseConditions.push(lte(abordaje.fechaAbordaje, new Date(filters.fechaFin)));
+    if (filters.fechaInicio && filters.fechaInicio.trim() !== '') {
+        const d = new Date(filters.fechaInicio);
+        if (!isNaN(d.getTime())) baseConditions.push(gte(abordaje.fechaAbordaje, d));
+    }
+    if (filters.fechaFin && filters.fechaFin.trim() !== '') {
+        const d = new Date(filters.fechaFin);
+        if (!isNaN(d.getTime())) baseConditions.push(lte(abordaje.fechaAbordaje, d));
+    }
     if (filters.comunidad && filters.comunidad !== 'todas') baseConditions.push(eq(abordaje.codigoComunidad, filters.comunidad));
 
     // 1. Top Meds
@@ -294,8 +330,14 @@ export async function getPharmacyData(filters: DashboardFilters) {
 
 export async function getOperationsData(filters: DashboardFilters) {
     const baseConditions = [];
-    if (filters.fechaInicio) baseConditions.push(gte(abordaje.fechaAbordaje, new Date(filters.fechaInicio)));
-    if (filters.fechaFin) baseConditions.push(lte(abordaje.fechaAbordaje, new Date(filters.fechaFin)));
+    if (filters.fechaInicio && filters.fechaInicio.trim() !== '') {
+        const d = new Date(filters.fechaInicio);
+        if (!isNaN(d.getTime())) baseConditions.push(gte(abordaje.fechaAbordaje, d));
+    }
+    if (filters.fechaFin && filters.fechaFin.trim() !== '') {
+        const d = new Date(filters.fechaFin);
+        if (!isNaN(d.getTime())) baseConditions.push(lte(abordaje.fechaAbordaje, d));
+    }
     if (filters.comunidad && filters.comunidad !== 'todas') baseConditions.push(eq(abordaje.codigoComunidad, filters.comunidad));
 
     // 1. Efficiency (Estimados vs Reales)
@@ -321,18 +363,19 @@ export async function getOperationsData(filters: DashboardFilters) {
         .where(baseConditions.length > 0 ? and(...baseConditions) : undefined)
         .groupBy(abordaje.tipoAbordaje);
 
-    // 3. Resources
-    const resources = await db
+    // 3. Medical Specialties (Consultations per specialty)
+    const specialtiesData = await db
         .select({
-            transporte: sum(sql`CASE WHEN ${abordaje.transporte} = 1 THEN 1 ELSE 0 END`),
-            refrigerios: sum(sql`CASE WHEN ${abordaje.refrigerios} = 1 THEN 1 ELSE 0 END`),
-            espacio: sum(sql`CASE WHEN ${abordaje.espacioCubierto} = 1 THEN 1 ELSE 0 END`),
-            total: count()
+            especialidad: especialidades.nombreEspecialidad,
+            cantidad: count(consultas.codigoConsulta)
         })
-        .from(abordaje)
-        .where(baseConditions.length > 0 ? and(...baseConditions) : undefined);
-
-    const res = resources[0];
+        .from(consultas)
+        .innerJoin(medicos, eq(consultas.cedulaMedico, medicos.cedulaTejedor))
+        .innerJoin(especialidades, eq(medicos.codigoEspecialidad, especialidades.codigoEspecialidad))
+        .leftJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(baseConditions.length > 0 ? and(...baseConditions) : undefined)
+        .groupBy(especialidades.nombreEspecialidad)
+        .orderBy(desc(count(consultas.codigoConsulta)));
 
     return {
         efficiency: efficiencyData.map(e => ({
@@ -340,12 +383,14 @@ export async function getOperationsData(filters: DashboardFilters) {
             Estimados: e.estimados || 0,
             Reales: e.reales
         })),
-        types: typesData,
-        resources: [
-            { subject: 'Transporte', A: Number(res?.transporte || 0), fullMark: Number(res?.total) },
-            { subject: 'Refrigerios', A: Number(res?.refrigerios || 0), fullMark: Number(res?.total) },
-            { subject: 'Espacio Cubierto', A: Number(res?.espacio || 0), fullMark: Number(res?.total) },
-        ]
+        types: typesData.map(t => ({
+            tipo: t.tipo || 'General',
+            cantidad: t.cantidad
+        })),
+        specialties: specialtiesData.map(s => ({
+            subject: s.especialidad,
+            value: s.cantidad
+        }))
     };
 }
 

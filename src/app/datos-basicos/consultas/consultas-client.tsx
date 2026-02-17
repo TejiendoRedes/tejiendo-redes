@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,13 @@ export default function ConsultasClient({
     enfermedades
 }: ConsultasClientProps) {
     const [consultasData, setConsultasData] = React.useState(initialConsultas);
+    const router = useRouter();
+
+    // Sincronizar estado local cuando los datos del servidor cambian (router.refresh())
+    React.useEffect(() => {
+        setConsultasData(initialConsultas);
+    }, [initialConsultas]);
+
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingId, setEditingId] = React.useState<string | null>(null);
 
@@ -120,16 +128,18 @@ export default function ConsultasClient({
         if (editingId) {
             const res = await updateConsulta(editingId, formData, selectedEnfermedades);
             if (res.success) {
-                toast.success('Consulta actualizada. Recargando...');
-                window.location.reload(); // Simple reload for complex relations update
+                toast.success('Consultas actualizadas');
+                setIsModalOpen(false);
+                router.refresh();
             } else {
                 toast.error(res.error || 'Error al actualizar');
             }
         } else {
             const res = await createConsulta(formData, selectedEnfermedades);
             if (res.success) {
-                toast.success('Consulta creada. Recargando...');
-                window.location.reload();
+                toast.success('Consulta creada');
+                setIsModalOpen(false);
+                router.refresh();
             } else {
                 toast.error(res.error || 'Error al crear');
             }

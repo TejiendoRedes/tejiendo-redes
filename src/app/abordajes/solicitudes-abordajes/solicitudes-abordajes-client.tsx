@@ -54,6 +54,11 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
     const [isLoading, setIsLoading] = React.useState(false);
     const [solicitudes, setSolicitudes] = React.useState<SolicitudAbordaje[]>(initialData);
 
+    // Sincronizar estado local cuando los datos del servidor cambian (router.refresh())
+    React.useEffect(() => {
+        setSolicitudes(initialData);
+    }, [initialData]);
+
     const [formData, setFormData] = React.useState({
         codigoComunidad: '',
         fechaSugerida: '',

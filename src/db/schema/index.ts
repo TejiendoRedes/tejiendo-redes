@@ -16,3 +16,4 @@ export * from './aspirantes';
 export * from './peticiones';
 export * from './solicitudes-abordajes';
 export * from './abordaje-asistencia';
+export * from './mantenimiento';

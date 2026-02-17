@@ -8,6 +8,7 @@ import { medicamentos } from '@/db/schema/medicamentos';
 import { eq, and, sql } from 'drizzle-orm';
 import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
 import { pacientes } from '@/db/schema/pacientes';
+import { medicos } from '@/db/schema/medicos';
 
 export class AbordajesService {
     /**
@@ -84,18 +85,30 @@ export class AbordajesService {
                     .from(tejedoresAbordaje)
                     .innerJoin(tejedores, eq(tejedoresAbordaje.cedulaTejedor, tejedores.cedulaTejedor))
                     .where(eq(tejedoresAbordaje.codigoAbordaje, id)),
-                db.select()
+                db.select({
+                    codigoConsulta: consultas.codigoConsulta,
+                    cedulaPaciente: consultas.cedulaPaciente,
+                    nombrePaciente: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
+                    cedulaMedico: consultas.cedulaMedico,
+                    nombreMedico: sql<string>`concat(${tejedores.nombreTejedor}, ' ', ${tejedores.apellidoTejedor})`,
+                    motivoConsulta: consultas.motivoConsulta,
+                })
                     .from(consultas)
+                    .leftJoin(pacientes, eq(consultas.cedulaPaciente, pacientes.cedulaPaciente))
+                    .leftJoin(medicos, eq(consultas.cedulaMedico, medicos.cedulaTejedor))
+                    .leftJoin(tejedores, eq(medicos.cedulaTejedor, tejedores.cedulaTejedor))
                     .where(eq(consultas.codigoAbordaje, id)),
                 db.select({
                     codigoMedicamento: medicamentos.codigoMedicamento,
                     cedulaPaciente: medicamentosPacientes.cedulaPaciente,
+                    nombrePaciente: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
                     cantidadEntregada: medicamentosPacientes.cantidadEntregada,
                     indicaciones: medicamentos.descripcion,
                     nombreMedicamento: medicamentos.nombreMedicamento,
                 })
                     .from(medicamentosPacientes)
                     .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
+                    .leftJoin(pacientes, eq(medicamentosPacientes.cedulaPaciente, pacientes.cedulaPaciente))
                     .where(eq(medicamentosPacientes.codigoAbordaje, id)),
             ]);
 
@@ -200,15 +213,28 @@ export class AbordajesService {
     }
 
     static async delete(id: string) {
-        // FK constraints will be handled by the database (restrict or cascade depending on relation)
-        // But for main Abordaje, we might want to ensure manual cascades or checks if DB doesn't handle all.
-        // In relations.ts:
-        // - abordajeComunidad: cascade
-        // - tejedoresAbordaje: cascade
-        // - consultas: restrict (THIS IS GOOD, prevents deleting abordaje with consultations)
-        // - medicamentosPacientes: cascade (we just set this!)
+        return await db.transaction(async (tx) => {
+            // 1. Eliminar medicamentos entregados
+            await tx.delete(medicamentosPacientes).where(eq(medicamentosPacientes.codigoAbordaje, id));
 
-        return await db.delete(abordaje).where(eq(abordaje.codigoAbordaje, id));
+            // 2. Eliminar consultas asociadas (incluyendo sus enfermedades, que están en CASCADA en DB pero mejor ser explícitos si fuera necesario, aquí confiamos en la DB para consultas->enfermedades si está configurado, 
+            // pero consultas->abordaje es RESTRICT, so we MUST delete inquiries first)
+            // Primero borrar enfermedades de las consultas de este abordaje si fuera necesario, pero la relación consultas->enfermedades es cascade.
+            // Borramos las consultas.
+            await tx.delete(consultas).where(eq(consultas.codigoAbordaje, id));
+
+            // 3. Eliminar asistencia / check-ins
+            await tx.delete(abordajeAsistencia).where(eq(abordajeAsistencia.codigoAbordaje, id));
+
+            // 4. Eliminar tejedores asociados
+            await tx.delete(tejedoresAbordaje).where(eq(tejedoresAbordaje.codigoAbordaje, id));
+
+            // 5. Eliminar comunidades asociadas
+            await tx.delete(abordajeComunidad).where(eq(abordajeComunidad.codigoAbordaje, id));
+
+            // 6. Finalmente eliminar el abordaje
+            return await tx.delete(abordaje).where(eq(abordaje.codigoAbordaje, id));
+        });
     }
 
     static async registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {

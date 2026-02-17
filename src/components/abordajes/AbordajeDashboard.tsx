@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { updateAbordaje, deleteAbordaje } from '@/actions/abordajes-actions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     ArrowLeft,
@@ -37,6 +39,46 @@ interface AbordajeDashboardProps {
 export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('comunidades');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleFinalize = async () => {
+        if (!confirm('¿Estás seguro de finalizar este abordaje? No podrás realizar más cambios después.')) return;
+
+        setIsLoading(true);
+        try {
+            const res = await updateAbordaje(abordaje.codigoAbordaje, { estado: 'Finalizado' });
+            if (res.success) {
+                toast.success('Abordaje finalizado correctamente');
+                router.refresh();
+            } else {
+                toast.error(res.error || 'Error al finalizar el abordaje');
+            }
+        } catch (error) {
+            toast.error('Error de conexión');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('¿Estás seguro de eliminar este abordaje? Esta acción no se puede deshacer y borrará toda la información asociada.')) return;
+
+        setIsLoading(true);
+        try {
+            const res = await deleteAbordaje(abordaje.codigoAbordaje);
+            if (res.success) {
+                toast.success('Abordaje eliminado correctamente');
+                router.push('/abordajes');
+                return;
+            } else {
+                toast.error(res.error || 'Error al eliminar el abordaje');
+            }
+        } catch (error) {
+            toast.error('Error de conexión');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Logistics info badges
     const logisticsBadges = [
@@ -85,9 +127,14 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <Button variant="default" className="shadow-sm bg-blue-600 hover:bg-blue-700">
+                    <Button
+                        variant="default"
+                        className="shadow-sm bg-blue-600 hover:bg-blue-700"
+                        onClick={handleFinalize}
+                        disabled={isLoading || abordaje.estado === 'Finalizado'}
+                    >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
-                        Finalizar Abordaje
+                        {isLoading ? 'Finalizando...' : 'Finalizar Abordaje'}
                     </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -99,8 +146,8 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                             <DropdownMenuItem onClick={() => router.push(`/abordajes/${abordaje.codigoAbordaje}/editar`)}>
                                 Editar Datos Básicos
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                                Cancelar Abordaje
+                            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleDelete}>
+                                Eliminar Abordaje
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

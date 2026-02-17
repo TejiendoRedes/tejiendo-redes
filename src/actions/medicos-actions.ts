@@ -32,9 +32,11 @@ export async function getMedicos(query?: string, limit: number = 50) {
 
         const result = await queryBuilder.limit(limit);
 
-        // Transformar data para el cliente
+        // Transformar data para el cliente (aplanar campos de tejedor para componentes de búsqueda)
         const data = result.map(({ medicos, tejedores, especialidades }) => ({
             ...medicos,
+            nombreTejedor: tejedores?.nombreTejedor,
+            apellidoTejedor: tejedores?.apellidoTejedor,
             tejedor: tejedores,
             especialidad: especialidades
         }));

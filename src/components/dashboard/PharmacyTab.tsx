@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Pill, Users } from 'lucide-react';
 import {
     BarChart,
     Bar,
@@ -34,16 +34,35 @@ export function PharmacyTab({ data }: PharmacyTabProps) {
                     <CardTitle>Medicamentos Más Rotados</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={topMeds}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="nombre" fontSize={12} interval={0} angle={-15} textAnchor="end" height={60} />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="cantidad" fill="#8884d8" name="Entregados" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {topMeds.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={topMeds}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                    <XAxis
+                                        dataKey="nombre"
+                                        fontSize={11}
+                                        interval={0}
+                                        angle={-15}
+                                        textAnchor="end"
+                                        height={60}
+                                        tick={{ fill: '#4b5563' }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                    />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Bar dataKey="cantidad" fill="#8b5cf6" name="Entregados" radius={[4, 4, 0, 0]} barSize={30} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-center space-y-2">
+                                <Pill className="w-12 h-12 text-gray-200 mx-auto" />
+                                <p className="text-sm text-gray-400">Sin datos de rotación de medicamentos</p>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -54,16 +73,37 @@ export function PharmacyTab({ data }: PharmacyTabProps) {
                     <CardTitle>Consumo por Grupo Etario</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={consumptionByAge}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="value" stroke="#82ca9d" fill="#82ca9d" name="Unidades" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {consumptionByAge.some(d => d.value > 0) ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={consumptionByAge}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#4b5563', fontSize: 12 }}
+                                    />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#10b981"
+                                        fill="#d1fae5"
+                                        name="Unidades"
+                                        strokeWidth={2}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-center space-y-2">
+                                <Users className="w-12 h-12 text-gray-200 mx-auto" />
+                                <p className="text-sm text-gray-400">Sin datos de consumo por edad</p>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

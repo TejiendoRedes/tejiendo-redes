@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, Users } from 'lucide-react';
 import {
     BarChart,
     Bar,
@@ -50,16 +51,32 @@ export function EpidemiologyTab({ data }: EpidemiologyTabProps) {
                     <CardTitle>Top 10 Patologías</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={pathologies} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" />
-                                <YAxis dataKey="enfermedad" type="category" width={150} tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar dataKey="cantidad" fill="#8884d8" radius={[0, 4, 4, 0]} name="Casos" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {pathologies.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={pathologies} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                                    <XAxis type="number" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                                    <YAxis
+                                        dataKey="enfermedad"
+                                        type="category"
+                                        width={150}
+                                        tick={{ fontSize: 12, fill: '#4b5563' }}
+                                        axisLine={false}
+                                        tickLine={false}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Bar dataKey="cantidad" fill="#6366f1" radius={[0, 4, 4, 0]} name="Casos" barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-center space-y-2">
+                                <Activity className="w-12 h-12 text-gray-200 mx-auto" />
+                                <p className="text-sm text-gray-400">No hay patologías registradas en este periodo</p>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -70,26 +87,33 @@ export function EpidemiologyTab({ data }: EpidemiologyTabProps) {
                     <CardTitle>Estado Nutricional (IMC)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={imcData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {imcData.map((entry, index) => ( // eslint-disable-line
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {imcData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={imcData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {imcData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-center space-y-2">
+                                <Users className="w-12 h-12 text-gray-200 mx-auto" />
+                                <p className="text-sm text-gray-400">Sin datos nutricionales (IMC)</p>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -100,25 +124,32 @@ export function EpidemiologyTab({ data }: EpidemiologyTabProps) {
                     <CardTitle>Prevalencia Hipertensión</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={hypertensionData}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent = 0 }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                    outerRadius={80}
-                                    dataKey="value"
-                                >
-                                    {hypertensionData.map((entry, index) => ( // eslint-disable-line
-                                        <Cell key={`cell-${index}`} fill={HYPERTENSION_COLORS[index]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <div className="h-[300px] flex items-center justify-center">
+                        {hypertensionData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={hypertensionData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, percent = 0 }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                        outerRadius={80}
+                                        dataKey="value"
+                                    >
+                                        {hypertensionData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={HYPERTENSION_COLORS[index]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="text-center space-y-2">
+                                <Activity className="w-12 h-12 text-gray-200 mx-auto" />
+                                <p className="text-sm text-gray-400">Sin datos de tensión arterial</p>
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

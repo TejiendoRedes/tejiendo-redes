@@ -53,6 +53,7 @@ export async function getPatientHistory(cedulaPaciente: string) {
             consulta: consultas,
             nombreMedico: sql<string>`concat(${tejedores.nombreTejedor}, ' ', ${tejedores.apellidoTejedor})`,
             codigoAbordaje: abordaje.codigoAbordaje,
+            descripcionAbordaje: abordaje.descripcion,
             fechaAbordaje: abordaje.fechaAbordaje,
             especialidad: especialidades.nombreEspecialidad
         })
@@ -68,6 +69,34 @@ export async function getPatientHistory(cedulaPaciente: string) {
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'el historial del paciente', 'obtener');
         return { success: false, error: errorMessage };
+    }
+}
+
+/**
+ * Obtener historial de medicamentos entregados a un paciente
+ */
+export async function getPatientMedicationHistory(cedulaPaciente: string) {
+    try {
+        const { medicamentos } = await import('@/db/schema/medicamentos');
+        const { medicamentosPacientes } = await import('@/db/schema/relations');
+
+        const data = await db.select({
+            entrega: medicamentosPacientes,
+            nombreMedicamento: medicamentos.nombreMedicamento,
+            presentacion: medicamentos.presentacion,
+            fechaAbordaje: abordaje.fechaAbordaje,
+            descripcionAbordaje: abordaje.descripcion
+        })
+            .from(medicamentosPacientes)
+            .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
+            .leftJoin(abordaje, eq(medicamentosPacientes.codigoAbordaje, abordaje.codigoAbordaje))
+            .where(eq(medicamentosPacientes.cedulaPaciente, cedulaPaciente))
+            .orderBy(desc(medicamentosPacientes.fechaEntrega));
+
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error fetching patient medication history:', error);
+        return { success: false, error: 'No se pudo obtener el historial de medicamentos' };
     }
 }
 

@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Calendar, Clock, MapPin, Users, FileText, Plus, Pill, Truck, Coffee, Sun, Info } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, Users, FileText, Plus, Pill, Truck, Coffee, Sun, Info, AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/UIComponents';
 import {
     EditAbordajeModal,
@@ -39,6 +41,7 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
     const [showAddTejedor, setShowAddTejedor] = useState(false);
     const [showRegisterMeds, setShowRegisterMeds] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
 
     if (!abordajeData) {
         return (
@@ -87,29 +90,60 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                         <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="flex items-center gap-2">
                             Eliminar
                         </Button>
-                        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                            <AlertDialogContent className="bg-white p-6 rounded-lg max-w-md w-full">
+                        <AlertDialog open={showDeleteDialog} onOpenChange={(open) => {
+                            setShowDeleteDialog(open);
+                            if (!open) setConfirmText('');
+                        }}>
+                            <AlertDialogContent className="bg-white p-6 rounded-lg max-w-md w-full border-red-200 border-2">
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el abordaje
-                                        {abordajeData.consultas?.length > 0 && " (Nota: Si hay consultas asociadas, la eliminación fallará por seguridad)"}.
+                                    <div className="flex items-center gap-3 text-red-600 mb-2">
+                                        <AlertTriangle className="w-8 h-8" />
+                                        <AlertDialogTitle className="text-xl">¿Eliminar Abordaje Permanentemente?</AlertDialogTitle>
+                                    </div>
+                                    <AlertDialogDescription className="space-y-3">
+                                        <div className="bg-red-50 p-3 rounded-md border border-red-100 text-red-800 text-sm">
+                                            <p className="font-semibold mb-1">¡ADVERTENCIA DE SEGURIDAD!</p>
+                                            <p>Esta acción es <strong>IRREVERSIBLE</strong> y eliminará en cascada:</p>
+                                            <ul className="list-disc list-inside mt-1 ml-1 space-y-0.5">
+                                                <li>El abordaje <strong>{abordajeData.codigoAbordaje}</strong></li>
+                                                <li>Todas las <strong>{abordajeData.consultas?.length || 0} consultas médicas</strong> asociadas</li>
+                                                <li>Todos los registros de asistencia</li>
+                                                <li>Las entregas de medicamentos vinculadas</li>
+                                            </ul>
+                                        </div>
+                                        <div className="space-y-2 mt-4">
+                                            <Label htmlFor="confirm-delete" className="text-gray-700 font-medium">
+                                                Para confirmar, escriba <span className="font-mono font-bold text-red-600">ELIMINAR</span> a continuación:
+                                            </Label>
+                                            <Input
+                                                id="confirm-delete"
+                                                value={confirmText}
+                                                onChange={(e) => setConfirmText(e.target.value)}
+                                                placeholder="Escriba ELIMINAR"
+                                                className="border-red-300 focus-visible:ring-red-500"
+                                            />
+                                        </div>
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <AlertDialogFooter className="mt-4 flex justify-end gap-2">
+                                <AlertDialogFooter className="mt-6 flex justify-end gap-3">
                                     <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={async () => {
-                                        const res = await deleteAbordaje(abordajeData.codigoAbordaje);
-                                        if (res.success) {
-                                            toast.success('Abordaje eliminado exitosamente');
-                                            router.push('/abordajes');
-                                        } else {
-                                            toast.error(res.error || 'No se pudo eliminar el abordaje');
-                                            setShowDeleteDialog(false);
-                                        }
-                                    }} className="bg-red-600 hover:bg-red-700 text-white">
-                                        Eliminar
-                                    </AlertDialogAction>
+                                    <Button
+                                        variant="destructive"
+                                        disabled={confirmText !== 'ELIMINAR'}
+                                        onClick={async () => {
+                                            const res = await deleteAbordaje(abordajeData.codigoAbordaje);
+                                            if (res.success) {
+                                                toast.success('Abordaje y todos sus datos asociados fueron eliminados permanentemente');
+                                                router.push('/abordajes');
+                                            } else {
+                                                toast.error(res.error || 'No se pudo eliminar el abordaje');
+                                                setShowDeleteDialog(false);
+                                            }
+                                        }}
+                                        className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                                    >
+                                        ELIMINAR DEFINITIVAMENTE
+                                    </Button>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>

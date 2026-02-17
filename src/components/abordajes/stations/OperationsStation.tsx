@@ -41,14 +41,7 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
     };
 
     const handleViewHistory = (consulta: any) => {
-        // Since we don't have the full patient list loaded anymore, we can try to get the name from the consultation data if available,
-        // or just use the ID. The PatientHistoryDialog fetches details by ID anyway.
-        setSelectedPatient({
-            cedula: consulta.cedulaPaciente,
-            nombre: consulta.cedulaPaciente // We might want to fetch the name if critical, but ID is enough for the dialog
-        });
-        setSelectedConsultaId(consulta.codigoConsulta);
-        setHistoryDialogOpen(true);
+        router.push(`/datos-basicos/pacientes/${consulta.cedulaPaciente}`);
     };
 
     return (
@@ -118,11 +111,12 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
                                                 </span>
                                             </div>
                                             <p className="text-sm">
-                                                <strong>Paciente:</strong> {consulta.cedulaPaciente}
+                                                <strong>Paciente:</strong> {consulta.nombrePaciente || consulta.cedulaPaciente}
+                                                <span className="text-xs text-gray-400 ml-2">({consulta.cedulaPaciente})</span>
                                             </p>
                                             {consulta.cedulaMedico && (
                                                 <p className="text-sm text-gray-600">
-                                                    <strong>Médico:</strong> {consulta.cedulaMedico}
+                                                    <strong>Médico:</strong> {consulta.nombreMedico || consulta.cedulaMedico}
                                                 </p>
                                             )}
                                         </div>
@@ -181,7 +175,8 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
                                         </div>
                                         <div>
                                             <p className="text-gray-500 text-xs">Paciente</p>
-                                            <p className="font-semibold">{entrega.cedulaPaciente}</p>
+                                            <p className="font-semibold text-xs">{entrega.nombrePaciente || entrega.cedulaPaciente}</p>
+                                            <p className="text-[10px] text-gray-400">{entrega.cedulaPaciente}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-500 text-xs">Cantidad</p>

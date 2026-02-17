@@ -7,7 +7,7 @@ import os from 'os';
 
 const execAsync = promisify(exec);
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const host = process.env.DATABASE_HOST || 'localhost';
         const user = process.env.DATABASE_USER || 'root';
@@ -59,7 +59,23 @@ export async function GET() {
         await execAsync(command);
         console.log('Backup created at:', tempFilePath);
 
-        // Read the file
+        // Check if we should return the file or just a success message
+        const { searchParams } = new URL(request.url);
+        const shouldDownload = searchParams.get('download') === 'true';
+
+        if (!shouldDownload) {
+            // If not downloading, we might want to move it to a persistent location
+            // or just confirm it was created. For now, we'll delete it and return success
+            // as the user requested "gestionara el tiempo" and "boton para refresh"
+            fs.unlinkSync(tempFilePath);
+            return NextResponse.json({
+                success: true,
+                message: 'Copia de seguridad generada correctamente',
+                filename
+            });
+        }
+
+        // Read the file for download
         const fileBuffer = fs.readFileSync(tempFilePath);
 
         // Delete the temp file after reading

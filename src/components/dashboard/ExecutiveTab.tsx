@@ -28,7 +28,9 @@ interface ExecutiveTabProps {
 }
 
 export function ExecutiveTab({ data }: ExecutiveTabProps) {
-    const { kpis, evolution, geo } = data;
+    const { kpis, evolution = [], geo = [] } = data;
+
+    const hasData = kpis.totalPacientes > 0 || kpis.totalAbordajes > 0;
 
     return (
         <div className="space-y-6">
@@ -47,7 +49,7 @@ export function ExecutiveTab({ data }: ExecutiveTabProps) {
                     description="Jornadas realizadas"
                 />
                 <KPICard
-                    title="Medicamentos"
+                    title="Total Entregas Realizadas"
                     value={kpis.totalMedicamentos}
                     icon={<Pill className="w-6 h-6 text-purple-600" />}
                     description="Unidades entregadas"
@@ -67,22 +69,38 @@ export function ExecutiveTab({ data }: ExecutiveTabProps) {
                         <CardTitle>Evolución de Atenciones</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={evolution}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="mes" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="cantidad"
-                                        stroke="#2563eb"
-                                        strokeWidth={2}
-                                        name="Consultas"
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
+                        <div className="h-[300px] flex items-center justify-center">
+                            {evolution.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={evolution}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                        <XAxis
+                                            dataKey="mes"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                        />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="cantidad"
+                                            stroke="#2563eb"
+                                            strokeWidth={3}
+                                            dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
+                                            activeDot={{ r: 6, strokeWidth: 0 }}
+                                            name="Consultas"
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="text-center space-y-2">
+                                    <Activity className="w-12 h-12 text-gray-200 mx-auto" />
+                                    <p className="text-sm text-gray-400">No hay datos de evolución para el periodo seleccionado</p>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -92,16 +110,34 @@ export function ExecutiveTab({ data }: ExecutiveTabProps) {
                         <CardTitle>Top 5 Comunidades</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={geo} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="comunidad" type="category" width={100} fontSize={12} />
-                                    <Tooltip />
-                                    <Bar dataKey="pacientes" fill="#059669" radius={[0, 4, 4, 0]} name="Pacientes" />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div className="h-[300px] flex items-center justify-center">
+                            {geo.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={geo} layout="vertical" margin={{ left: 20, right: 20 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                                        <XAxis type="number" hide />
+                                        <YAxis
+                                            dataKey="comunidad"
+                                            type="category"
+                                            width={100}
+                                            fontSize={12}
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fill: '#4b5563' }}
+                                        />
+                                        <Tooltip
+                                            cursor={{ fill: '#f8fafc' }}
+                                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                        <Bar dataKey="pacientes" fill="#3b82f6" radius={[0, 4, 4, 0]} name="Pacientes" barSize={20} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="text-center space-y-2">
+                                    <Users className="w-12 h-12 text-gray-200 mx-auto" />
+                                    <p className="text-sm text-gray-400">Sin datos de distribución geográfica</p>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
