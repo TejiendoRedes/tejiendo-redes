@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { peticiones, medicamentos, pacientes, type NewPeticion, type Peticion } from '@/db/schema';
-import { eq, and, gt, sql } from 'drizzle-orm';
+import { peticiones, medicamentos, pacientes, abordaje, type NewPeticion, type Peticion } from '@/db/schema';
+import { eq, and, gt, sql, desc } from 'drizzle-orm';
 import { comunidades } from '@/db/schema/comunidades';
 import { getErrorMessage } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
@@ -31,11 +31,14 @@ export async function getPeticiones() {
             nombreMedicamento: medicamentos.nombreMedicamento,
             presentacion: medicamentos.presentacion,
             existencia: medicamentos.existencia,
+            codigoAbordaje: peticiones.codigoAbordaje,
+            descripcionAbordaje: abordaje.descripcion,
         })
             .from(peticiones)
             .leftJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
             .leftJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
-            .orderBy(peticiones.fechaPeticion);
+            .leftJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
+            .orderBy(desc(peticiones.fechaPeticion));
 
         return { success: true, data: result as any[] };
     } catch (error) {
@@ -142,6 +145,7 @@ export async function createPeticion(data: unknown) {
             codigoPaciente: validation.data.codigoPaciente,
             codigoMedicamento: validation.data.codigoMedicamento,
             cantidad: validation.data.cantidad,
+            codigoAbordaje: validation.data.codigoAbordaje || null,
             estado: 'pendiente',
             notas: validation.data.notas || null,
         };
@@ -335,5 +339,27 @@ export async function deletePeticion(id: number) {
     } catch (error) {
         console.error('Error deleting peticion:', error);
         return { success: false, error: 'Error al eliminar la petición' };
+    }
+}
+
+/**
+ * Obtener abordajes para select (formato simplificado)
+ */
+export async function getAbordajesForSelect() {
+    try {
+        await requireAuth();
+        const data = await db.select({
+            codigoAbordaje: abordaje.codigoAbordaje,
+            descripcion: abordaje.descripcion,
+            fechaAbordaje: abordaje.fechaAbordaje,
+        })
+            .from(abordaje)
+            .where(eq(abordaje.estado, 'Planificado')) // Solo abordajes planificados o en curso? 
+            .orderBy(desc(abordaje.fechaAbordaje));
+
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error fetching abordajes:', error);
+        return { success: false, error: 'Error al obtener los abordajes' };
     }
 }

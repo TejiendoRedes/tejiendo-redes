@@ -5,8 +5,9 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar } from 'lucide-react';
-import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado, getPacientesForSelect, getMedicamentosForSelect, getPeticiones } from '@/actions/peticiones-actions';
+import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList } from 'lucide-react';
+import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado, getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/actions/peticiones-actions';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -31,6 +32,8 @@ interface Peticion {
     horaEntrega?: string | null;
     estado: string;
     notas?: string | null;
+    codigoAbordaje?: string | null;
+    descripcionAbordaje?: string | null;
     nombrePaciente: string | null;
     apellidoPaciente: string | null;
     nombreMedicamento: string | null;
@@ -51,6 +54,12 @@ interface Medicamento {
     existencia: number;
 }
 
+interface Abordaje {
+    codigoAbordaje: string;
+    descripcion: string;
+    fechaAbordaje: Date;
+}
+
 interface PeticionesClientProps {
     initialData: Peticion[];
 }
@@ -68,8 +77,11 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
 
     const [pacientes, setPacientes] = React.useState<Paciente[]>([]);
     const [medicamentos, setMedicamentos] = React.useState<Medicamento[]>([]);
+    const [abordajes, setAbordajes] = React.useState<Abordaje[]>([]);
     const [selectedPaciente, setSelectedPaciente] = React.useState<string>('');
     const [selectedMedicamento, setSelectedMedicamento] = React.useState<string>('');
+    const [selectedAbordaje, setSelectedAbordaje] = React.useState<string>('');
+    const [isAbordaje, setIsAbordaje] = React.useState(false);
 
     const [formData, setFormData] = React.useState({
         codigoPaciente: '',
@@ -82,6 +94,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     React.useEffect(() => {
         loadPacientes();
         loadMedicamentos();
+        loadAbordajes();
     }, []);
 
     const loadPacientes = async () => {
@@ -98,6 +111,13 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         }
     };
 
+    const loadAbordajes = async () => {
+        const result = await getAbordajesForSelect();
+        if (result.success) {
+            setAbordajes(result.data || []);
+        }
+    };
+
     const handleAdd = () => {
         setFormData({
             codigoPaciente: '',
@@ -107,6 +127,8 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         });
         setSelectedPaciente('');
         setSelectedMedicamento('');
+        setSelectedAbordaje('');
+        setIsAbordaje(false);
         setIsModalOpen(true);
     };
 
@@ -189,7 +211,10 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                 return;
             }
 
-            const res = await createPeticion(formData);
+            const res = await createPeticion({
+                ...formData,
+                codigoAbordaje: isAbordaje ? selectedAbordaje : null
+            });
 
             if (res.success) {
                 toast.success(res.message);
@@ -325,6 +350,23 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
             ),
         },
         {
+            key: 'abordaje',
+            label: 'Abordaje',
+            render: (row: Peticion) => (
+                row.codigoAbordaje ? (
+                    <div className="flex items-center gap-2">
+                        <ClipboardList className="w-4 h-4 text-purple-500" />
+                        <div>
+                            <div className="font-medium">{row.descripcionAbordaje}</div>
+                            <div className="text-xs text-gray-500">{row.codigoAbordaje}</div>
+                        </div>
+                    </div>
+                ) : (
+                    <Badge variant="outline" className="text-gray-400 font-normal">Independiente</Badge>
+                )
+            ),
+        },
+        {
             key: 'estado',
             label: 'Estado',
             render: (row: Peticion) => getEstadoBadge(row.estado),
@@ -377,14 +419,14 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold">Peticiones de Medicamentos</h1>
+                        <h1 className="text-3xl font-bold">Entrega de Medicamentos</h1>
                         <p className="text-gray-600 mt-2">
-                            Gestiona las solicitudes de medicamentos realizadas por los pacientes
+                            Gestiona las entregas de medicamentos de forma independiente o en abordajes
                         </p>
                     </div>
                     <Button onClick={handleAdd} className="flex items-center gap-2">
                         <Plus className="w-4 h-4" />
-                        Nueva Petición
+                        Nueva Entrega
                     </Button>
                 </div>
 
@@ -397,7 +439,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle>Nueva Petición de Medicamento</DialogTitle>
+                            <DialogTitle>Nueva Entrega/Petición de Medicamento</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -429,6 +471,31 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                     />
                                 </div>
                             </div>
+
+                            <div className="flex items-center space-x-2 py-4">
+                                <Checkbox
+                                    id="is-abordaje"
+                                    checked={isAbordaje}
+                                    onCheckedChange={(checked) => setIsAbordaje(checked === true)}
+                                />
+                                <Label htmlFor="is-abordaje" className="cursor-pointer">¿Esta entrega se realizó en un abordaje?</Label>
+                            </div>
+
+                            {isAbordaje && (
+                                <div className="space-y-1 pb-4 border-b">
+                                    <SearchableSelect
+                                        label="Seleccionar Abordaje"
+                                        items={abordajes}
+                                        value={selectedAbordaje}
+                                        onValueChange={setSelectedAbordaje}
+                                        placeholder="Buscar abordaje..."
+                                        searchPlaceholder="Descripción o código..."
+                                        idField="codigoAbordaje"
+                                        labelField="descripcion"
+                                        secondaryLabelField="codigoAbordaje"
+                                    />
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -470,13 +537,13 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                     Cancelar
                                 </Button>
                                 <Button type="submit" disabled={isLoading}>
-                                    {isLoading ? 'Guardando...' : 'Crear Petición'}
+                                    {isLoading ? 'Guardando...' : 'Crear Entrega'}
                                 </Button>
                             </div>
                         </form>
                     </DialogContent>
                 </Dialog>
             </div>
-        </MainLayout>
+        </MainLayout >
     );
 }

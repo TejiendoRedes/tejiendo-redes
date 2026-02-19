@@ -75,7 +75,7 @@ export const menuItems: MenuItem[] = [
         icon: <Pill className="w-4 h-4" />,
         children: [
             { label: 'Medicamentos', path: '/farmacia/medicamentos', icon: <Heart className="w-4 h-4" /> },
-            { label: 'Peticiones', path: '/farmacia/peticiones', icon: <FileQuestion className="w-4 h-4" /> },
+            { label: 'Entrega de Medicamentos', path: '/farmacia/peticiones', icon: <FileQuestion className="w-4 h-4" /> },
         ],
     },
     {
