@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { mysqlTable, varchar, text, index, datetime } from 'drizzle-orm/mysql-core';
 import { abordaje } from './abordajes';
 import { pacientes } from './pacientes';
@@ -13,7 +14,7 @@ export const consultas = mysqlTable('consultas', {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }),
-    fechaConsulta: datetime('fecha_consulta').notNull().default(new Date()),
+    fechaConsulta: datetime('fecha_consulta').notNull().default(sql`now()`),
     cedulaPaciente: varchar('cedula_paciente', { length: 12 }).notNull().references(() => pacientes.cedulaPaciente, {
         onDelete: 'restrict',
         onUpdate: 'cascade'

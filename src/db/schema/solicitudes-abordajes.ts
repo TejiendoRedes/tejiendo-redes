@@ -16,6 +16,10 @@ export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     participantesEstimados: int('participantes_estimados').notNull(),
     recursosAdicionales: text('recursos_adicionales'), // Qué más se necesita
     estado: varchar('estado', { length: 20 }).notNull().default('pendiente'), // pendiente, confirmado, rechazado
+    logisticaLugar: boolean('logistica_lugar').notNull().default(false),
+    logisticaPersonal: boolean('logistica_personal').notNull().default(false),
+    logisticaRefrigerios: boolean('logistica_refrigerios').notNull().default(false),
+    logisticaTransporte: boolean('logistica_transporte').notNull().default(false),
     fechaSolicitud: datetime('fecha_solicitud').notNull().default(new Date()),
     notas: text('notas'),
 }, (table) => ({

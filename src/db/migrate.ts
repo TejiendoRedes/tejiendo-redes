@@ -36,6 +36,10 @@ async function runMigrations() {
         });
         console.log('✅ Connected to database');
 
+        // Disable sql_require_primary_key for this session 
+        // to prevent issues with Drizzle's migration scripts
+        await connection.query('SET SESSION sql_require_primary_key = 0;');
+
         const db = drizzle(connection);
 
         console.log('📝 Aplicando migraciones...');

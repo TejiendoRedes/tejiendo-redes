@@ -20,12 +20,7 @@ export default async function AbordajesPage() {
                         <h1 className="text-3xl font-bold text-gray-900">Abordaje Tejiendo Redes</h1>
                         <p className="text-gray-600 mt-2">Gestión de abordajes comunitarios</p>
                     </div>
-                    <Link href="/abordajes/nuevo">
-                        <Button className="flex items-center gap-2">
-                            <Plus className="w-4 h-4" />
-                            Nuevo Abordaje
-                        </Button>
-                    </Link>
+
                 </div>
 
                 {abordajes && abordajes.length > 0 ? (
@@ -102,8 +97,8 @@ export default async function AbordajesPage() {
                         title="No hay abordajes"
                         description="No se han registrado abordajes comunitarios aún."
                         action={{
-                            label: 'Crear primer abordaje',
-                            href: '/abordajes/nuevo'
+                            label: 'Ir a Solicitudes',
+                            href: '/abordajes/solicitudes-abordajes'
                         }}
                     />
                 )}

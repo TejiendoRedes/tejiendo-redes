@@ -184,3 +184,41 @@ export async function deleteSolicitudAbordaje(id: number) {
         return { success: false, error: errorMessage };
     }
 }
+
+/**
+ * Toggle check de logística
+ */
+export async function toggleLogisticaCheck(id: number, campo: 'logisticaLugar' | 'logisticaPersonal' | 'logisticaRefrigerios' | 'logisticaTransporte', valor: boolean) {
+    try {
+        await requireAuth();
+
+        // Actualizar el valor del check logistico específico
+        await db.update(solicitudesAbordajes)
+            .set({ [campo]: valor })
+            .where(eq(solicitudesAbordajes.id, id));
+
+        // Obtener la solicitud actualizada para validar autoconfirmación
+        const solicitudActualizada = await db.select()
+            .from(solicitudesAbordajes)
+            .where(eq(solicitudesAbordajes.id, id))
+            .limit(1);
+
+        if (solicitudActualizada[0]) {
+            const sol = solicitudActualizada[0];
+            // Autoconfirmación: Si los 4 checks están `true` y aún está `pendiente` u otro case
+            if (sol.logisticaLugar && sol.logisticaPersonal && sol.logisticaRefrigerios && sol.logisticaTransporte && sol.estado.toLowerCase() === 'pendiente') {
+                const confRes = await confirmarSolicitudAbordaje(id);
+                if (!confRes.success) {
+                    return { success: false, error: `Error al intentar autoconfirmar: ${confRes.error}` };
+                }
+                return { success: true, message: 'La solicitud se ha confirmado automáticamente. ' + confRes.message };
+            }
+        }
+
+        revalidatePath('/abordajes/solicitudes-abordajes');
+        return { success: true, message: 'Logística actualizada correctaemente' };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'la solicitud de abordaje', 'actualizar');
+        return { success: false, error: errorMessage };
+    }
+}

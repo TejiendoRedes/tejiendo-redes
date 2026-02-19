@@ -29,7 +29,7 @@ import {
 
 import { CommunityStation } from './stations/CommunityStation';
 import { TeamStation } from './stations/TeamStation';
-import { OperationsStation } from './stations/OperationsStation';
+
 import { HistoryStation } from './stations/HistoryStation';
 import { StatisticsStation } from './stations/StatisticsStation';
 
@@ -175,13 +175,7 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                             <Users className="w-4 h-4 mr-2" />
                             Equipo
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="operaciones"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none px-4 h-full"
-                        >
-                            <Stethoscope className="w-4 h-4 mr-2" />
-                            Operaciones
-                        </TabsTrigger>
+
                         <TabsTrigger
                             value="historial"
                             className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none px-4 h-full"
@@ -209,9 +203,7 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                         <TeamStation abordaje={abordaje} />
                     </TabsContent>
 
-                    <TabsContent value="operaciones" className="mt-0">
-                        <OperationsStation abordaje={abordaje} />
-                    </TabsContent>
+
 
                     <TabsContent value="historial" className="mt-0">
                         <HistoryStation abordaje={abordaje} />
