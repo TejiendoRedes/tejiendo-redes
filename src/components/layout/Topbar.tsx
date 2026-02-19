@@ -28,9 +28,8 @@ export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
   const { isDesktop } = useBreakpoint();
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
+  const handleLogout = async () => {
+    await logout();
   };
 
   const handleSearch = (e: React.FormEvent) => {

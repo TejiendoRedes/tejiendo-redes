@@ -38,7 +38,7 @@ export default function LoginPage() {
                         <p className="text-slate-500 text-sm mb-3">¿Eres nuevo?</p>
                         <a
                             href="/unirse"
-                            className="inline-flex items-center justify-center px-6 py-3 border border-[#0870B8] text-[#0870B8] font-semibold rounded-xl hover:bg-slate-50 transition-all active:scale-95 text-sm"
+                            className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-all active:scale-95 text-sm"
                         >
                             Unirse como tejedor
                         </a>

@@ -21,6 +21,9 @@ const dbConfig = {
     // Connection reuse settings
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+    // Timeout settings — DB-08: Increased for robust performance
+    connectTimeout: 20000, // 20 seconds to connect
+    acquireTimeout: 20000, // 20 seconds to acquire connection from pool
     // SSL configuration for Aiven
     ssl: {
         rejectUnauthorized: false

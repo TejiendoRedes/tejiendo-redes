@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -12,21 +12,28 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function LoginForm() {
     const { login } = useAuth();
     const router = useRouter();
-    const [usuario, setUsuario] = React.useState('');
-    const [password, setPassword] = React.useState('');
-    const [loading, setLoading] = React.useState(false);
+    const [usuario, setUsuario] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    // Security states
+    const [honeypot, setHoneypot] = useState('');
+    const [startTime] = useState(Date.now().toString());
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const success = await login(usuario, password);
+            const success = await login(usuario, password, {
+                honeypot,
+                submissionTime: startTime
+            });
 
             if (success) {
                 toast.success('Sesión iniciada correctamente');
-                router.refresh();
                 router.push('/dashboard');
+                router.refresh();
             } else {
                 toast.error('Usuario o contraseña incorrectos');
             }
@@ -39,6 +46,18 @@ export default function LoginForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Honeypot Field (Invisible to users, but visible to bots) */}
+            <div className="hidden" aria-hidden="true">
+                <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                />
+            </div>
+
             <div className="space-y-2">
                 <Label htmlFor="usuario" className="text-slate-700 font-semibold ml-1">
                     Usuario
@@ -56,6 +75,7 @@ export default function LoginForm() {
                         placeholder="Ingrese su usuario"
                         required
                         disabled={loading}
+                        autoComplete="username"
                     />
                 </div>
             </div>
@@ -77,13 +97,14 @@ export default function LoginForm() {
                         placeholder="Ingrese su contraseña"
                         required
                         disabled={loading}
+                        autoComplete="current-password"
                     />
                 </div>
             </div>
 
             <Button
                 type="submit"
-                className="w-full h-12 text-base font-bold bg-slate-900 hover:bg-slate-800 transition-all rounded-xl shadow-lg shadow-slate-200 mt-2"
+                className="w-full h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 transition-all rounded-xl shadow-lg shadow-blue-100 mt-2"
                 disabled={loading}
             >
                 {loading ? (

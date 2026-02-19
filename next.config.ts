@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // NX-03: Performance optimizations
   compress: true,
+  transpilePackages: ['isomorphic-dompurify'],
   images: {
     formats: ['image/avif', 'image/webp'],
   },

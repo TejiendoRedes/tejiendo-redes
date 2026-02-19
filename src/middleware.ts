@@ -1,11 +1,49 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { decrypt } from '@/lib/auth';
+import { SECURITY_HEADERS } from '@/lib/security/headers';
+import { rateLimit, LOGIN_LIMIT, REGISTER_LIMIT } from '@/lib/security/rate-limiter';
+import { validateCsrfToken } from '@/lib/security/csrf';
 
 export async function middleware(request: NextRequest) {
-    const currentUser = request.cookies.get('session')?.value;
     const { pathname } = request.nextUrl;
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
 
+    // 1. Rate Limiting for Auth Routes
+    if (pathname.startsWith('/api/auth/login')) {
+        const limiter = await rateLimit(ip, LOGIN_LIMIT);
+        if (!limiter.success) {
+            return new NextResponse(JSON.stringify({ error: 'Too many attempts. Please try again later.' }), {
+                status: 429,
+                headers: { 'Content-Type': 'application/json', 'Retry-After': String(limiter.retryAfter) }
+            });
+        }
+    }
+
+    if (pathname.startsWith('/api/auth/register') || pathname.startsWith('/api/auth/unirse')) {
+        const limiter = await rateLimit(ip, REGISTER_LIMIT);
+        if (!limiter.success) {
+            return new NextResponse(JSON.stringify({ error: 'Too many registrations from this IP. Please try again later.' }), {
+                status: 429,
+                headers: { 'Content-Type': 'application/json', 'Retry-After': String(limiter.retryAfter) }
+            });
+        }
+    }
+
+    // 2. CSRF Validation for API POST requests (Exclude registration for public access)
+    if (request.method === 'POST' && pathname.startsWith('/api/auth/') && !pathname.startsWith('/api/auth/register')) {
+        // We use a custom header for CSRF in AJAX requests
+        const csrfHeader = request.headers.get('x-csrf-token');
+        const isValid = await validateCsrfToken(csrfHeader || '');
+        if (!isValid) {
+            return new NextResponse(JSON.stringify({ error: 'Invalid CSRF token' }), {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+    }
+
+    const currentUser = request.cookies.get('session')?.value;
     let session = null;
     if (currentUser) {
         try {
@@ -24,44 +62,51 @@ export async function middleware(request: NextRequest) {
         pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/) ||
         pathname === '/';
 
+    let response: NextResponse;
+
     // 1. If user is logged in and hits /login or /, redirect to their specific dashboard
     if (session && (isLoginPage || pathname === '/')) {
-        return redirectToDashboard(session.role, request);
+        response = redirectToDashboard(session.role, request);
     }
-
     // 2. If user is NOT logged in and tries to access protected content
-    if (!session && !isLoginPage && !isUnirsePage && !isPublicApi && !isStaticAsset) {
-        return NextResponse.redirect(new URL('/login', request.url));
+    else if (!session && !isLoginPage && !isUnirsePage && !isPublicApi && !isStaticAsset) {
+        response = NextResponse.redirect(new URL('/login', request.url));
     }
-
     // 3. Robust Role-Based Access Control
-    if (session) {
+    else if (session) {
         // Redirect root /dashboard to specific role dashboard
         if (pathname === '/dashboard') {
-            return redirectToDashboard(session.role, request);
+            response = redirectToDashboard(session.role, request);
         }
-
         // Protect role-specific routes
-        if (pathname.startsWith('/dashboard/super-usuario') && session.role !== 'superuser') {
-            return redirectToDashboard(session.role, request);
+        else if (pathname.startsWith('/dashboard/super-usuario') && session.role !== 'superuser') {
+            response = redirectToDashboard(session.role, request);
         }
-        if (pathname.startsWith('/dashboard/admin') && !['admin', 'superuser'].includes(session.role)) {
-            return redirectToDashboard(session.role, request);
+        else if (pathname.startsWith('/dashboard/admin') && !['admin', 'superuser'].includes(session.role)) {
+            response = redirectToDashboard(session.role, request);
         }
-        if (pathname.startsWith('/dashboard/tejedor') && session.role !== 'tejedor') {
-            return redirectToDashboard(session.role, request);
+        else if (pathname.startsWith('/dashboard/tejedor') && session.role !== 'tejedor') {
+            response = redirectToDashboard(session.role, request);
         }
-
         // Protect API routes
-        if (pathname.startsWith('/api/super') && session.role !== 'superuser') {
-            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+        else if (pathname.startsWith('/api/super') && session.role !== 'superuser') {
+            response = new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
         }
-        if (pathname.startsWith('/api/admin') && !['admin', 'superuser'].includes(session.role)) {
-            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+        else if (pathname.startsWith('/api/admin') && !['admin', 'superuser'].includes(session.role)) {
+            response = new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+        } else {
+            response = NextResponse.next();
         }
+    } else {
+        response = NextResponse.next();
     }
 
-    return NextResponse.next();
+    // Apply security headers to all responses
+    Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+        response.headers.set(key, value);
+    });
+
+    return response;
 }
 
 function redirectToDashboard(role: string, request: NextRequest) {
@@ -77,7 +122,7 @@ function redirectToDashboard(role: string, request: NextRequest) {
             target = '/dashboard/tejedor';
             break;
         case 'medico':
-            target = '/atencion-medica'; // Medicos might go straight to their task
+            target = '/atencion-medica';
             break;
         case 'operador':
             target = '/datos-basicos';

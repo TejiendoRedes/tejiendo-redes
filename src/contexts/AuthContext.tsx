@@ -1,16 +1,16 @@
-'use client';
-
 // Context de autenticación
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Tejedor } from '@/types/models';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: Tejedor | null;
   loading: boolean;
-  login: (usuario: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  login: (usuario: string, password: string, additionalData?: any) => Promise<boolean>;
+  logout: () => Promise<void>;
   hasRole: (roles: string[]) => boolean;
+  csrfToken: string;
+  refreshCsrf: () => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,12 +18,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Tejedor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [csrfToken, setCsrfToken] = useState('');
   const router = useRouter();
+
+  const fetchCsrf = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/csrf');
+      if (res.ok) {
+        const data = await res.json();
+        setCsrfToken(data.csrfToken);
+        return data.csrfToken;
+      }
+    } catch (err) {
+      console.error('Failed to fetch CSRF token');
+    }
+    return '';
+  }, []);
 
   useEffect(() => {
     // Validar sesión con la API
-    const checkSession = async () => {
+    const initAuth = async () => {
       try {
+        await fetchCsrf();
         const res = await fetch('/api/auth/me');
         if (res.ok) {
           const data = await res.json();
@@ -38,16 +54,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     };
-    checkSession();
-  }, []);
+    initAuth();
+  }, [fetchCsrf]);
 
-  const login = async (usuario: string, password: string): Promise<boolean> => {
+  const login = async (usuario: string, password: string, additionalData: any = {}): Promise<boolean> => {
     try {
       setLoading(true);
+
+      // Ensure we have a fresh token
+      const currentToken = await fetchCsrf();
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, password }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': currentToken
+        },
+        body: JSON.stringify({
+          usuario,
+          password,
+          csrfToken: currentToken,
+          ...additionalData
+        }),
       });
 
       if (res.ok) {
@@ -67,13 +95,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      localStorage.removeItem('currentUser'); // Cleanup old local storage
-      router.push('/login');
-      router.refresh();
+      // Use the stored token for logout
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'x-csrf-token': csrfToken
+        }
+      });
     } catch (error) {
       console.error('Logout failed', error);
+    } finally {
+      // Always cleanup state and redirect, even if API fails
+      setUser(null);
+      localStorage.removeItem('currentUser');
+      router.push('/login');
+      router.refresh();
+      // Reset CSRF token
+      fetchCsrf();
     }
   };
 
@@ -84,7 +122,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      logout,
+      hasRole,
+      csrfToken,
+      refreshCsrf: fetchCsrf
+    }}>
       {children}
     </AuthContext.Provider>
   );

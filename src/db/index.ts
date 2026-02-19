@@ -5,8 +5,8 @@ import * as schema from './schema';
 // Create Drizzle instance with schema
 export const db = drizzle(connection, { schema, mode: 'default' });
 
-// Re-export schema for convenience
-export { schema };
+// Re-export connection and schema for convenience
+export { connection, schema };
 
 // Export commonly used types
 export type Database = typeof db;

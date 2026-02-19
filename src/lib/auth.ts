@@ -49,7 +49,7 @@ export async function getSession() {
 }
 
 export async function hashPassword(password: string) {
-    return await bcrypt.hash(password, 10);
+    return await bcrypt.hash(password, 12);
 }
 
 

@@ -2,38 +2,81 @@ import { NextResponse } from 'next/server';
 import { encrypt, comparePassword } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import { users, auditLogs } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { loginSchema } from '@/lib/validations/auth';
+import { sanitizeObject } from '@/lib/security/sanitize';
 
 export async function POST(request: Request) {
+    const startTime = Date.now();
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
     try {
         const body = await request.json();
-        const { usuario, password } = body;
 
-        if (!usuario || !password) {
+        // 1. Zod Validation
+        const result = loginSchema.safeParse(body);
+        if (!result.success) {
             return NextResponse.json(
-                { error: 'Usuario y contraseña requeridos' },
+                { error: 'Datos de inicio de sesión inválidos' },
                 { status: 400 }
             );
         }
 
-        // Buscar el usuario en la base de datos
+        const { usuario, password, honeypot, submissionTime } = result.data;
+
+        // 2. Honeypot check
+        if (honeypot) {
+            return NextResponse.json({ error: 'Bot detected' }, { status: 400 });
+        }
+
+        // 3. Submission time check
+        if (submissionTime) {
+            const timeElapsed = Date.now() - parseInt(submissionTime);
+            if (timeElapsed < 2000) {
+                return NextResponse.json({ error: 'Too fast' }, { status: 400 });
+            }
+        }
+
+        // 4. Input Sanitization
+        const sanitizedData = sanitizeObject({ usuario });
+
+        // 5. Database lookup (using Drizzle prepared-statement-like syntax)
         const [user] = await db.select()
             .from(users)
-            .where(eq(users.username, usuario))
+            .where(eq(users.username, sanitizedData.usuario))
             .limit(1);
 
         if (!user) {
+            await db.insert(auditLogs).values({
+                action: 'LOGIN_FAILURE',
+                entity: 'USERS',
+                details: `Intento de login fallido: usuario no existe (${sanitizedData.usuario})`,
+                ipAddress: ip,
+                userAgent: userAgent
+            });
+            // Apply delay to prevent timing attacks
+            await preventTimingAttack(startTime);
             return NextResponse.json(
                 { error: 'Credenciales inválidas' },
                 { status: 401 }
             );
         }
 
-        // Verificar la contraseña contra el hash
+        // 6. Password Verification
         const isValid = await comparePassword(password, user.password);
 
         if (!isValid) {
+            await db.insert(auditLogs).values({
+                userId: user.id,
+                action: 'LOGIN_FAILURE',
+                entity: 'USERS',
+                details: 'Intento de login fallido: contraseña incorrecta',
+                ipAddress: ip,
+                userAgent: userAgent
+            });
+            await preventTimingAttack(startTime);
             return NextResponse.json(
                 { error: 'Credenciales inválidas' },
                 { status: 401 }
@@ -47,10 +90,20 @@ export async function POST(request: Request) {
             );
         }
 
-        // Actualizar último login
-        await db.update(users)
-            .set({ lastLogin: new Date() })
-            .where(eq(users.id, user.id));
+        // 7. Success
+        await db.transaction(async (tx) => {
+            await tx.update(users)
+                .set({ lastLogin: new Date() })
+                .where(eq(users.id, user.id));
+
+            await tx.insert(auditLogs).values({
+                userId: user.id,
+                action: 'LOGIN_SUCCESS',
+                entity: 'USERS',
+                ipAddress: ip,
+                userAgent: userAgent
+            });
+        });
 
         // Crear sesión con los datos del usuario y su rol
         const userPayload = {
@@ -64,14 +117,14 @@ export async function POST(request: Request) {
         // Crear token
         const token = await encrypt(userPayload);
 
-        // Configurar cookie
+        // Configurar cookie segura
         const cookieStore = await cookies();
         cookieStore.set('session', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            sameSite: 'strict', // Changed to strict
             path: '/',
-            maxAge: 60 * 60 * 24,
+            maxAge: 60 * 60 * 24, // 24h
         });
 
         return NextResponse.json({
@@ -88,5 +141,16 @@ export async function POST(request: Request) {
             { error: 'Error interno del servidor' },
             { status: 500 }
         );
+    }
+}
+
+/**
+ * Ensures a minimum response time to mitigate timing attacks
+ */
+async function preventTimingAttack(startTime: number) {
+    const minTime = 1000; // 1 second minimum
+    const elapsed = Date.now() - startTime;
+    if (elapsed < minTime) {
+        await new Promise(resolve => setTimeout(resolve, minTime - elapsed));
     }
 }
