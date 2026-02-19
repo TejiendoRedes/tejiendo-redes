@@ -76,10 +76,22 @@ export function Sidebar({ collapsed, onToggle, variant = 'sidebar', hideToggle =
       {/* Menú */}
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
-          {menuItems.map(item => {
-            const hasChildren = item.children && item.children.length > 0;
+          {menuItems.filter(item => !item.roles || hasRole(item.roles)).map(item => {
+            // Resolve path for Dashboard item dynamically
+            let finalPath = item.path;
+            if (item.label === 'Inicio') {
+              const user = (hasRole as any).user; // Hack for now if user is available or use a hook
+              // Better approach: use a helper or get from context
+            }
+
+            // Re-evaluating: The middleware already handles the redirect for /dashboard.
+            // So keeping it as /dashboard is fine, it will just redirect.
+            // But for visual consistency (active state), we might want the real path.
+
+            const visibleChildren = item.children?.filter(child => !child.roles || hasRole(child.roles));
+            const hasChildren = visibleChildren && visibleChildren.length > 0;
             const isExpanded = expandedMenus.includes(item.path);
-            const itemActive = isActive(item.path);
+            const itemActive = isActive(finalPath);
 
             return (
               <li key={item.path}>
@@ -110,13 +122,13 @@ export function Sidebar({ collapsed, onToggle, variant = 'sidebar', hideToggle =
                     </button>
                     {!collapsed && isExpanded && (
                       <ul className="mt-1 ml-4 space-y-1">
-                        {item.children?.map(child => (
+                        {visibleChildren?.map(child => (
                           <li key={child.path}>
                             <Link
                               href={child.path}
                               className={cn(
                                 'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
-                                isActive(child.path, item.children)
+                                isActive(child.path, visibleChildren)
                                   ? 'bg-primary/10 text-primary'
                                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                               )}

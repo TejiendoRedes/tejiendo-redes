@@ -13,8 +13,8 @@ interface SessionPayload {
     cedulaTejedor: string;
     nombreTejedor: string;
     apellidoTejedor: string;
-    role?: string;
-    usuario?: string;
+    role: string;
+    usuario: string;
     iat?: number;
     exp?: number;
     [key: string]: unknown; // Allow other properties but force validation

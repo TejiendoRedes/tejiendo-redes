@@ -4,9 +4,8 @@ import { decrypt } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
     const currentUser = request.cookies.get('session')?.value;
+    const { pathname } = request.nextUrl;
 
-    // Decrypt the session to verify it's valid
-    // If decryption fails, it returns null or throws, so we treat it as no session
     let session = null;
     if (currentUser) {
         try {
@@ -16,32 +15,77 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Paths that are public
-    // - /login (public, but redirects to dashboard if logged in)
-    // - /api/auth/* (public endpoints)
-    // - /_next/* (static files)
-    // - /favicon.ico, /logo.png, /minilogo.png (assets)
-
-    const isLoginPage = request.nextUrl.pathname.startsWith('/login');
-    const isPublicApi = request.nextUrl.pathname.startsWith('/api/auth');
+    // Public Paths
+    const isLoginPage = pathname.startsWith('/login');
+    const isUnirsePage = pathname.startsWith('/unirse');
+    const isPublicApi = pathname.startsWith('/api/auth') || pathname.startsWith('/api/public');
     const isStaticAsset =
-        request.nextUrl.pathname.startsWith('/_next') ||
-        request.nextUrl.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/) ||
-        request.nextUrl.pathname === '/';
+        pathname.startsWith('/_next') ||
+        pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/) ||
+        pathname === '/';
 
-    // If user is already logged in and tries to access login page, redirect to dashboard
-    if (isLoginPage && session) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+    // 1. If user is logged in and hits /login or /, redirect to their specific dashboard
+    if (session && (isLoginPage || pathname === '/')) {
+        return redirectToDashboard(session.role, request);
     }
 
-    // If user is NOT logged in and tries to access a protected route
-    // Protected routes are everything EXCEPT login, public api, and static assets
-    if (!session && !isLoginPage && !isPublicApi && !isStaticAsset) {
-        // Redirect to login
+    // 2. If user is NOT logged in and tries to access protected content
+    if (!session && !isLoginPage && !isUnirsePage && !isPublicApi && !isStaticAsset) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
+    // 3. Robust Role-Based Access Control
+    if (session) {
+        // Redirect root /dashboard to specific role dashboard
+        if (pathname === '/dashboard') {
+            return redirectToDashboard(session.role, request);
+        }
+
+        // Protect role-specific routes
+        if (pathname.startsWith('/dashboard/super-usuario') && session.role !== 'superuser') {
+            return redirectToDashboard(session.role, request);
+        }
+        if (pathname.startsWith('/dashboard/admin') && !['admin', 'superuser'].includes(session.role)) {
+            return redirectToDashboard(session.role, request);
+        }
+        if (pathname.startsWith('/dashboard/tejedor') && session.role !== 'tejedor') {
+            return redirectToDashboard(session.role, request);
+        }
+
+        // Protect API routes
+        if (pathname.startsWith('/api/super') && session.role !== 'superuser') {
+            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+        }
+        if (pathname.startsWith('/api/admin') && !['admin', 'superuser'].includes(session.role)) {
+            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+        }
+    }
+
     return NextResponse.next();
+}
+
+function redirectToDashboard(role: string, request: NextRequest) {
+    let target = '/dashboard';
+    switch (role) {
+        case 'superuser':
+            target = '/dashboard/super-usuario';
+            break;
+        case 'admin':
+            target = '/dashboard/admin';
+            break;
+        case 'tejedor':
+            target = '/dashboard/tejedor';
+            break;
+        case 'medico':
+            target = '/atencion-medica'; // Medicos might go straight to their task
+            break;
+        case 'operador':
+            target = '/datos-basicos';
+            break;
+        default:
+            target = '/login';
+    }
+    return NextResponse.redirect(new URL(target, request.url));
 }
 
 export const config = {

@@ -33,6 +33,16 @@ export default function LoginPage() {
                 {/* Formulario de login */}
                 <div className="w-full bg-white rounded-3xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] border border-slate-100 p-10 transition-all duration-700 animate-in fade-in zoom-in-95 delay-200">
                     <LoginForm />
+
+                    <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                        <p className="text-slate-500 text-sm mb-3">¿Eres nuevo?</p>
+                        <a
+                            href="/unirse"
+                            className="inline-flex items-center justify-center px-6 py-3 border border-[#0870B8] text-[#0870B8] font-semibold rounded-xl hover:bg-slate-50 transition-all active:scale-95 text-sm"
+                        >
+                            Unirse como tejedor
+                        </a>
+                    </div>
                 </div>
 
                 <div className="mt-8 text-center animate-in fade-in slide-in-from-top-4 delay-500">

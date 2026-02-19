@@ -1,5 +1,7 @@
 // Export all schema tables
 export * from './responsable';
+export * from './users';
+export * from './audit_logs';
 export * from './tejedores';
 export * from './especialidades';
 export * from './enfermedades';
