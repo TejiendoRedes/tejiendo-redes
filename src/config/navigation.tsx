@@ -56,7 +56,12 @@ export const menuItems: MenuItem[] = [
         ],
     },
     {
-        label: 'Abordajes',
+        label: 'Atención Médica',
+        path: '/atencion-medica',
+        icon: <Stethoscope className="w-5 h-5" />,
+    },
+    {
+        label: 'Abordaje Tejiendo Redes',
         path: '/abordajes',
         icon: <ClipboardList className="w-5 h-5" />,
         children: [

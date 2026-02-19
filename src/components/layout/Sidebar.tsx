@@ -57,7 +57,7 @@ export function Sidebar({ collapsed, onToggle, variant = 'sidebar', hideToggle =
               height={56}
               className="object-contain"
             />
-            <span className="font-bold text-lg text-foreground">Abordajes</span>
+            <span className="font-bold text-lg text-foreground">Tejiendo Redes</span>
           </div>
         )}
         {collapsed && (

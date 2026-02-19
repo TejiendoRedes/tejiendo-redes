@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const ConsultaSchema = z.object({
-    codigoAbordaje: z.string().min(1, 'El código de abordaje es requerido'),
+    codigoAbordaje: z.string().optional().nullable(),
     cedulaPaciente: z.string().min(1, 'La cédula del paciente es requerida'),
     cedulaMedico: z.string().min(1, 'La cédula del médico es requerida'),
     motivoConsulta: z.string().min(1, 'El motivo de consulta es requerido'),

@@ -19,6 +19,8 @@ export const antecedentes = mysqlTable('antecedentes', {
     enfermedadesPrevias: text('enfermedades_previas').notNull(), // Historial de enfermedades pasadas
     alergias: text('alergias').notNull(),
     enfermedadesFamilia: text('enfermedades_familia').notNull(),
+    cirugiasPrevias: text('cirugias_previas'),
+    medicamentosActuales: text('medicamentos_actuales'),
 }, (table) => ({
     cedulaPacienteIdx: index('idx_cedula_paciente').on(table.cedulaPaciente),
 }));

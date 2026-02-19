@@ -391,6 +391,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
                                                 <SelectValue placeholder="Seleccione un tipo" />
                                             </SelectTrigger>
                                             <SelectContent>
+                                                <SelectItem value="Pública">Pública</SelectItem>
                                                 <SelectItem value="Gubernamental">Gubernamental</SelectItem>
                                                 <SelectItem value="Privada">Privada</SelectItem>
                                                 <SelectItem value="ONG">ONG</SelectItem>

@@ -280,106 +280,125 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                         </DialogHeader>
 
                         <form onSubmit={handleSubmit}>
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 mb-6">
-                                    <TabsTrigger value="tejedor" className="flex items-center gap-2">
-                                        <User className="w-4 h-4" />
-                                        Personal
-                                    </TabsTrigger>
-                                    <TabsTrigger value="especialidad" className="flex items-center gap-2">
-                                        <ClipboardList className="w-4 h-4" />
-                                        Datos Médicos
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="tejedor" className="space-y-4 py-2">
-                                    <div className="space-y-4">
-                                        <SearchableSelect
-                                            label="Seleccionar Tejedor (Médicos no asignados)"
-                                            items={isEditing ? tejedores.filter(t => t.cedulaTejedor === formData.cedulaTejedor) : tejedoresDisponibles}
-                                            value={formData.cedulaTejedor}
-                                            onValueChange={(val) => setFormData({ ...formData, cedulaTejedor: val })}
-                                            placeholder="Busque por nombre o cédula..."
-                                            searchPlaceholder="Buscar por nombre o cédula..."
-                                            idField="cedulaTejedor"
-                                            labelField="nombreTejedor"
-                                            secondaryLabelField="apellidoTejedor"
-                                            disabled={isEditing}
-                                        />
-                                    </div>
-
-                                    <div className="mt-8 flex justify-end">
-                                        <Button
-                                            type="button"
-                                            onClick={() => setActiveTab('especialidad')}
-                                            disabled={!formData.cedulaTejedor}
-                                            className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                        >
-                                            Siguiente: Datos Médicos
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-
-                                <TabsContent value="especialidad" className="space-y-6 py-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-6">
+                                {activeTab === 'tejedor' && (
+                                    <div className="space-y-4 py-2">
                                         <div className="space-y-4">
                                             <SearchableSelect
-                                                label="Especialidad Médica *"
-                                                items={especialidades}
-                                                value={formData.codigoEspecialidad}
-                                                onValueChange={(val) => setFormData({ ...formData, codigoEspecialidad: val })}
-                                                placeholder="Seleccione especialidad"
-                                                searchPlaceholder="Buscar por nombre o código..."
-                                                idField="codigoEspecialidad"
-                                                labelField="nombreEspecialidad"
+                                                label="Seleccionar Tejedor (Sólo tipo Médico)"
+                                                items={isEditing
+                                                    ? tejedores.filter(t => t.cedulaTejedor === formData.cedulaTejedor)
+                                                    : tejedores.filter(t =>
+                                                        t.tipodeVoluntario === 'Médico' &&
+                                                        !initialMedicos.some(m => m.cedulaTejedor === t.cedulaTejedor)
+                                                    )
+                                                }
+                                                value={formData.cedulaTejedor}
+                                                onValueChange={(val) => setFormData({ ...formData, cedulaTejedor: val })}
+                                                placeholder="Busque por nombre o cédula..."
+                                                searchPlaceholder="Buscar por nombre o cédula..."
+                                                idField="cedulaTejedor"
+                                                labelField="nombreTejedor"
+                                                secondaryLabelField="apellidoTejedor"
+                                                disabled={isEditing}
                                             />
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="m_colegio">Matrícula Colegio Médico *</Label>
-                                            <Input
-                                                id="m_colegio"
-                                                placeholder="Ej. MPPS-123456"
-                                                value={formData.matriculaColegioMedico}
-                                                onChange={(e) => setFormData({ ...formData, matriculaColegioMedico: e.target.value })}
-                                                className="h-11"
-                                                required
-                                                maxLength={30}
-                                            />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <Label htmlFor="m_sanidad">Matrícula Sanidad *</Label>
-                                            <Input
-                                                id="m_sanidad"
-                                                placeholder="Ej. MS-998877"
-                                                value={formData.matriculaSanidad}
-                                                onChange={(e) => setFormData({ ...formData, matriculaSanidad: e.target.value })}
-                                                className="h-11"
-                                                required
-                                                maxLength={30}
-                                            />
+                                        <div className="mt-8 flex justify-end">
+                                            <Button
+                                                type="button"
+                                                onClick={() => setActiveTab('especialidad')}
+                                                disabled={!formData.cedulaTejedor}
+                                                className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
+                                            >
+                                                Siguiente: Datos Médicos
+                                            </Button>
                                         </div>
                                     </div>
+                                )}
 
-                                    <div className="flex gap-2 justify-end pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => setActiveTab('tejedor')}
-                                        >
-                                            Atrás
-                                        </Button>
-                                        <Button
-                                            type="submit"
-                                            className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                            disabled={isLoading || !formData.codigoEspecialidad || !formData.matriculaColegioMedico}
-                                        >
-                                            {isLoading ? 'Guardando...' : 'Finalizar Asignación'}
-                                        </Button>
+                                {activeTab === 'especialidad' && (
+                                    <div className="space-y-6 py-2">
+                                        {/* Resumen del Tejedor Seleccionado */}
+                                        <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-blue-600 p-2 rounded-full">
+                                                    <User className="w-5 h-5 text-white" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider">Tejedor Seleccionado</p>
+                                                    <h3 className="text-lg font-bold text-blue-900 leading-tight">
+                                                        {(() => {
+                                                            const t = tejedores.find(tej => tej.cedulaTejedor === formData.cedulaTejedor);
+                                                            return t ? `${t.nombreTejedor} ${t.apellidoTejedor}` : 'No seleccionado';
+                                                        })()}
+                                                    </h3>
+                                                    <p className="text-sm text-blue-700">C.I: {formData.cedulaTejedor}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <SearchableSelect
+                                                    label="Especialidad Médica *"
+                                                    items={especialidades}
+                                                    value={formData.codigoEspecialidad}
+                                                    onValueChange={(val) => setFormData({ ...formData, codigoEspecialidad: val })}
+                                                    placeholder="Seleccione especialidad"
+                                                    searchPlaceholder="Buscar por nombre o código..."
+                                                    idField="codigoEspecialidad"
+                                                    labelField="nombreEspecialidad"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="m_colegio">Matrícula Colegio Médico *</Label>
+                                                <Input
+                                                    id="m_colegio"
+                                                    placeholder="Ej. MPPS-123456"
+                                                    value={formData.matriculaColegioMedico}
+                                                    onChange={(e) => setFormData({ ...formData, matriculaColegioMedico: e.target.value })}
+                                                    className="h-11"
+                                                    required
+                                                    maxLength={30}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="m_sanidad">Matrícula Sanidad *</Label>
+                                                <Input
+                                                    id="m_sanidad"
+                                                    placeholder="Ej. MS-998877"
+                                                    value={formData.matriculaSanidad}
+                                                    onChange={(e) => setFormData({ ...formData, matriculaSanidad: e.target.value })}
+                                                    className="h-11"
+                                                    required
+                                                    maxLength={30}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2 justify-end pt-4">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => setActiveTab('tejedor')}
+                                                disabled={isEditing}
+                                            >
+                                                Atrás
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
+                                                disabled={isLoading || !formData.codigoEspecialidad || !formData.matriculaColegioMedico || !formData.matriculaSanidad}
+                                            >
+                                                {isLoading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Finalizar Asignación')}
+                                            </Button>
+                                        </div>
                                     </div>
-                                </TabsContent>
-                            </Tabs>
+                                )}
+                            </div>
                         </form>
                     </DialogContent>
                 </Dialog>

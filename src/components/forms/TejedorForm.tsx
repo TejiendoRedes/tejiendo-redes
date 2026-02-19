@@ -171,16 +171,28 @@ export function TejedorForm({
 
                 <div className="space-y-2">
                     <Label htmlFor="tipoVoluntario">Tipo Voluntario *</Label>
-                    <Input
-                        id="tipoVoluntario"
+                    <Select
                         value={formData.tipodeVoluntario}
-                        onChange={(e) =>
-                            setFormData({ ...formData, tipodeVoluntario: e.target.value })
-                        }
+                        onValueChange={(val) => setFormData({ ...formData, tipodeVoluntario: val })}
                         required
-                        maxLength={50}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                    >
+                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                            <SelectValue placeholder="Seleccione un tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Médico">Médico</SelectItem>
+                            <SelectItem value="Cocinero">Cocinero</SelectItem>
+                            <SelectItem value="Administrador">Administrador</SelectItem>
+                            <SelectItem value="Trabajador Social">Trabajador Social</SelectItem>
+                            <SelectItem value="Psicólogo">Psicólogo</SelectItem>
+                            <SelectItem value="Logística">Logística</SelectItem>
+                            <SelectItem value="Seguridad">Seguridad</SelectItem>
+                            <SelectItem value="Mantenimiento">Mantenimiento</SelectItem>
+                            <SelectItem value="Enfermería">Enfermería</SelectItem>
+                            <SelectItem value="Odontología">Odontología</SelectItem>
+                            <SelectItem value="Otros">Otros</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="space-y-2">

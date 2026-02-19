@@ -30,6 +30,9 @@ async function runMigrations() {
             database: process.env.DATABASE_NAME!,
             port: Number(process.env.DATABASE_PORT),
             multipleStatements: true,
+            ssl: {
+                rejectUnauthorized: false
+            }
         });
         console.log('✅ Connected to database');
 

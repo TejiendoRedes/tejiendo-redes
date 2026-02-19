@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, index, datetime } from 'drizzle-orm/mysql-core';
 import { abordaje } from './abordajes';
 import { pacientes } from './pacientes';
 import { medicos } from './medicos';
@@ -9,10 +9,11 @@ import { medicos } from './medicos';
  */
 export const consultas = mysqlTable('consultas', {
     codigoConsulta: varchar('codigo_consulta', { length: 10 }).primaryKey().notNull(), // CON-001...
-    codigoAbordaje: varchar('codigo_abordaje', { length: 10 }).notNull().references(() => abordaje.codigoAbordaje, {
+    codigoAbordaje: varchar('codigo_abordaje', { length: 10 }).references(() => abordaje.codigoAbordaje, {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }),
+    fechaConsulta: datetime('fecha_consulta').notNull().default(new Date()),
     cedulaPaciente: varchar('cedula_paciente', { length: 12 }).notNull().references(() => pacientes.cedulaPaciente, {
         onDelete: 'restrict',
         onUpdate: 'cascade'
