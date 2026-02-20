@@ -208,17 +208,20 @@ export async function updatePeticionEstado(id: number, estado: string) {
             }
 
             // Obtener fecha y hora actual en zona horaria de Venezuela (America/Caracas, UTC-4)
-            const ahoraVE = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Caracas' }));
-            const horaVE = `${String(ahoraVE.getHours()).padStart(2, '0')}:${String(ahoraVE.getMinutes()).padStart(2, '0')}:${String(ahoraVE.getSeconds()).padStart(2, '0')}`;
-
             // Iniciar transacción
             await db.transaction(async (tx) => {
-                // Actualizar la petición con estado, fecha y hora de entrega
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                const horaFormateada = `${hours}:${minutes}:${seconds}`;
+
+                // Actualizar la petición con estado, fecha y hora de entrega local del sistema
                 await tx.update(peticiones)
                     .set({
                         estado: 'entregado',
-                        fechaEntrega: ahoraVE,
-                        horaEntrega: horaVE
+                        fechaEntrega: now,
+                        horaEntrega: horaFormateada
                     })
                     .where(eq(peticiones.id, id));
 

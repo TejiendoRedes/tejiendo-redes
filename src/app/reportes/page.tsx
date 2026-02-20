@@ -42,7 +42,7 @@ export default async function ReportesPage({
         getReporteComunidades(filters),
         getReportePacientes(filters),
         getReporteMorbilidad(filters),
-        getReporteMedicamentos()
+        getReporteMedicamentos(filters)
     ]);
 
     // Extraer datos o usar arrays vacíos como fallback

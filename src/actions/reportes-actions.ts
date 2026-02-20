@@ -8,6 +8,7 @@ import { pacientes } from '@/db/schema/pacientes';
 import { consultas } from '@/db/schema/consultas';
 import { enfermedades } from '@/db/schema/enfermedades';
 import { medicamentos } from '@/db/schema/medicamentos';
+import { peticiones } from '@/db/schema/peticiones';
 import { eq, sql, and, gte, lte, count, desc, like } from 'drizzle-orm';
 import { reportesFilterSchema } from '@/lib/validators/reportes';
 import { requireAuth } from '@/lib/auth';
@@ -254,23 +255,54 @@ export async function getReporteMorbilidad(params: unknown) {
 }
 
 /**
- * Obtener datos para el Reporte de Medicamentos
- * (Este reporte no suele filtrar por fecha de abordaje directamente, sino por inventario actual,
- * pero si se quisiera historial de movimientos sería diferente. Asumimos inventario actual por ahora)
+ * Obtener datos para el Reporte de Medicamentos Entregados
+ * Agrupa entregas por medicamento, aplicando filtros de fecha, comunidad y ubicación
  */
-export async function getReporteMedicamentos() {
+export async function getReporteMedicamentos(params: unknown) {
     try {
         await requireAuth();
+        const validatedParams = reportesFilterSchema.safeParse(params);
+        if (!validatedParams.success) {
+            return { success: false, error: 'Parámetros inválidos', data: [] };
+        }
+
+        const { fechaInicio, fechaFin, codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
+        const conditions = [eq(peticiones.estado, 'entregado')];
+
+        // Filtros de fecha sobre fecha de entrega
+        if (fechaInicio) conditions.push(gte(peticiones.fechaEntrega, new Date(fechaInicio)));
+        if (fechaFin) conditions.push(lte(peticiones.fechaEntrega, new Date(fechaFin)));
+
+        // Filtros de ubicación a través de pacientes → comunidades
+        const comunidadConditions = [];
+        if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
+        if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
+        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(comunidades.municipio, municipio));
+        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(comunidades.parroquia, parroquia));
+        if (tipoComunidad && tipoComunidad !== 'todos') comunidadConditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
+
+        if (comunidadConditions.length > 0) {
+            const pacientesEnComunidades = db
+                .select({ cedulaPaciente: pacientes.cedulaPaciente })
+                .from(pacientes)
+                .innerJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+                .where(and(...comunidadConditions));
+
+            conditions.push(sql`${peticiones.codigoPaciente} IN (${pacientesEnComunidades})`);
+        }
+
         const result = await db
             .select({
                 codigo_medicamento: medicamentos.codigoMedicamento,
                 nombre_medicamento: medicamentos.nombreMedicamento,
                 presentacion: medicamentos.presentacion,
-                existencia: medicamentos.existencia,
-                descripcion: medicamentos.descripcion
+                total_entregado: sql<number>`SUM(${peticiones.cantidad})`.as('total_entregado'),
             })
-            .from(medicamentos)
-            .orderBy(medicamentos.nombreMedicamento);
+            .from(peticiones)
+            .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
+            .where(and(...conditions))
+            .groupBy(medicamentos.codigoMedicamento, medicamentos.nombreMedicamento, medicamentos.presentacion)
+            .orderBy(desc(sql`total_entregado`));
 
         return { success: true, data: result };
     } catch (error) {

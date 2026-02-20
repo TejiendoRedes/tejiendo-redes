@@ -682,11 +682,11 @@ export default function ReportesClient({
                     </Card>
                 </TabsContent>
 
-                {/* Reporte Medicamentos */}
+                {/* Reporte Medicamentos Entregados */}
                 <TabsContent value="medicamentos">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Reporte de Medicamentos</CardTitle>
+                            <CardTitle>Reporte de Medicamentos Entregados</CardTitle>
                             <div className="flex gap-2 items-center">
                                 {renderChartControls('medicamentos')}
                                 <Button
@@ -696,7 +696,7 @@ export default function ReportesClient({
                                         { key: 'codigo_medicamento', label: 'Código' },
                                         { key: 'nombre_medicamento', label: 'Medicamento' },
                                         { key: 'presentacion', label: 'Presentación' },
-                                        { key: 'existencia', label: 'Existencia' }
+                                        { key: 'total_entregado', label: 'Total Entregado' }
                                     ])}
                                 >
                                     <Download className="w-4 h-4 mr-2" />
@@ -709,7 +709,7 @@ export default function ReportesClient({
                                         { key: 'codigo_medicamento', label: 'Código' },
                                         { key: 'nombre_medicamento', label: 'Medicamento' },
                                         { key: 'presentacion', label: 'Presentación' },
-                                        { key: 'existencia', label: 'Existencia' }
+                                        { key: 'total_entregado', label: 'Total Entregado' }
                                     ])}
                                 >
                                     <FileText className="w-4 h-4 mr-2" />
@@ -725,8 +725,7 @@ export default function ReportesClient({
                                         { key: 'codigo_medicamento', label: 'Código', sortable: true },
                                         { key: 'nombre_medicamento', label: 'Nombre Medicamento', sortable: true },
                                         { key: 'presentacion', label: 'Presentación', sortable: true },
-                                        { key: 'existencia', label: 'Existencia', sortable: true },
-                                        { key: 'descripcion', label: 'Descripción' },
+                                        { key: 'total_entregado', label: 'Total Entregado', sortable: true },
                                     ]}
                                     searchPlaceholder="Buscar medicamento..."
                                 />
@@ -740,14 +739,33 @@ export default function ReportesClient({
                                             <YAxis />
                                             <RechartsTooltip />
                                             <Legend verticalAlign="top" />
-                                            <Bar dataKey="existencia" name="Existencia" fill="#00C49F" />
+                                            <Bar dataKey="total_entregado" name="Cantidad Entregada" fill="#00C49F" />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             )}
                             {chartViews.medicamentos === 'pie' && (
-                                <div className="h-[400px] w-full flex items-center justify-center bg-gray-50 border border-dashed rounded-md mt-4">
-                                    <span className="text-gray-500">Gráfico circular no ideal para inventario. Intente gráfico de barras.</span>
+                                <div className="h-[500px] w-full mt-4 flex flex-col items-center">
+                                    <h3 className="text-gray-700 font-semibold mb-2">Distribución de Medicamentos Entregados (Top 10)</h3>
+                                    <ResponsiveContainer width="100%" height="90%">
+                                        <PieChart>
+                                            <Pie
+                                                data={reporteMedicamentos.slice(0, 10)}
+                                                dataKey="total_entregado"
+                                                nameKey="nombre_medicamento"
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={180}
+                                                label={({ percent }) => percent !== undefined ? `${(percent * 100).toFixed(1)}%` : ''}
+                                            >
+                                                {reporteMedicamentos.slice(0, 10).map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <RechartsTooltip />
+                                            <Legend layout="horizontal" verticalAlign="bottom" />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
                             )}
                         </CardContent>

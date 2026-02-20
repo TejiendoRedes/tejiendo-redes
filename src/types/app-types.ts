@@ -170,8 +170,7 @@ export interface ReporteMedicamentoItem {
     codigo_medicamento: string;
     nombre_medicamento: string;
     presentacion: string;
-    existencia: number;
-    descripcion: string | null;
+    total_entregado: number;
 }
 
 export interface ReportesData {
