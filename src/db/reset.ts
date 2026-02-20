@@ -12,8 +12,6 @@ loadEnvConfig(projectDir);
  * Usage: tsx src/db/reset.ts
  */
 async function reset() {
-    console.log('🔄 Reseteando la base de datos (dejándola en cero)...');
-
     try {
         const { db, schema } = await import('./index');
         const { users } = await import('./schema');
@@ -36,17 +34,14 @@ async function reset() {
 
         // Deduplicate table names (in case multiple exports refer to the same table)
         const uniqueTableNames = [...new Set(tableNames)];
-        console.log(`Found ${uniqueTableNames.length} tables to truncate.`);
 
         for (const tableName of uniqueTableNames) {
-            console.log(`  - Limpiando tabla: ${tableName}...`);
             await db.execute(sql`TRUNCATE TABLE ${sql.identifier(tableName)};`);
         }
 
         // Re-enable foreign key checks
         await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1;`);
 
-        console.log('👤 Seeding default users for initial login...');
         const defaultUsers = [
             { username: 'admin', password: 'Admin123!', role: 'admin' as const },
             { username: 'super', password: 'Super123!', role: 'superuser' as const },
@@ -62,10 +57,8 @@ async function reset() {
                 role: user.role,
                 approved: true,
             });
-            console.log(`  ✅ User created: ${user.username} (${user.role})`);
         }
 
-        console.log('✅ Base de datos reseteada exitosamente!');
         process.exit(0);
     } catch (error) {
         console.error('❌ Error durante el reset:', error);

@@ -16,12 +16,16 @@ export default async function ReportesPage({
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const resolvedSearchParams = await searchParams;
-    const { fechaInicio, fechaFin, codigoComunidad } = resolvedSearchParams;
+    const { fechaInicio, fechaFin, codigoComunidad, estado, municipio, parroquia, tipoComunidad } = resolvedSearchParams;
 
     const filters = {
         fechaInicio: fechaInicio as string,
         fechaFin: fechaFin as string,
-        codigoComunidad: codigoComunidad as string
+        codigoComunidad: codigoComunidad as string,
+        estado: estado as string,
+        municipio: municipio as string,
+        parroquia: parroquia as string,
+        tipoComunidad: tipoComunidad as string
     };
 
     // Obtener todos los datos de reportes en paralelo para mejor rendimiento

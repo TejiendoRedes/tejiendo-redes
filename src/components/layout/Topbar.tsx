@@ -35,7 +35,6 @@ export function Topbar({ sidebarCollapsed, onMenuClick }: TopbarProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // En producción, implementar búsqueda global
-    console.log('Buscando:', searchQuery);
   };
 
   return (

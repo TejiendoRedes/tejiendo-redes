@@ -5,7 +5,6 @@ import { connection } from './client';
 import { sql } from 'drizzle-orm';
 
 async function main() {
-    console.log('Running manual migration...');
     const { db } = await import('./index');
 
     try {
@@ -23,7 +22,6 @@ async function main() {
                 CONSTRAINT \`fk_asistencia_paciente\` FOREIGN KEY (\`cedula_paciente\`) REFERENCES \`pacientes\`(\`cedula_paciente\`) ON DELETE RESTRICT ON UPDATE CASCADE
             );
         `);
-        console.log('Table created.');
 
         // Indexes
         try {
@@ -36,7 +34,6 @@ async function main() {
             await db.execute(sql`CREATE INDEX \`idx_asistencia_estado\` ON \`abordaje_asistencia\` (\`estado\`);`);
         } catch (e) { }
 
-        console.log('Indexes created.');
 
     } catch (e) {
         console.error('Error:', e);

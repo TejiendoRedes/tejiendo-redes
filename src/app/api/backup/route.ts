@@ -52,7 +52,6 @@ export async function GET(request: Request) {
             database
         ];
 
-        console.log('Starting backup process with command:', dumpCommand);
 
         await new Promise<void>((resolve, reject) => {
             const child = spawn(dumpCommand, args, {

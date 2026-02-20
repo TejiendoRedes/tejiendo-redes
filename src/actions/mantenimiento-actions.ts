@@ -35,7 +35,6 @@ export async function updateConfiguracionBackup(data: {
 }) {
     try {
         await requireAuth();
-        console.log('MOCK: Actualizando configuración con:', data);
         revalidatePath('/mantenimiento');
         return { success: true, message: 'Configuración actualizada (Ejemplo)' };
     } catch (error) {
@@ -52,7 +51,6 @@ export async function triggerManualBackup() {
         // Simulamos un retraso para que se vea el cargando
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        console.log('MOCK: Backup generado exitosamente');
 
         revalidatePath('/mantenimiento');
         return { success: true, message: 'Copia de seguridad generada (Simulación)' };

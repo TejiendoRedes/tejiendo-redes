@@ -10,7 +10,6 @@ dotenv.config({ path: '.env.local' });
  * sin perder los datos de las tablas principales.
  */
 async function dropBridgeTables() {
-    console.log('🗑️  Eliminando tablas de relación...\n');
 
     const connection = await mysql.createConnection({
         host: process.env.DATABASE_HOST!,
@@ -33,15 +32,12 @@ async function dropBridgeTables() {
         ];
 
         for (const table of bridgeTables) {
-            console.log(`  Eliminando tabla: ${table}`);
             await connection.query(`DROP TABLE IF EXISTS \`${table}\``);
         }
 
         // Reactivar las verificaciones de claves foráneas
         await connection.query('SET FOREIGN_KEY_CHECKS = 1');
 
-        console.log('\n✅ Tablas de relación eliminadas exitosamente!');
-        console.log('💡 Ahora puedes ejecutar: npm run db:migrate\n');
 
     } catch (error) {
         console.error('❌ Error al eliminar tablas:', error);

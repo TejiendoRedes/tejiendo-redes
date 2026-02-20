@@ -94,7 +94,6 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         setIsLoading(true);
 
         try {
-            console.log('Datos del formulario a enviar:', formData);
             const res = await createSolicitudAbordaje(formData as any);
 
             if (res.success) {

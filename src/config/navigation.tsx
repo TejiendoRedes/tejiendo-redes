@@ -45,23 +45,15 @@ export const menuItems: MenuItem[] = [
         icon: <Database className="w-5 h-5" />,
         roles: ['admin', 'superuser', 'medico', 'operador', 'invitado'],
         children: [
-            { label: 'Tejedores', path: '/datos-basicos/tejedores', icon: <Users className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
             { label: 'Aspirantes', path: '/datos-basicos/aspirantes', icon: <UserPlus className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador', 'invitado'] },
+            { label: 'Tejedores', path: '/datos-basicos/tejedores', icon: <Users className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
             { label: 'Médicos', path: '/datos-basicos/medicos', icon: <Stethoscope className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
             { label: 'Especialidades', path: '/datos-basicos/especialidades', icon: <GraduationCap className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
             { label: 'Responsables Comunitarios', path: '/datos-basicos/responsables', icon: <UserCheck className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
             { label: 'Comunidades', path: '/datos-basicos/comunidades', icon: <MapPin className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
             { label: 'Instituciones', path: '/datos-basicos/organismos', icon: <Building2 className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
-            { label: 'Pacientes', path: '/datos-basicos/pacientes', icon: <Heart className="w-4 h-4" />, roles: ['admin', 'superuser', 'medico', 'operador'] },
             { label: 'Enfermedades', path: '/datos-basicos/enfermedades', icon: <Activity className="w-4 h-4" />, roles: ['admin', 'superuser', 'operador'] },
-            { label: 'Antecedentes', path: '/datos-basicos/antecedentes', icon: <FileClock className="w-4 h-4" />, roles: ['admin', 'superuser', 'medico', 'operador'] },
         ],
-    },
-    {
-        label: 'Consultas',
-        path: '/atencion-medica',
-        icon: <Stethoscope className="w-5 h-5" />,
-        roles: ['admin', 'superuser', 'medico'],
     },
     {
         label: 'Abordaje Tejiendo Redes',
@@ -72,6 +64,12 @@ export const menuItems: MenuItem[] = [
             { label: 'Solicitudes', path: '/abordajes/solicitudes-abordajes', icon: <Clock className="w-4 h-4" /> },
             { label: 'Abordajes Confirmados', path: '/abordajes', icon: <CheckCircle className="w-4 h-4" /> },
         ],
+    },
+    {
+        label: 'Consultas',
+        path: '/atencion-medica',
+        icon: <Stethoscope className="w-5 h-5" />,
+        roles: ['admin', 'superuser', 'medico'],
     },
     {
         label: 'Farmacia',
@@ -89,22 +87,5 @@ export const menuItems: MenuItem[] = [
         icon: <FileText className="w-5 h-5" />,
         roles: ['admin', 'superuser'],
     },
-    {
-        label: 'Administración',
-        path: '/dashboard/admin/gestion',
-        icon: <UserCheck className="w-5 h-5" />,
-        roles: ['admin', 'superuser'],
-    },
-    {
-        label: 'Seguridad y Logs',
-        path: '/dashboard/super-usuario/seguridad',
-        icon: <Shield className="w-5 h-5" />,
-        roles: ['superuser'],
-    },
-    {
-        label: 'Configuración',
-        path: '/settings',
-        icon: <Settings className="w-5 h-5" />,
-        roles: ['admin', 'superuser'],
-    },
+
 ];

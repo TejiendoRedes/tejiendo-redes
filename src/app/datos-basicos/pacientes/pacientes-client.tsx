@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Heart, MapPin, History } from 'lucide-react';
+import { Edit, Trash2, Heart, MapPin } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -168,16 +168,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             render: (p) => {
                 return (
                     <div className="flex gap-2">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/datos-basicos/pacientes/${p.cedulaPaciente}`)}
-                            title="Ver Historial"
-                            aria-label="Ver historial del paciente"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                            <History className="w-4 h-4" />
-                        </Button>
+
                         <Button
                             variant="ghost"
                             size="sm"

@@ -13,8 +13,6 @@ loadEnvConfig(projectDir);
  * WARN: This is destructive!
  */
 async function hardReset() {
-    console.log('⚠️  INICIANDO HARD RESET DE LA BASE DE DATOS...');
-    console.log('⚠️  ESTO ELIMINARÁ TODAS LAS TABLAS Y DATOS PERMANENTEMENTE.');
 
     try {
         const { db, schema, connection: pool } = await import('./index');
@@ -44,25 +42,21 @@ async function hardReset() {
 
             // Deduplicate table names
             const uniqueTableNames = [...new Set(tableNames)];
-            console.log(`🚀 Found ${uniqueTableNames.length} tables to drop.`);
 
             // Drop tables in parallel using the same connection context
             await withPerformanceCheck('Parallel Table Drop', async () => {
                 return Promise.all(uniqueTableNames.map(async (tableName) => {
-                    console.log(`  🗑️  Eliminando tabla: ${tableName}...`);
                     return conn.execute(`DROP TABLE IF EXISTS \`${tableName}\`;`);
                 }));
             }, 10000);
 
             // Re-enable foreign key checks
             await conn.execute('SET FOREIGN_KEY_CHECKS = 1;');
-            console.log('✅ Base de datos limpiada exitosamente.');
         } finally {
             // Release the connection back to the pool
             conn.release();
         }
 
-        console.log('👉 Ahora puedes correr `npm run db:push` para recrear el esquema.');
         process.exit(0);
     } catch (error) {
         console.error('❌ Error durante el hard reset:', error);

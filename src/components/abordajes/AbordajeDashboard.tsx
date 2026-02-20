@@ -63,6 +63,25 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
         }
     };
 
+    const handleCancel = async () => {
+        if (!confirm('¿Estás seguro de cancelar este abordaje? No podrás realizar más cambios después.')) return;
+
+        setIsLoading(true);
+        try {
+            const res = await updateAbordaje(abordaje.codigoAbordaje, { estado: 'Cancelado' });
+            if (res.success) {
+                toast.success('Abordaje cancelado correctamente');
+                router.refresh();
+            } else {
+                toast.error(res.error || 'Error al cancelar el abordaje');
+            }
+        } catch (error) {
+            toast.error('Error de conexión');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleDelete = async () => {
         if (!confirm('¿Estás seguro de eliminar este abordaje? Esta acción no se puede deshacer y borrará toda la información asociada.')) return;
 
@@ -108,7 +127,8 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                             </h1>
                             <Badge variant={
                                 abordaje.estado === 'Finalizado' ? 'default' :
-                                    abordaje.estado === 'En Curso' ? 'secondary' : 'outline'
+                                    abordaje.estado === 'Confirmado' ? 'secondary' :
+                                        abordaje.estado === 'Cancelado' ? 'destructive' : 'outline'
                             }>
                                 {abordaje.estado}
                             </Badge>
@@ -130,11 +150,22 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {abordaje.estado !== 'Finalizado' && abordaje.estado !== 'Cancelado' && (
+                        <Button
+                            variant="destructive"
+                            className="shadow-sm"
+                            onClick={handleCancel}
+                            disabled={isLoading}
+                        >
+                            <X className="w-4 h-4 mr-2" />
+                            {isLoading ? 'Cancelando...' : 'Cancelar'}
+                        </Button>
+                    )}
                     <Button
                         variant="default"
                         className="shadow-sm bg-blue-600 hover:bg-blue-700"
                         onClick={handleFinalize}
-                        disabled={isLoading || abordaje.estado === 'Finalizado'}
+                        disabled={isLoading || abordaje.estado === 'Finalizado' || abordaje.estado === 'Cancelado'}
                     >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         {isLoading ? 'Finalizando...' : 'Finalizar Abordaje'}

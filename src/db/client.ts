@@ -39,8 +39,6 @@ export const getPool = () => {
         // Test connection on pool creation
         pool.getConnection()
             .then(connection => {
-                console.log('✅ MySQL database connected successfully');
-                console.log(`📊 Connection pool configured: ${dbConfig.connectionLimit} max connections`);
                 connection.release();
             })
             .catch(err => {

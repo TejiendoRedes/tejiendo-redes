@@ -16,7 +16,11 @@ export const abordaje = mysqlTable('abordaje', {
     tipoAbordaje: varchar('tipo_abordaje', { length: 50 }),
     participantesEstimados: int('participantes_estimados'),
     recursosAdicionales: text('recursos_adicionales'),
-    estado: varchar('estado', { length: 20 }).notNull().default('Planificado'),
+    lugar: boolean('lugar').notNull().default(false),
+    personal: boolean('personal').notNull().default(false),
+    refrigerios: boolean('refrigerios').notNull().default(false),
+    transporte: boolean('transporte').notNull().default(false),
+    estado: varchar('estado', { length: 20 }).notNull().default('Pendiente'),
     notas: text('notas'),
 });
 

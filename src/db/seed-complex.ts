@@ -23,14 +23,12 @@ const projectDir = process.cwd();
 loadEnvConfig(projectDir);
 
 async function main() {
-    console.log('🌱 Starting complex seed process...');
 
     const { db } = await import('./index');
     const { connection } = await import('./client');
 
     try {
         // 1. Clean Database (Disable FK checks for truncation)
-        console.log('🧹 Cleaning existing data...');
         await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
 
         // Order matters for some updates but with FK checks off we can truncate freely
@@ -57,10 +55,8 @@ async function main() {
         }
 
         await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
-        console.log('✨ Database cleaned.');
 
         // 2. Catalogs
-        console.log('📚 Seeding Catalogs...');
 
         // Especialidades
         await db.insert(schema.especialidades).values(
@@ -93,7 +89,6 @@ async function main() {
         );
 
         // 3. System Actors (Tejedores)
-        console.log('👥 Seeding Tejedores...');
         const tejedoresData: any[] = [];
         const medicosData: any[] = [];
         const createdTejedorCedulas: Set<string> = new Set();
@@ -143,7 +138,6 @@ async function main() {
         }
 
         // 4. Communities & Responsables
-        console.log('c🏘️ Seeding Communities...');
         const comunidadesIds: string[] = [];
         const responsablesData: any[] = [];
         const comunidadesData: any[] = [];
@@ -207,7 +201,6 @@ async function main() {
         await db.insert(schema.comunidades).values(comunidadesData);
 
         // 5. Patients per Community
-        console.log('👨‍👩‍👧‍👦 Seeding Patients...');
         const patientsByCommunity: Record<string, string[]> = {};
         const allPatientsData: any[] = [];
         const createdPatientCedulas: Set<string> = new Set();
@@ -250,7 +243,6 @@ async function main() {
         }
 
         // 6. Abordajes (History - 3 Years)
-        console.log('📅 Seeding 3 Years of History...');
         const startDate = new Date();
         startDate.setFullYear(startDate.getFullYear() - 3);
         const endDate = new Date();
@@ -368,7 +360,6 @@ async function main() {
             currentDate.setMonth(currentDate.getMonth() + 1);
         }
 
-        console.log('✅ Complex Seed executed successfully!');
         process.exit(0);
 
     } catch (error) {

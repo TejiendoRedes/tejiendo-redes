@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { format } from 'date-fns';
 import { ConsultaForm } from '../ConsultaForm';
 import { EntregaMedicamentoForm } from '../EntregaMedicamentoForm';
-import { PatientHistoryDialog } from '../PatientHistoryDialog';
 
 import { AbordajeWithRelations } from '@/types/app-types';
 
@@ -24,11 +23,6 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
     const [consultaDialogOpen, setConsultaDialogOpen] = useState(false);
     const [entregaDialogOpen, setEntregaDialogOpen] = useState(false);
 
-    // New state for history dialog
-    const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-    const [selectedPatient, setSelectedPatient] = useState<{ cedula: string, nombre: string } | null>(null);
-    const [selectedConsultaId, setSelectedConsultaId] = useState<string | null>(null);
-
     const consultas = abordaje.consultas || [];
     const entregas = abordaje.medicamentos_entregados || [];
 
@@ -40,10 +34,6 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
     const handleEntregaSuccess = () => {
         setEntregaDialogOpen(false);
         router.refresh(); // Trigger data revalidation
-    };
-
-    const handleViewHistory = (consulta: any) => {
-        router.push(`/datos-basicos/pacientes/${consulta.cedulaPaciente}`);
     };
 
     return (
@@ -122,13 +112,7 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
                                                 </p>
                                             )}
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleViewHistory(consulta)}
-                                        >
-                                            Ver Historial
-                                        </Button>
+
                                     </div>
                                 </Card>
                             ))}
@@ -197,16 +181,6 @@ export function OperationsStation({ abordaje }: OperationsStationProps) {
 
             </Tabs>
 
-            {/* Patient History Dialog */}
-            {selectedPatient && (
-                <PatientHistoryDialog
-                    open={historyDialogOpen}
-                    onOpenChange={setHistoryDialogOpen}
-                    cedulaPaciente={selectedPatient.cedula}
-                    nombrePaciente={selectedPatient.nombre}
-                    currentConsultaId={selectedConsultaId || undefined}
-                />
-            )}
         </div>
     );
 }

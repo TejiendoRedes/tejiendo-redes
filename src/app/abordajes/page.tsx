@@ -46,9 +46,11 @@ export default async function AbordajesPage() {
                                                     variant={
                                                         abordaje.estado === 'Finalizado'
                                                             ? 'default'
-                                                            : abordaje.estado === 'En Curso'
+                                                            : abordaje.estado === 'Confirmado'
                                                                 ? 'secondary'
-                                                                : 'outline'
+                                                                : abordaje.estado === 'Cancelado'
+                                                                    ? 'destructive'
+                                                                    : 'outline'
                                                     }
                                                 >
                                                     {abordaje.estado}

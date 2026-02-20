@@ -12,13 +12,6 @@ loadEnvConfig(process.cwd());
  * Este es el enfoque profesional - usa archivos de migración versionados
  */
 async function runMigrations() {
-    console.log('🚀 Iniciando proceso de migraciones...\n');
-    console.log('Environment check:', {
-        host: process.env.DATABASE_HOST,
-        user: process.env.DATABASE_USER,
-        port: process.env.DATABASE_PORT,
-        db: process.env.DATABASE_NAME
-    });
 
     let connection;
 
@@ -34,7 +27,6 @@ async function runMigrations() {
                 rejectUnauthorized: false
             }
         });
-        console.log('✅ Connected to database');
 
         // Disable sql_require_primary_key for this session 
         // to prevent issues with Drizzle's migration scripts
@@ -42,21 +34,18 @@ async function runMigrations() {
 
         const db = drizzle(connection);
 
-        console.log('📝 Aplicando migraciones...');
 
         // Aplica todas las migraciones pendientes desde la carpeta ./drizzle
         await migrate(db, {
             migrationsFolder: path.join(process.cwd(), 'drizzle'),
         });
 
-        console.log('✅ Migraciones aplicadas exitosamente!\n');
     } catch (error) {
         console.error('❌ Error al aplicar migraciones:', error);
         process.exit(1);
     } finally {
         if (connection) {
             await connection.end();
-            console.log('🔌 Conexión cerrada');
         }
     }
 }

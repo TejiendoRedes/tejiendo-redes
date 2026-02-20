@@ -26,7 +26,7 @@ export const CreateAbordajeSchema = z.object({
     tipoAbordaje: z.string().optional(),
     participantesEstimados: z.coerce.number().int().nonnegative().optional(),
     recursosAdicionales: z.string().optional(),
-    estado: z.string().default('Planificado'),
+    estado: z.string().default('Pendiente'),
     notas: z.string().optional(),
 });
 

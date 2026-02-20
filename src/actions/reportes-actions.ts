@@ -23,18 +23,26 @@ export async function getReporteAbordajes(params: unknown) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
         }
 
-        const { fechaInicio, fechaFin, codigoComunidad } = validatedParams.data;
+        const { fechaInicio, fechaFin, codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
         const conditions = [];
 
         if (fechaInicio) conditions.push(gte(abordaje.fechaAbordaje, new Date(fechaInicio)));
         if (fechaFin) conditions.push(lte(abordaje.fechaAbordaje, new Date(fechaFin)));
 
-        // Si hay filtro de comunidad, necesitamos hacer join o subquery
-        if (codigoComunidad && codigoComunidad !== 'todas') {
+        // Filtros relacionados con la comunidad
+        const comunidadConditions = [];
+        if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
+        if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
+        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(comunidades.municipio, municipio));
+        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(comunidades.parroquia, parroquia));
+        if (tipoComunidad && tipoComunidad !== 'todos') comunidadConditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
+
+        if (comunidadConditions.length > 0) {
             const abordajesEnComunidad = db
                 .select({ codigoAbordaje: abordajeComunidad.codigoAbordaje })
                 .from(abordajeComunidad)
-                .where(eq(abordajeComunidad.codigoComunidad, codigoComunidad));
+                .innerJoin(comunidades, eq(abordajeComunidad.codigoComunidad, comunidades.codigoComunidad))
+                .where(and(...comunidadConditions));
 
             conditions.push(sql`${abordaje.codigoAbordaje} IN (${abordajesEnComunidad})`);
         }
@@ -81,12 +89,14 @@ export async function getReporteComunidades(params: unknown) {
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
         }
-        const { codigoComunidad } = validatedParams.data;
+        const { codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
 
         const conditions = [];
-        if (codigoComunidad && codigoComunidad !== 'todas') {
-            conditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
-        }
+        if (codigoComunidad && codigoComunidad !== 'todas') conditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
+        if (estado && estado !== 'todos') conditions.push(eq(comunidades.estado, estado));
+        if (municipio && municipio !== 'todos') conditions.push(eq(comunidades.municipio, municipio));
+        if (parroquia && parroquia !== 'todas') conditions.push(eq(comunidades.parroquia, parroquia));
+        if (tipoComunidad && tipoComunidad !== 'todos') conditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         const result = await db
             .select({
@@ -94,7 +104,11 @@ export async function getReporteComunidades(params: unknown) {
                 nombre_comunidad: comunidades.nombreComunidad,
                 estado: comunidades.estado,
                 municipio: comunidades.municipio,
+                parroquia: comunidades.parroquia,
+                tipo_comunidad: comunidades.tipoComunidad,
+                telefono_comunidad: comunidades.telefonoComunidad,
                 cantidad_habitantes: comunidades.cantidadHabitantes,
+                cantidad_familias: comunidades.cantidadFamilias,
                 pacientes_tratados: sql<number>`(SELECT COUNT(*) FROM pacientes p WHERE p.codigo_comunidad = comunidades.codigo_comunidad)`,
                 abordajes_realizados: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_comunidad = comunidades.codigo_comunidad)`,
                 total_consultas: sql<number>`(SELECT COUNT(*) FROM consultas c INNER JOIN pacientes p ON c.cedula_paciente = p.cedula_paciente WHERE p.codigo_comunidad = comunidades.codigo_comunidad)`,
@@ -119,12 +133,14 @@ export async function getReportePacientes(params: unknown) {
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
         }
-        const { codigoComunidad } = validatedParams.data;
+        const { codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
 
         const conditions = [];
-        if (codigoComunidad && codigoComunidad !== 'todas') {
-            conditions.push(eq(pacientes.codigoComunidad, codigoComunidad));
-        }
+        if (codigoComunidad && codigoComunidad !== 'todas') conditions.push(eq(pacientes.codigoComunidad, codigoComunidad));
+        if (estado && estado !== 'todos') conditions.push(eq(comunidades.estado, estado));
+        if (municipio && municipio !== 'todos') conditions.push(eq(comunidades.municipio, municipio));
+        if (parroquia && parroquia !== 'todas') conditions.push(eq(comunidades.parroquia, parroquia));
+        if (tipoComunidad && tipoComunidad !== 'todos') conditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         const result = await db
             .select({
@@ -137,6 +153,9 @@ export async function getReportePacientes(params: unknown) {
                 direccion_paciente: pacientes.direccionPaciente,
                 telefono_paciente: pacientes.telefonoPaciente,
                 correo_paciente: pacientes.correoPaciente,
+                estado: comunidades.estado,
+                municipio: comunidades.municipio,
+                parroquia: comunidades.parroquia,
             })
             .from(pacientes)
             .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
@@ -160,12 +179,29 @@ export async function getReporteMorbilidad(params: unknown) {
         if (!validatedParams.success) {
             return { success: false, error: 'Parámetros inválidos', data: [] };
         }
-        const { fechaInicio, fechaFin } = validatedParams.data;
+        const { fechaInicio, fechaFin, codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
 
         // Filtros para la subconsulta de casos
         const whereConditions = [];
         if (fechaInicio) whereConditions.push(gte(abordaje.fechaAbordaje, new Date(fechaInicio)));
         if (fechaFin) whereConditions.push(lte(abordaje.fechaAbordaje, new Date(fechaFin)));
+
+        const comunidadConditions = [];
+        if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
+        if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
+        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(comunidades.municipio, municipio));
+        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(comunidades.parroquia, parroquia));
+        if (tipoComunidad && tipoComunidad !== 'todos') comunidadConditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
+
+        if (comunidadConditions.length > 0) {
+            const pacientesEnComunidades = db
+                .select({ cedulaPaciente: pacientes.cedulaPaciente })
+                .from(pacientes)
+                .innerJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+                .where(and(...comunidadConditions));
+
+            whereConditions.push(sql`${consultas.cedulaPaciente} IN (${pacientesEnComunidades})`);
+        }
 
         // Subconsulta para obtener total de consultas filtradas (para calcular porcentajes)
         // Necesitamos contar consultas que coincidan con los filtros de fecha (unidas con abordajes)

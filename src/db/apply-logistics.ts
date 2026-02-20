@@ -16,7 +16,6 @@ export async function runManualDbChanges() {
 
     try {
         await connection.query('SET SESSION sql_require_primary_key = 0;');
-        console.log('Disabled sql_require_primary_key');
 
         const queries = [
             'ALTER TABLE `solicitudes_abordajes` ADD COLUMN `logistica_lugar` tinyint NOT NULL DEFAULT 0;',
@@ -28,10 +27,8 @@ export async function runManualDbChanges() {
         for (const q of queries) {
             try {
                 await connection.query(q);
-                console.log(`Executed: ${q}`);
             } catch (e: any) {
                 if (e.code === 'ER_DUP_FIELDNAME') {
-                    console.log(`Column already exists, skipped: ${q}`);
                 } else {
                     throw e; // rethrow other errors
                 }
@@ -41,16 +38,13 @@ export async function runManualDbChanges() {
         // Check if the old columns exist, if so drop them (optional, skip if not needed)
         try {
             await connection.query('ALTER TABLE `solicitudes_abordajes` DROP COLUMN `lugar`, DROP COLUMN `personal`, DROP COLUMN `refrigerios`, DROP COLUMN `transporte`;');
-            console.log('Dropped old logistica columns');
         } catch (e: any) {
             if (e.code === 'ER_CANT_DROP_FIELD_OR_KEY') {
-                console.log('Old logistica columns already dropped or do not exist');
             } else {
                 console.error('Error dropping logistica old cols:', e.message);
             }
         }
 
-        console.log('Database fixes applied successfully.');
     } catch (error) {
         console.error('Migration error:', error);
     } finally {

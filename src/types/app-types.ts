@@ -131,7 +131,11 @@ export interface ReporteComunidadItem {
     nombre_comunidad: string;
     estado: string;
     municipio: string;
+    parroquia: string;
+    tipo_comunidad: string;
+    telefono_comunidad: string;
     cantidad_habitantes: number;
+    cantidad_familias: number;
     pacientes_tratados: number;
     abordajes_realizados: number;
     total_consultas: number;
@@ -147,6 +151,9 @@ export interface ReportePacienteItem {
     direccion_paciente: string | null;
     telefono_paciente: string | null;
     correo_paciente: string | null;
+    estado: string | null;
+    municipio: string | null;
+    parroquia: string | null;
 }
 
 export interface ReporteMorbilidadItem {

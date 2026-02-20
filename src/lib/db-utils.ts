@@ -24,7 +24,6 @@ export async function withPerformanceCheck<T>(
         const duration = Date.now() - start;
 
         if (duration > thresholdMs) {
-            console.log(`✅ [DB PERFORMANCE] Operation "${operationName}" finally completed after ${duration}ms.`);
         }
 
         return result;

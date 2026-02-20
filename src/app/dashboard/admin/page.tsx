@@ -8,28 +8,46 @@ import { Users, FileText, Activity, Clock, Check, X, Loader2 } from 'lucide-reac
 import Link from 'next/link';
 
 export default function AdminDashboard() {
-    const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+    const [pendingAspirantes, setPendingAspirantes] = useState<any[]>([]);
+    const [stats, setStats] = useState({ pendingAspirantes: 0, activeAbordajes: 0, totalConsultas: 0 });
+    const [recentAbordajes, setRecentAbordajes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('/api/admin/pending-users')
-            .then(res => res.json())
-            .then(data => {
-                setPendingUsers(data.users || []);
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch pending aspirantes
+                const pendingRes = await fetch('/api/admin/pending-aspirantes');
+                const pendingData = await pendingRes.json();
+                setPendingAspirantes(pendingData.aspirantes || []);
+
+                // Fetch dashboard stats
+                const statsRes = await fetch('/api/admin/stats');
+                const statsData = await statsRes.json();
+                if (statsData.stats) setStats(statsData.stats);
+                if (statsData.recentAbordajes) setRecentAbordajes(statsData.recentAbordajes);
+
+            } catch (err) {
+                console.error('Error fetching dashboard data:', err);
+            } finally {
                 setLoading(false);
-            })
-            .catch(() => setLoading(false));
+            }
+        };
+
+        fetchData();
     }, []);
 
-    const handleApproval = async (userId: number, approve: boolean) => {
+    const handleApproval = async (cedulaAspirante: string, approve: boolean) => {
         try {
-            const res = await fetch('/api/admin/approve-user', {
+            const res = await fetch('/api/admin/approve-aspirante', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, approve })
+                body: JSON.stringify({ cedulaAspirante, approve })
             });
             if (res.ok) {
-                setPendingUsers(prev => prev.filter(u => u.id !== userId));
+                setPendingAspirantes(prev => prev.filter(a => a.cedulaAspirante !== cedulaAspirante));
+                setStats(prev => ({ ...prev, pendingAspirantes: Math.max(0, prev.pendingAspirantes - 1) }));
             }
         } catch (err) {
             console.error(err);
@@ -42,7 +60,7 @@ export default function AdminDashboard() {
                 <div>
                     <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
                     <p className="text-muted-foreground mt-1">
-                        Gestión operativa de tejedores y coordinación de abordajes.
+                        Gestión operativa de aspirantes y coordinación de abordajes.
                     </p>
                 </div>
 
@@ -50,11 +68,11 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium">Tejedores Pendientes</CardTitle>
+                            <CardTitle className="text-sm font-medium">Aspirantes Pendientes</CardTitle>
                             <Users className="w-4 h-4 text-warning" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{pendingUsers.length}</div>
+                            <div className="text-2xl font-bold">{stats.pendingAspirantes}</div>
                             <Link href="#approvals" className="text-xs text-warning hover:underline">Ver solicitudes abajo</Link>
                         </CardContent>
                     </Card>
@@ -64,8 +82,8 @@ export default function AdminDashboard() {
                             <Activity className="w-4 h-4 text-primary" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">3</div>
-                            <p className="text-xs text-muted-foreground">En curso actualmente</p>
+                            <div className="text-2xl font-bold">{stats.activeAbordajes}</div>
+                            <p className="text-xs text-muted-foreground">En curso o planificados</p>
                         </CardContent>
                     </Card>
                     <Card>
@@ -74,8 +92,8 @@ export default function AdminDashboard() {
                             <FileText className="w-4 h-4 text-success" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">45</div>
-                            <p className="text-xs text-muted-foreground">Este mes</p>
+                            <div className="text-2xl font-bold">{stats.totalConsultas}</div>
+                            <p className="text-xs text-muted-foreground">Histórico total</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -83,28 +101,33 @@ export default function AdminDashboard() {
                 {/* Approval Section */}
                 <Card id="approvals">
                     <CardHeader>
-                        <CardTitle>Nuevas Solicitudes de Registro</CardTitle>
-                        <CardDescription>Aprobar o rechazar nuevos tejedores en el sistema</CardDescription>
+                        <CardTitle>Nuevas Solicitudes de Registro (Aspirantes)</CardTitle>
+                        <CardDescription>Revisar y gestionar las solicitudes de nuevos aspirantes que desean unirse a la red</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {loading ? (
                             <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
-                        ) : pendingUsers.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-8">No hay solicitudes pendientes.</p>
+                        ) : pendingAspirantes.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-8">No hay solicitudes de aspirantes pendientes.</p>
                         ) : (
                             <div className="space-y-4">
-                                {pendingUsers.map(user => (
-                                    <div key={user.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-slate-100">
-                                        <div>
-                                            <p className="font-bold text-slate-800">{user.username}</p>
-                                            <p className="text-xs text-slate-500">Cédula: {user.cedulaTejedor} | Registrado: {new Date(user.createdAt).toLocaleDateString()}</p>
+                                {pendingAspirantes.map(asp => (
+                                    <div key={asp.cedulaAspirante} className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-slate-100">
+                                        <div className="space-y-1">
+                                            <p className="font-bold text-slate-800">{asp.nombreAspirante} {asp.apellidoAspirante}</p>
+                                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                                                <span><span className="font-medium">Cédula:</span> {asp.cedulaAspirante}</span>
+                                                <span><span className="font-medium">Teléfono:</span> {asp.telefonoAspirante}</span>
+                                                <span><span className="font-medium">Fecha:</span> {new Date(asp.fechaPostulacion).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 line-clamp-1"><span className="font-medium">Profesión:</span> {asp.profesionAspirante}</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button
                                                 size="sm"
                                                 variant="default"
                                                 className="bg-emerald-500 hover:bg-emerald-600 h-8 gap-1"
-                                                onClick={() => handleApproval(user.id, true)}
+                                                onClick={() => handleApproval(asp.cedulaAspirante, true)}
                                             >
                                                 <Check className="w-4 h-4" /> Aprobar
                                             </Button>
@@ -112,7 +135,7 @@ export default function AdminDashboard() {
                                                 size="sm"
                                                 variant="outline"
                                                 className="text-destructive hover:bg-destructive/5 h-8 gap-1"
-                                                onClick={() => handleApproval(user.id, false)}
+                                                onClick={() => handleApproval(asp.cedulaAspirante, false)}
                                             >
                                                 <X className="w-4 h-4" /> Rechazar
                                             </Button>
@@ -153,12 +176,21 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {['Barrio El Sol', 'Comunidad Las Rosas'].map((place) => (
-                                    <div key={place} className="flex items-center justify-between text-sm p-3 bg-white/50 border rounded-lg">
-                                        <span className="font-medium">{place}</span>
-                                        <span className="text-xs text-muted-foreground">12-02-2024</span>
-                                    </div>
-                                ))}
+                                {recentAbordajes.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-4">No hay abordajes registrados.</p>
+                                ) : (
+                                    recentAbordajes.map((arb) => (
+                                        <div key={arb.codigo} className="flex items-center justify-between text-sm p-3 bg-white/50 border rounded-lg hover:bg-white/80 transition-colors">
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{arb.comunidad}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase">{arb.estado}</span>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(arb.fecha).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </CardContent>
                     </Card>

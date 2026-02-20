@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Users, History } from 'lucide-react';
+import { Edit, Trash2, Users } from 'lucide-react';
 import { Tejedor } from '@/db/schema/tejedores';
 import { createTejedor, deleteTejedor, updateTejedor } from '@/actions/tejedores-actions';
 import {
@@ -106,16 +106,7 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
             label: 'Acciones',
             render: (t) => (
                 <div className="flex gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/datos-basicos/tejedores/${t.cedulaTejedor}`)}
-                        title="Ver Historial"
-                        aria-label="Ver historial del tejedor"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                        <History className="w-4 h-4" />
-                    </Button>
+
                     <Button
                         variant="ghost"
                         size="sm"

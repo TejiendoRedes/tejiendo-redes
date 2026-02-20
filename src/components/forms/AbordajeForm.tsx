@@ -40,7 +40,7 @@ export function AbordajeForm({
         fechaAbordaje: initialDateStr,
         horaInicio: initialData?.horaInicio || '08:00',
         horaFin: initialData?.horaFin || '12:00',
-        estado: initialData?.estado || 'Planificado',
+        estado: initialData?.estado || 'Pendiente',
         codigoComunidad: initialData?.codigoComunidad || '',
         tipoAbordaje: initialData?.tipoAbordaje || '',
         participantesEstimados: initialData?.participantesEstimados || 0,
@@ -125,8 +125,8 @@ export function AbordajeForm({
                             <SelectValue placeholder="Seleccionar estado" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Planificado">Planificado</SelectItem>
-                            <SelectItem value="En Curso">En Curso</SelectItem>
+                            <SelectItem value="Pendiente">Pendiente</SelectItem>
+                            <SelectItem value="Confirmado">Confirmado</SelectItem>
                             <SelectItem value="Finalizado">Finalizado</SelectItem>
                             <SelectItem value="Cancelado">Cancelado</SelectItem>
                         </SelectContent>
