@@ -98,7 +98,7 @@ export default function UnifiedMedicalAttention({
         <MainLayout>
             <div className="space-y-6 max-w-5xl mx-auto">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Atención Médica Unificada</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Registro de Consulta</h1>
                     <p className="text-gray-600">
                         Proceso integral de registro, actualización y consulta médica.
                     </p>

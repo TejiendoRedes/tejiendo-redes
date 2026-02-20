@@ -6,7 +6,7 @@ import { getComunidades } from '@/actions/comunidades-actions';
 import UnifiedMedicalAttention from './UnifiedMedicalAttention';
 
 export const metadata = {
-    title: 'Atención Médica Unificada | Tejiendo Redes',
+    title: 'Registro de Consulta | Tejiendo Redes',
     description: 'Flujo paso a paso para la atención médica de pacientes.',
 };
 
