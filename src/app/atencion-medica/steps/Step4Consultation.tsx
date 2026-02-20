@@ -22,6 +22,7 @@ interface Step4ConsultationProps {
     medicos: any[];
     abordajes: any[];
     enfermedades: any[];
+    initialData?: any;
     onBack: () => void;
     onFinish: (data: any) => Promise<void>;
 }
@@ -31,20 +32,21 @@ export function Step4Consultation({
     medicos,
     abordajes,
     enfermedades,
+    initialData,
     onBack,
     onFinish
 }: Step4ConsultationProps) {
     const [isSaving, setIsSaving] = React.useState(false);
     const [formData, setFormData] = React.useState({
-        cedulaMedico: '',
-        codigoAbordaje: '',
-        motivoConsulta: '',
-        diagnosticoTexto: '',
-        tratamiento: '',
-        recomendaciones: '',
-        tensionArterial: '', // Ad-hoc for this consultation if needed
+        cedulaMedico: initialData?.cedulaMedico || '',
+        codigoAbordaje: initialData?.codigoAbordaje || '',
+        motivoConsulta: initialData?.motivoConsulta || '',
+        diagnosticoTexto: initialData?.diagnosticoTexto || '',
+        tratamiento: initialData?.tratamiento || '',
+        recomendaciones: initialData?.recomendaciones || '',
+        tensionArterial: initialData?.tensionArterial || '',
     });
-    const [selectedEnfermedades, setSelectedEnfermedades] = React.useState<string[]>([]);
+    const [selectedEnfermedades, setSelectedEnfermedades] = React.useState<string[]>(initialData?.selectedEnfermedades || []);
 
     // Prepare doctors for SearchableSelect
     const formattedMedicos = React.useMemo(() => {
@@ -133,11 +135,14 @@ export function Step4Consultation({
                                                 <SelectItem value="independent" className="font-semibold text-blue-600 italic">
                                                     Sin abordaje / Consulta independiente
                                                 </SelectItem>
-                                                {abordajes.map((ab: any) => (
-                                                    <SelectItem key={ab.codigoAbordaje} value={ab.codigoAbordaje}>
-                                                        {ab.codigoAbordaje} - {ab.descripcion || 'Sin descripción'} ({new Date(ab.fechaAbordaje || ab.fecha).toLocaleDateString()})
-                                                    </SelectItem>
-                                                ))}
+                                                {abordajes.map((ab: any) => {
+                                                    const abd = ab.abordaje || ab;
+                                                    return (
+                                                        <SelectItem key={abd.codigoAbordaje} value={abd.codigoAbordaje}>
+                                                            {abd.codigoAbordaje} - {abd.descripcion || 'Sin descripción'} ({abd.fechaAbordaje ? new Date(abd.fechaAbordaje).toLocaleDateString() : 'Sin fecha'})
+                                                        </SelectItem>
+                                                    );
+                                                })}
                                             </SelectContent>
                                         </Select>
                                         <p className="text-[10px] text-gray-400 italic px-1 font-medium">Si la atención es fuera de un operativo, deje esta opción como "Sin abordaje".</p>

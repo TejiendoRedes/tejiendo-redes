@@ -156,7 +156,7 @@ export async function createConsulta(
             }
         });
 
-        revalidatePath('/datos-basicos/consultas');
+        revalidatePath('/atencion-medica');
         // Also revalidate the specific abordaje page if this consulta belongs to an abordaje
         if (data.codigoAbordaje) {
             revalidatePath(`/abordajes/${data.codigoAbordaje}`);
@@ -204,7 +204,7 @@ export async function updateConsulta(
             }
         });
 
-        revalidatePath('/datos-basicos/consultas');
+        revalidatePath('/atencion-medica');
         return { success: true, message: 'Consulta actualizada correctamente' };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'la consulta', 'actualizar');
@@ -222,7 +222,7 @@ export async function deleteConsulta(codigo: string) {
         // defined in schema as cascade, so just deleting parent is enough.
         await db.delete(consultas)
             .where(eq(consultas.codigoConsulta, codigo));
-        revalidatePath('/datos-basicos/consultas');
+        revalidatePath('/atencion-medica');
         return { success: true, message: 'Consulta eliminada correctamente' };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'la consulta', 'eliminar');

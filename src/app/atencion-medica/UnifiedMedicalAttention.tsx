@@ -35,6 +35,7 @@ export default function UnifiedMedicalAttention({
     const [selectedPatient, setSelectedPatient] = React.useState<any>(null);
     const [patientInfo, setPatientInfo] = React.useState<any>(null);
     const [medicalHistory, setMedicalHistory] = React.useState<any>(null);
+    const [fechaConsulta, setFechaConsulta] = React.useState<string>(new Date().toISOString().split('T')[0]);
     const [consultationData, setConsultationData] = React.useState<any>({
         motivoConsulta: '',
         diagnosticoTexto: '',
@@ -59,8 +60,9 @@ export default function UnifiedMedicalAttention({
         setActiveStep('step2');
     };
 
-    const handleSaveInfo = (info: any) => {
+    const handleSaveInfo = (info: any, consultaDate?: string) => {
         setPatientInfo(info);
+        if (consultaDate) setFechaConsulta(consultaDate);
         setActiveStep('step3');
     };
 
@@ -72,18 +74,21 @@ export default function UnifiedMedicalAttention({
     const handleFinish = async (finalConsultation: any) => {
         if (!selectedPatient) return;
 
+        // Save consultation data for persistence when navigating back
+        setConsultationData(finalConsultation);
+
         const res = await createConsulta(
             {
                 ...finalConsultation,
                 cedulaPaciente: selectedPatient.cedulaPaciente,
+                fechaConsulta: new Date(fechaConsulta),
             },
             finalConsultation.selectedEnfermedades || []
         );
 
         if (res.success) {
             toast.success(res.message);
-            // Optionally redirect or reset
-            window.location.href = '/datos-basicos/consultas';
+            window.location.href = '/atencion-medica';
         } else {
             toast.error(res.error || 'Error al guardar la consulta');
         }
@@ -140,6 +145,7 @@ export default function UnifiedMedicalAttention({
                                 <Step2PatientInfo
                                     patient={patientInfo}
                                     comunidades={comunidades}
+                                    fechaConsulta={fechaConsulta}
                                     onBack={() => setActiveStep('step1')}
                                     onNext={handleSaveInfo}
                                 />
@@ -159,6 +165,7 @@ export default function UnifiedMedicalAttention({
                                     medicos={medicos}
                                     abordajes={abordajes}
                                     enfermedades={enfermedades}
+                                    initialData={consultationData}
                                     onBack={() => setActiveStep('step3')}
                                     onFinish={handleFinish}
                                 />
