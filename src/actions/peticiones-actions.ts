@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { peticiones, medicamentos, pacientes, abordaje, type NewPeticion, type Peticion } from '@/db/schema';
-import { eq, and, gt, sql, desc } from 'drizzle-orm';
+import { eq, and, gt, sql, desc, inArray } from 'drizzle-orm';
 import { comunidades } from '@/db/schema/comunidades';
 import { getErrorMessage } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
@@ -207,9 +207,16 @@ export async function updatePeticionEstado(id: number, estado: string) {
                 };
             }
 
-            // Obtener hora actual
+            // Obtener fecha y hora actual (en zona horaria de Venezuela para la hora literal)
             const ahora = new Date();
-            const horaActual = ahora.toTimeString().slice(0, 8); // HH:MM:SS
+            const timeFormatter = new Intl.DateTimeFormat('es-VE', {
+                timeZone: 'America/Caracas',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hourCycle: 'h23'
+            });
+            const horaActual = timeFormatter.format(ahora);
 
             // Iniciar transacción
             await db.transaction(async (tx) => {
@@ -354,7 +361,7 @@ export async function getAbordajesForSelect() {
             fechaAbordaje: abordaje.fechaAbordaje,
         })
             .from(abordaje)
-            .where(eq(abordaje.estado, 'Planificado')) // Solo abordajes planificados o en curso? 
+            .where(inArray(abordaje.estado, ['Confirmado', 'Finalizado'])) // Abordajes confirmados o finalizados
             .orderBy(desc(abordaje.fechaAbordaje));
 
         return { success: true, data };
