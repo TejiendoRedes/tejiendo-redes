@@ -207,16 +207,9 @@ export async function updatePeticionEstado(id: number, estado: string) {
                 };
             }
 
-            // Obtener fecha y hora actual (en zona horaria de Venezuela para la hora literal)
-            const ahora = new Date();
-            const timeFormatter = new Intl.DateTimeFormat('es-VE', {
-                timeZone: 'America/Caracas',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hourCycle: 'h23'
-            });
-            const horaActual = timeFormatter.format(ahora);
+            // Obtener fecha y hora actual en zona horaria de Venezuela (America/Caracas, UTC-4)
+            const ahoraVE = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Caracas' }));
+            const horaVE = `${String(ahoraVE.getHours()).padStart(2, '0')}:${String(ahoraVE.getMinutes()).padStart(2, '0')}:${String(ahoraVE.getSeconds()).padStart(2, '0')}`;
 
             // Iniciar transacción
             await db.transaction(async (tx) => {
@@ -224,8 +217,8 @@ export async function updatePeticionEstado(id: number, estado: string) {
                 await tx.update(peticiones)
                     .set({
                         estado: 'entregado',
-                        fechaEntrega: ahora,
-                        horaEntrega: horaActual
+                        fechaEntrega: ahoraVE,
+                        horaEntrega: horaVE
                     })
                     .where(eq(peticiones.id, id));
 

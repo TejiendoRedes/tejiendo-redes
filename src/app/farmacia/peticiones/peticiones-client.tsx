@@ -157,14 +157,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
             router.refresh();
             // Actualizar la lista local con estado, fecha y hora de entrega
             const ahora = new Date();
-            const timeFormatter = new Intl.DateTimeFormat('es-VE', {
-                timeZone: 'America/Caracas',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hourCycle: 'h23'
-            });
-            const horaActual = timeFormatter.format(ahora);
+            const horaActual = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}:${String(ahora.getSeconds()).padStart(2, '0')}`;
             setPeticiones(prev =>
                 prev.map(p =>
                     p.codigoPeticion === codigo
