@@ -30,7 +30,12 @@ export function ConsultasTab({ consultas, codigoAbordaje }: ConsultasTabProps) {
                             <CardHeader>
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-lg">{consulta.codigoConsulta}</CardTitle>
-                                    <Badge variant="outline">{new Date(consulta.fechaConsulta).toLocaleDateString()}</Badge>
+                                    <div className="flex gap-2">
+                                        <Badge variant="outline">{new Date(consulta.fechaConsulta).toLocaleDateString()}</Badge>
+                                        {consulta.horaConsulta && (
+                                            <Badge variant="secondary">{consulta.horaConsulta}</Badge>
+                                        )}
+                                    </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">

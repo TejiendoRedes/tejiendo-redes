@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { aspirantes, auditLogs } from '@/db/schema';
+import { aspirantes, auditLogs, tejedores } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 
@@ -32,11 +32,44 @@ export async function POST(request: Request) {
         }
 
         await db.transaction(async (tx) => {
-            const nuevoEstado = approve ? 'Aprobado' : 'Rechazado';
+            if (approve) {
+                // Verificar que no exista ya un tejedor con esta cédula
+                const existingTejedor = await tx.select()
+                    .from(tejedores)
+                    .where(eq(tejedores.cedulaTejedor, cedulaAspirante))
+                    .limit(1);
 
-            await tx.update(aspirantes)
-                .set({ estadoAspirante: nuevoEstado })
-                .where(eq(aspirantes.cedulaAspirante, cedulaAspirante));
+                if (existingTejedor.length > 0) {
+                    throw new Error('Ya existe un tejedor con esta cédula');
+                }
+
+                // Insertar en la tabla de tejedores
+                await tx.insert(tejedores).values({
+                    cedulaTejedor: aspirante.cedulaAspirante,
+                    nombreTejedor: aspirante.nombreAspirante,
+                    apellidoTejedor: aspirante.apellidoAspirante,
+                    fechaNacimiento: aspirante.fechaNacimiento,
+                    direccionTejedor: aspirante.direccionAspirante,
+                    municipioTejedor: aspirante.municipioAspirante,
+                    estadoTejedor: aspirante.estadoDireccionAspirante,
+                    parroquiaTejedor: aspirante.parroquiaAspirante,
+                    telefonoTejedor: aspirante.telefonoAspirante,
+                    correoTejedor: aspirante.correoAspirante,
+                    profesionTejedor: aspirante.profesionAspirante,
+                    fechaIngreso: new Date(),
+                    fechaPromocion: new Date(),
+                    tipodeVoluntario: 'Tejedor Oficial',
+                });
+
+                // Eliminar el aspirante ya que ahora es un tejedor
+                await tx.delete(aspirantes)
+                    .where(eq(aspirantes.cedulaAspirante, cedulaAspirante));
+            } else {
+                // Si es rechazado, solo actualizamos el estado
+                await tx.update(aspirantes)
+                    .set({ estadoAspirante: 'Rechazado' })
+                    .where(eq(aspirantes.cedulaAspirante, cedulaAspirante));
+            }
 
             // Registrar auditoría
             await tx.insert(auditLogs).values({
@@ -53,8 +86,11 @@ export async function POST(request: Request) {
             message: approve ? 'Aspirante aprobado con éxito' : 'Aspirante rechazado'
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error approving aspirante:', error);
+        if (error.message === 'Ya existe un tejedor con esta cédula') {
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
         return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
     }
 }

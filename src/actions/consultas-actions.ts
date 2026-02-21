@@ -139,11 +139,32 @@ export async function createConsulta(
         // Generación automática del código de consulta (CON-001...)
         const newCode = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
 
+        // Obtener fecha y hora actual en zona horaria de Venezuela (America/Caracas, UTC-4)
+        const now = new Date();
+        const options: Intl.DateTimeFormatOptions = {
+            timeZone: 'America/Caracas',
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        const formatter = new Intl.DateTimeFormat('es-VE', options);
+        let horaFormateada = formatter.format(now);
+        // Ensure formatting correctly returned hh:mm:ss, otherwise fallback
+        if (horaFormateada.length !== 8) {
+            const vHours = now.getHours().toString().padStart(2, '0');
+            const vMinutes = now.getMinutes().toString().padStart(2, '0');
+            const vSeconds = now.getSeconds().toString().padStart(2, '0');
+            horaFormateada = `${vHours}:${vMinutes}:${vSeconds}`;
+        }
+
+
         await db.transaction(async (tx) => {
             // 1. Insert Consulta
             await tx.insert(consultas).values({
                 ...data,
-                codigoConsulta: newCode
+                codigoConsulta: newCode,
+                horaConsulta: horaFormateada
             });
 
             // 2. Insert Enfermedades Relations

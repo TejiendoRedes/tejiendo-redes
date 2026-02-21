@@ -53,7 +53,7 @@ export async function GET() {
 
         return NextResponse.json({
             stats: {
-                pendingUsers: pendingCount?.value || 0,
+                pendingAspirantes: pendingCount?.value || 0,
                 activeAbordajes: activeCount?.value || 0,
                 totalConsultas: consultasCount?.value || 0
             },

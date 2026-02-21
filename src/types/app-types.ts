@@ -31,6 +31,7 @@ export interface AbordajeConsultaData {
     diagnosticoTexto: string | null;
     tensionArterial?: string | null; // Optional property inferred from usage in client
     fechaConsulta: string; // Added based on usage
+    horaConsulta?: string | null; // Added based on usage
 }
 
 export interface AbordajeMedicamentoData {

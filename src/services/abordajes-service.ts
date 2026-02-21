@@ -94,6 +94,7 @@ export class AbordajesService {
                     motivoConsulta: consultas.motivoConsulta,
                     diagnosticoTexto: consultas.diagnosticoTexto,
                     tensionArterial: consultas.tensionArterial,
+                    horaConsulta: consultas.horaConsulta,
                 })
                     .from(consultas)
                     .leftJoin(pacientes, eq(consultas.cedulaPaciente, pacientes.cedulaPaciente))

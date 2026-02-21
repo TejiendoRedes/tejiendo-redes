@@ -15,6 +15,7 @@ export const consultas = mysqlTable('consultas', {
         onUpdate: 'cascade'
     }),
     fechaConsulta: datetime('fecha_consulta').notNull().default(sql`now()`),
+    horaConsulta: varchar('hora_consulta', { length: 20 }),
     cedulaPaciente: varchar('cedula_paciente', { length: 12 }).notNull().references(() => pacientes.cedulaPaciente, {
         onDelete: 'restrict',
         onUpdate: 'cascade'

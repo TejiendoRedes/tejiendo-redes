@@ -357,7 +357,7 @@ export async function getAbordajesForSelect() {
             fechaAbordaje: abordaje.fechaAbordaje,
         })
             .from(abordaje)
-            .where(inArray(abordaje.estado, ['Confirmado', 'Finalizado'])) // Abordajes confirmados o finalizados
+            .where(inArray(abordaje.estado, ['Pendiente', 'Confirmado', 'Finalizado'])) // Abordajes pendientes, confirmados o finalizados
             .orderBy(desc(abordaje.fechaAbordaje));
 
         return { success: true, data };
