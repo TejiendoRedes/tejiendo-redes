@@ -23,9 +23,9 @@ import {
     Stethoscope
 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/UIComponents';
-import { getEntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/queries/global-search-actions';;
 import { EntityDetails } from '@/types/app-types';
-import { getPatientHistory, getPatientMedicationHistory } from '@/actions/consultas-actions';
+import { getPatientHistory, getPatientMedicationHistory } from '@/queries/consultas-actions';;
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { jsPDF } from 'jspdf';

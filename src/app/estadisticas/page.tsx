@@ -6,14 +6,8 @@ import { ExecutiveTab } from '@/components/dashboard/ExecutiveTab';
 import { EpidemiologyTab } from '@/components/dashboard/EpidemiologyTab';
 import { PharmacyTab } from '@/components/dashboard/PharmacyTab';
 import { OperationsTab } from '@/components/dashboard/OperationsTab';
-import {
-    getDashboardFilters,
-    getExecutiveKPIs,
-    getEpidemiologicalData,
-    getPharmacyData,
-    getOperationsData,
-    type DashboardFilters as FilterType,
-} from '@/actions/dashboard';
+import { type DashboardFilters as FilterType,  } from '@/actions/dashboard';
+import { getDashboardFilters, getExecutiveKPIs, getEpidemiologicalData, getPharmacyData, getOperationsData } from '@/queries/dashboard';;
 
 interface PageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

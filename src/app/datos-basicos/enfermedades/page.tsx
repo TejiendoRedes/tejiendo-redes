@@ -1,5 +1,5 @@
-import { getEnfermedades } from '@/actions/enfermedades-actions';
-import EnfermedadesClient from './enfermedades-client';
+import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import EnfermedadesClient from '@/components/features/enfermedades/enfermedades-client';
 
 export default async function EnfermedadesPage() {
     const res = await getEnfermedades();

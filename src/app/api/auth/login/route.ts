@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { db } from '@/db';
 import { users, auditLogs } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { loginSchema } from '@/lib/validations/auth';
+import { loginSchema } from '@/schemas/auth';
 import { sanitizeObject } from '@/lib/security/sanitize';
 
 export async function POST(request: Request) {

@@ -11,9 +11,9 @@ import { LoadingSpinner } from '@/components/shared/UIComponents';
 import { toast } from 'sonner';
 import { BloodPressureInput } from '@/components/ui/blood-pressure-input';
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
-import { getPacientes } from '@/actions/pacientes-actions';
-import { getMedicos } from '@/actions/medicos-actions';
-import { getEnfermedades } from '@/actions/enfermedades-actions';
+import { getPacientes } from '@/queries/pacientes-actions';;
+import { getMedicos } from '@/queries/medicos-actions';;
+import { getEnfermedades } from '@/queries/enfermedades-actions';;
 
 interface ConsultaFormProps {
     abordajeId: string;

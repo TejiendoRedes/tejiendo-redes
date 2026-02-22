@@ -1,5 +1,5 @@
-import { getPeticiones } from '@/actions/peticiones-actions';
-import PeticionesClient from './peticiones-client';
+import { getPeticiones } from '@/queries/peticiones-actions';;
+import PeticionesClient from '@/components/features/peticiones/peticiones-client';
 
 export default async function PeticionesPage() {
     // Obtener datos iniciales

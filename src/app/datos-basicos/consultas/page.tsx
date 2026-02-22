@@ -1,9 +1,9 @@
-import { getConsultas } from '@/actions/consultas-actions';
-import { getPacientes } from '@/actions/pacientes-actions';
-import { getMedicos } from '@/actions/medicos-actions';
-import { getAbordajes } from '@/actions/abordajes-actions';
-import { getEnfermedades } from '@/actions/enfermedades-actions';
-import ConsultasClient from './consultas-client';
+import { getConsultas } from '@/queries/consultas-actions';;
+import { getPacientes } from '@/queries/pacientes-actions';;
+import { getMedicos } from '@/queries/medicos-actions';;
+import { getAbordajes } from '@/queries/abordajes-actions';;
+import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import ConsultasClient from '@/components/features/consultas/consultas-client';
 
 export default async function ConsultasPage() {
     // Parallel data fetching for efficiency

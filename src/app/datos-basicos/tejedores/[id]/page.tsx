@@ -17,7 +17,7 @@ import {
     MapPin
 } from 'lucide-react';
 import { EmptyState } from '@/components/shared/UIComponents';
-import { getTejedor, getTejedorHistory } from '@/actions/tejedores-actions';
+import { getTejedor, getTejedorHistory } from '@/queries/tejedores-actions';;
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { jsPDF } from 'jspdf';

@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
-import { getTejedor, updateTejedor } from '@/actions/tejedores-actions';
+import { updateTejedor } from '@/actions/tejedores-actions';
+import { getTejedor } from '@/queries/tejedores-actions';;
 import { TejedorForm } from '@/components/forms/TejedorForm';
 import {
     Dialog,

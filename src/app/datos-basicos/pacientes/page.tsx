@@ -1,6 +1,6 @@
-import { getPacientes } from '@/actions/pacientes-actions';
-import { getComunidades } from '@/actions/comunidades-actions';
-import PacientesClient from './pacientes-client';
+import { getPacientes } from '@/queries/pacientes-actions';;
+import { getComunidades } from '@/queries/comunidades-actions';;
+import PacientesClient from '@/components/features/pacientes/pacientes-client';
 
 export default async function PacientesPage() {
     const [pacientesRes, comunidadesRes] = await Promise.all([

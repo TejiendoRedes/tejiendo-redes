@@ -1,5 +1,5 @@
-import { getTejedores } from '@/actions/tejedores-actions';
-import TejedoresClient from './tejedores-client';
+import { getTejedores } from '@/queries/tejedores-actions';;
+import TejedoresClient from '@/components/features/tejedores/tejedores-client';
 
 export default async function TejedoresPage() {
     // Fetch data directly from the database via Server Action (or just DB call since we are on server)

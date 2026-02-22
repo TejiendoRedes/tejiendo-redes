@@ -1,6 +1,6 @@
-import { getComunidades } from '@/actions/comunidades-actions';
-import { getResponsables } from '@/actions/responsables-actions';
-import ComunidadesClient from './comunidades-client';
+import { getComunidades } from '@/queries/comunidades-actions';;
+import { getResponsables } from '@/queries/responsables-actions';;
+import ComunidadesClient from '@/components/features/comunidades/comunidades-client';
 
 export default async function ComunidadesPage() {
     const [comunidadesRes, responsablesRes] = await Promise.all([

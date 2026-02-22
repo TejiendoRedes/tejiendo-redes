@@ -1,5 +1,5 @@
-import { getEspecialidades } from '@/actions/especialidades-actions';
-import EspecialidadesClient from './especialidades-client';
+import { getEspecialidades } from '@/queries/especialidades-actions';;
+import EspecialidadesClient from '@/components/features/especialidades/especialidades-client';
 
 export default async function EspecialidadesPage() {
     const { data: especialidades, success } = await getEspecialidades();

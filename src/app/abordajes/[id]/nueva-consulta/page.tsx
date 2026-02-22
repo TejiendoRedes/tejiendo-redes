@@ -1,10 +1,10 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ConsultaForm } from '@/components/abordajes/ConsultaForm';
-import { getAbordajeById } from '@/actions/abordajes-actions';
-import { getPacientes } from '@/actions/pacientes-actions';
-import { getEnfermedades } from '@/actions/enfermedades-actions';
-import { getMedicos } from '@/actions/medicos-actions';
+import { getAbordajeById } from '@/queries/abordajes-actions';;
+import { getPacientes } from '@/queries/pacientes-actions';;
+import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import { getMedicos } from '@/queries/medicos-actions';;
 import { EmptyState } from '@/components/shared/UIComponents';
 
 export default async function NuevaConsultaPage({ params }: { params: Promise<{ id: string }> }) {

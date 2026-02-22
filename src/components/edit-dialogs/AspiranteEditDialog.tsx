@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
-import { getAspirante, updateAspirante } from '@/actions/aspirantes-actions';
+import { updateAspirante } from '@/actions/aspirantes-actions';
+import { getAspirante } from '@/queries/aspirantes-actions';;
 import { AspiranteForm } from '@/components/forms/AspiranteForm';
 import {
     Dialog,

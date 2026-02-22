@@ -1,8 +1,8 @@
-import { getPacientes } from '@/actions/pacientes-actions';
-import { getMedicos } from '@/actions/medicos-actions';
-import { getAbordajes } from '@/actions/abordajes-actions';
-import { getEnfermedades } from '@/actions/enfermedades-actions';
-import { getComunidades } from '@/actions/comunidades-actions';
+import { getPacientes } from '@/queries/pacientes-actions';;
+import { getMedicos } from '@/queries/medicos-actions';;
+import { getAbordajes } from '@/queries/abordajes-actions';;
+import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import { getComunidades } from '@/queries/comunidades-actions';;
 import UnifiedMedicalAttention from './UnifiedMedicalAttention';
 
 export const metadata = {

@@ -29,7 +29,8 @@ import type { Consulta } from '@/db/schema/consultas';
 import type { Paciente } from '@/db/schema/pacientes';
 import type { Enfermedad } from '@/db/schema/enfermedades';
 // We need extended types for lists
-import { createConsulta, updateConsulta, deleteConsulta, getEnfermedadesByConsulta } from '@/actions/consultas-actions';
+import { createConsulta, updateConsulta, deleteConsulta } from '@/actions/consultas-actions';
+import { getEnfermedadesByConsulta } from '@/queries/consultas-actions';;
 
 interface ConsultasClientProps {
     consultas: any[]; // Using any for joined result type momentarily

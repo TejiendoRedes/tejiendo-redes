@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Pill, Clock, CheckCircle2, AlertCircle, Plus, Trash2, Loader2, Package } from 'lucide-react';
-import { getAbordajeAsistencia, updateAbordajeAsistencia, registerMedicamentoEntrega } from '@/actions/abordajes-actions';
-import { getMedicamentos } from '@/actions/medicamentos-actions';
+import { updateAbordajeAsistencia, registerMedicamentoEntrega } from '@/actions/abordajes-actions';
+import { getAbordajeAsistencia } from '@/queries/abordajes-actions';;
+import { getMedicamentos } from '@/queries/medicamentos-actions';;
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { Input } from '@/components/ui/input';

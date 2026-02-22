@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Activity } from 'lucide-react';
 import { Antecedente } from '@/db/schema/antecedentes';
 import { Paciente } from '@/db/schema/pacientes';
-import { createAntecedente, deleteAntecedente, updateAntecedente, getNextAntecedenteCodigo } from '@/actions/antecedentes-actions';
-import { getPacientes } from '@/actions/pacientes-actions';
+import { createAntecedente, deleteAntecedente, updateAntecedente } from '@/actions/antecedentes-actions';
+import { getNextAntecedenteCodigo } from '@/queries/antecedentes-actions';;
+import { getPacientes } from '@/queries/pacientes-actions';;
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
 import {
     Dialog,

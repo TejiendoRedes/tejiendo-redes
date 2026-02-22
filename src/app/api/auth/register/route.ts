@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { aspirantes, auditLogs } from '@/db/schema';
 import { eq, or } from 'drizzle-orm';
-import { registerSchema } from '@/lib/validations/auth';
+import { registerSchema } from '@/schemas/auth';
 import { sanitizeObject } from '@/lib/security/sanitize';
 
 export async function POST(request: Request) {

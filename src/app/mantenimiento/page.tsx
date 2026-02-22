@@ -16,11 +16,8 @@ import {
     Settings2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-    getConfiguracionBackup,
-    updateConfiguracionBackup,
-    triggerManualBackup
-} from '@/actions/mantenimiento-actions';
+import { updateConfiguracionBackup, triggerManualBackup } from '@/actions/mantenimiento-actions';
+import { getConfiguracionBackup } from '@/queries/mantenimiento-actions';;
 import {
     Select,
     SelectContent,

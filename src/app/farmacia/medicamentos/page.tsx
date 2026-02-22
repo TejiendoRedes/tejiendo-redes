@@ -1,5 +1,5 @@
-import { getMedicamentos } from '@/actions/medicamentos-actions';
-import MedicamentosClient from './medicamentos-client';
+import { getMedicamentos } from '@/queries/medicamentos-actions';;
+import MedicamentosClient from '@/components/features/medicamentos/medicamentos-client';
 
 export default async function MedicamentosPage() {
     const { data: medicamentos, success } = await getMedicamentos();

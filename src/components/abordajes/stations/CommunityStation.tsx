@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { addComunidadToAbordaje, removeComunidadFromAbordaje } from '@/actions/abordajes-actions';
-import { getComunidades } from '@/actions/comunidades-actions';
+import { getComunidades } from '@/queries/comunidades-actions';;
 import { AbordajeWithRelations } from '@/types/app-types';
 
 interface CommunityStationProps {

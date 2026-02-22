@@ -1,6 +1,6 @@
-import { getOrganismos } from '@/actions/organismos-actions';
-import { getTejedores } from '@/actions/tejedores-actions';
-import OrganismosClient from './organismos-client';
+import { getOrganismos } from '@/queries/organismos-actions';;
+import { getTejedores } from '@/queries/tejedores-actions';;
+import OrganismosClient from '@/components/features/organismos/organismos-client';
 
 export default async function OrganismosPage() {
     const [organismosRes, tejedoresRes] = await Promise.all([

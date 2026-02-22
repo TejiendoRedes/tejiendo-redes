@@ -12,25 +12,6 @@ import { requireAuth } from '@/lib/auth';
 /**
  * Obtener todos los organismos con sus tejedores responsables
  */
-export async function getOrganismos() {
-    try {
-        await requireAuth();
-        const result = await db.select()
-            .from(organismos)
-            .leftJoin(tejedores, eq(organismos.cedulaTejedor, tejedores.cedulaTejedor));
-
-        // Transformar data para el cliente
-        const data = result.map(({ organismos, tejedores }) => ({
-            ...organismos,
-            tejedor: tejedores
-        }));
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Error fetching organismos:', error);
-        return { success: false, error: 'Error al obtener los organismos' };
-    }
-}
 
 /**
  * Crear un nuevo organismo

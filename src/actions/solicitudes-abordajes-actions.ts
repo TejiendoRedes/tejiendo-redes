@@ -12,46 +12,10 @@ import { requireAuth } from '@/lib/auth';
 /**
  * Obtener todas las solicitudes de abordajes con información de comunidades
  */
-export async function getSolicitudesAbordajes() {
-    try {
-        await requireAuth();
-        const result = await db.select({
-            solicitud: solicitudesAbordajes,
-            comunidad: comunidades,
-        })
-            .from(solicitudesAbordajes)
-            .leftJoin(comunidades, eq(solicitudesAbordajes.codigoComunidad, comunidades.codigoComunidad))
-            .orderBy(desc(solicitudesAbordajes.fechaSolicitud));
-
-        // Transformar data para el cliente
-        const data = result.map(({ solicitud, comunidad }) => ({
-            ...solicitud,
-            comunidad,
-        }));
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Error fetching solicitudes abordajes:', error);
-        return { success: false, error: 'Error al obtener las solicitudes de abordajes' };
-    }
-}
 
 /**
  * Obtener comunidades para el selector de solicitudes
  */
-export async function getComunidadesParaSolicitud() {
-    try {
-        await requireAuth();
-        const data = await db.select()
-            .from(comunidades)
-            .orderBy(comunidades.nombreComunidad);
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Error fetching comunidades:', error);
-        return { success: false, error: 'Error al obtener las comunidades' };
-    }
-}
 
 /**
  * Crear una nueva solicitud de abordaje

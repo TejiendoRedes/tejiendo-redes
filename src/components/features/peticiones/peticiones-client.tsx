@@ -6,7 +6,8 @@ import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList } from 'lucide-react';
-import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado, getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/actions/peticiones-actions';
+import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado } from '@/actions/peticiones-actions';
+import { getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/queries/peticiones-actions';;
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,

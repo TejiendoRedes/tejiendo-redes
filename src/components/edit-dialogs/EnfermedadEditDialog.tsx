@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
-import { getEnfermedad, updateEnfermedad } from '@/actions/enfermedades-actions';
+import { updateEnfermedad } from '@/actions/enfermedades-actions';
+import { getEnfermedad } from '@/queries/enfermedades-actions';;
 import { EnfermedadForm } from '@/components/forms/EnfermedadForm';
 import {
     Dialog,

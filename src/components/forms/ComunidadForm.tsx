@@ -16,7 +16,7 @@ import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/d
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
-import { getResponsables } from '@/actions/responsables-actions';
+import { getResponsables } from '@/queries/responsables-actions';;
 
 export interface ComunidadFormProps {
     initialData?: Comunidad;

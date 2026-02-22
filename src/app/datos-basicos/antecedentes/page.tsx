@@ -1,6 +1,6 @@
-import { getAntecedentes } from '@/actions/antecedentes-actions';
-import { getPacientes } from '@/actions/pacientes-actions';
-import AntecedentesClient from './antecedentes-client';
+import { getAntecedentes } from '@/queries/antecedentes-actions';;
+import { getPacientes } from '@/queries/pacientes-actions';;
+import AntecedentesClient from '@/components/features/antecedentes/antecedentes-client';
 
 export default async function AntecedentesPage() {
     const [antecedentesRes, pacientesRes] = await Promise.all([

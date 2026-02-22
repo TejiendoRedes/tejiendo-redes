@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
-import { getAbordajeById, updateAbordaje } from '@/actions/abordajes-actions';
-import { getComunidades } from '@/actions/comunidades-actions';
+import { updateAbordaje } from '@/actions/abordajes-actions';
+import { getAbordajeById } from '@/queries/abordajes-actions';;
+import { getComunidades } from '@/queries/comunidades-actions';;
 import { AbordajeForm } from '@/components/forms/AbordajeForm';
 import {
     Dialog,

@@ -11,16 +11,6 @@ import { requireAuth } from '@/lib/auth';
 /**
  * Obtener todas las especialidades
  */
-export async function getEspecialidades() {
-    try {
-        await requireAuth();
-        const data = await db.select().from(especialidades);
-        return { success: true, data };
-    } catch (error) {
-        console.error('Error fetching especialidades:', error);
-        return { success: false, error: 'Error al obtener las especialidades' };
-    }
-}
 
 /**
  * Crear una nueva especialidad

@@ -1,5 +1,5 @@
-import { getAspirantes } from '@/actions/aspirantes-actions';
-import AspirantesClient from './aspirantes-client';
+import { getAspirantes } from '@/queries/aspirantes-actions';;
+import AspirantesClient from '@/components/features/aspirantes/aspirantes-client';
 import { MainLayout } from '@/components/layout/MainLayout';
 
 export default async function AspirantesPage() {

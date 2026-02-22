@@ -1,6 +1,6 @@
-import { getSolicitudesAbordajes } from '@/actions/solicitudes-abordajes-actions';
-import { getComunidadesParaSolicitud } from '@/actions/solicitudes-abordajes-actions';
-import SolicitudesAbordajesClient from './solicitudes-abordajes-client';
+import { getSolicitudesAbordajes } from '@/queries/solicitudes-abordajes-actions';;
+import { getComunidadesParaSolicitud } from '@/queries/solicitudes-abordajes-actions';;
+import SolicitudesAbordajesClient from '@/components/features/solicitudes-abordajes/solicitudes-abordajes-client';
 
 export default async function SolicitudesAbordajesPage() {
     // Obtener datos iniciales

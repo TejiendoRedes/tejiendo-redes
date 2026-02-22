@@ -35,30 +35,6 @@ const handleDatabaseError = (error: any) => {
 /**
  * Obtener todos los responsables (con búsqueda opcional)
  */
-export async function getResponsables(query?: string, limit: number = 50) {
-    try {
-        await requireAuth();
-        let queryBuilder = db.select()
-            .from(responsables)
-            .$dynamic();
-
-        if (query) {
-            queryBuilder = queryBuilder.where(
-                or(
-                    like(responsables.nombreResponsable, `%${query}%`),
-                    like(responsables.apellidoResponsable, `%${query}%`),
-                    like(responsables.cedulaResponsable, `%${query}%`)
-                )
-            );
-        }
-
-        const data = await queryBuilder.limit(limit);
-        return { success: true, data };
-    } catch (error) {
-        console.error('Error fetching responsables:', error);
-        return { success: false, error: handleDatabaseError(error) };
-    }
-}
 
 /**
  * Crear un nuevo responsable
@@ -111,16 +87,3 @@ export async function deleteResponsable(cedula: string) {
 /**
  * Obtener un responsable por su Cédula
  */
-export async function getResponsable(cedula: string) {
-    try {
-        await requireAuth();
-        const result = await db.select().from(responsables).where(eq(responsables.cedulaResponsable, cedula));
-        if (result.length === 0) {
-            return { success: false, error: 'Responsable no encontrado' };
-        }
-        return { success: true, data: result[0] };
-    } catch (error) {
-        console.error('Error fetching responsable:', error);
-        return { success: false, error: handleDatabaseError(error) };
-    }
-}

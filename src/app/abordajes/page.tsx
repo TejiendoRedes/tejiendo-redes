@@ -1,5 +1,5 @@
 import React from 'react';
-import { getAbordajes } from '@/actions/abordajes-actions';
+import { getAbordajes } from '@/queries/abordajes-actions';;
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

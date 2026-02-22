@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, MapPin, Users, Briefcase, FileText } from 'lucide-react';
-import { getEntityDetails } from '@/actions/global-search-actions';
+import { getEntityDetails } from '@/queries/global-search-actions';;
 import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';

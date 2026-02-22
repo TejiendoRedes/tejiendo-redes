@@ -1,0 +1,47 @@
+# Reglas del Proyecto: Tejiendo Redes (Layered Architecture)
+
+Este archivo de reglas le indica al asistente de IA (Cursor, Windsurf, Copilot, etc.) cómo estructurar, refactorizar o crear nuevo código en este proyecto de Next.js 16.
+
+**LÉELO CUIDADOSAMENTE ANTES DE HACER CUALQUIER CAMBIO EN EL CÓDIGO.**
+
+---
+
+## 🏗 Arquitectura de Capas Estricta (Feature-Sliced Design)
+
+El proyecto utiliza una arquitectura separada para facilitar el mantenimiento en el tiempo. Cada parte del flujo de datos tiene su carpeta dedicada:
+
+### 1. `src/app/` (Capa de Presentación y Enrutamiento)
+- **Regla Estricta:** Aquí solo debe haber archivos de Next.js App Router (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`).
+- **PROHIBIDO:** Definir `Server Actions` inline ("use server") directamente dentro de componentes `.tsx`.
+- **PROHIBIDO:** Usar llamadas directas a la base de datos (con Drizzle ORM) dentro de las vistas. Todo `fetching` debe declararse en la carpeta `queries/` e importarse aquí en componentes de servidor (RSC).
+- **Mantener páginas delgadas:** Si el árbol de componentes de una página es muy complejo, extráelo a `src/components/features/`.
+
+### 2. `src/actions/` (Mutaciones de Datos Puras)
+- **Función:** Carpeta exclusiva para todos los "Server Actions".
+- **Encabezado:** Cada archivo debe empezar con la directiva `"use server";`.
+- **Regla Estricta:** Reciben los datos procesados, los validan nuevamente usando esquemas en `src/schemas/`, y luego interactúan con Drizzle y devuelven un objeto de respuesta (Ej. `{ success: boolean, message?: string, error?: string }`).
+
+### 3. `src/queries/` (Lecturas de Base de Datos Puras)
+- **Función:** Funciones asíncronas para extraer datos de la Base de Datos para los componentes React Server Components (RSC).
+- **Regla Estricta:** NUNCA uses la directiva `"use server"` en funciones de Solo Lectura. Devuelven arrays u objetos tipados infiriendo desde el Model.
+
+### 4. `src/schemas/` (Validaciones Compartidas)
+- **Función:** Archivos Zod (`z`) para validar esquemas tanto del lado cliente (con React Hook Form) como del lado servidor (en los actions).
+- **Nomenclatura:** Ej. `abordaje.schema.ts`. Exportar los `Types` usando `z.infer`.
+
+### 5. `src/components/features/` vs `src/components/ui/`
+- **`ui/`**: Exclusivo para componentes genéricos (Shadcn, botones, inputs base, utilidades de UI abstractas). No tienen lógica de negocio.
+- **`features/`**: Componentes acoplados al dominio de negocio que se reutilizan o son complejos (ej. `BuscadorPacientes.tsx`, `TablaConsultas.tsx`, `FormularioMedicamentos.tsx`).
+
+### 6. `src/db/` (Esquemas de Base de Datos)
+- **Función:** Solo mantener definiciones de Drizzle ORM y el cliente DB.
+
+---
+
+## 🤖 Directrices de "AI-Friendly" y Mantenibilidad
+
+1. **La Regla de Oro:** **NO ROMPAS EL CÓDIGO FUNCIONAL, JAMÁS.** Lee cómo funciona algo antes de reemplazarlo. Refactoriza paso a paso.
+2. **Auto-Documentación:** Agrega comentarios JSDoc `/** ... */` sobre las funciones de actions y queries complejas. Explica POR QUÉ y no CÓMO.
+3. **Tipado Estricto:** Usa TypeScript siempre. No utilices tipos `any`. Asegúrate de infirir los tipos para los Selects y Inserts de Drizzle.
+4. **Resilente:** En todos los `actions/` debes manejar los errores con un bloque `try/catch` y devolver un fallo controlado, en lugar de lanzar una excepción que rompa la UI.
+5. **Separación de Responsabilidades:** Un componente de React renderiza estado. Un hook encapsula la lógica local. Un query extrae datos. Un action muta datos. No mezcles roles.

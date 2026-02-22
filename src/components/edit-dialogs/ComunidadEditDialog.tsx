@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
-import { getComunidad, updateComunidad } from '@/actions/comunidades-actions';
-import { getResponsables } from '@/actions/responsables-actions';
+import { updateComunidad } from '@/actions/comunidades-actions';
+import { getComunidad } from '@/queries/comunidades-actions';;
+import { getResponsables } from '@/queries/responsables-actions';;
 import { ComunidadForm } from '@/components/forms/ComunidadForm';
 import {
     Dialog,
