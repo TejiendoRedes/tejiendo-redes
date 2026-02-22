@@ -33,14 +33,3 @@ export async function getOrganismos() {
     }
 }
 
-/**
- * Crear un nuevo organismo
- */
-
-/**
- * Actualizar un organismo
- */
-
-/**
- * Eliminar un organismo
- */

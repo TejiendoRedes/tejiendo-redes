@@ -1,4 +1,4 @@
-import { getResponsables } from '@/queries/responsables-actions';;
+import { getResponsables } from '@/queries/responsables';;
 import ResponsablesClient from '@/components/features/responsables/responsables-client';
 
 export default async function ResponsablesPage() {

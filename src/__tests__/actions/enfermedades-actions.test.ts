@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createEnfermedad, updateEnfermedad, deleteEnfermedad,  } from '@/actions/enfermedades-actions';
-import { getEnfermedades, getEnfermedad } from '@/queries/enfermedades-actions';;
+import { getEnfermedades, getEnfermedad } from '@/queries/enfermedades';;
 
 describe('Enfermedades Actions', () => {
     describe('getEnfermedades', () => {

@@ -130,19 +130,7 @@ export async function getMedicamentosForSelect() {
 }
 
 /**
- * Crear una nueva petición (sin restar existencias hasta aprobación)
- */
-
-/**
- * Actualizar estado de una petición (restar existencias solo cuando se aprueba/entrega, devolver cuando se cancela)
- */
-
-/**
  * Marcar petición como entregada
- */
-
-/**
- * Eliminar una petición y devolver existencia al medicamento
  */
 
 /**

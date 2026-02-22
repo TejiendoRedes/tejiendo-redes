@@ -1,5 +1,5 @@
-import { getAntecedentes } from '@/queries/antecedentes-actions';;
-import { getPacientes } from '@/queries/pacientes-actions';;
+import { getAntecedentes } from '@/queries/antecedentes';;
+import { getPacientes } from '@/queries/pacientes';;
 import AntecedentesClient from '@/components/features/antecedentes/antecedentes-client';
 
 export default async function AntecedentesPage() {

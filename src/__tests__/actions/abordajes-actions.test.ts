@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { checkInPatient } from '@/actions/abordajes-actions';
-import { getAbordajeAsistencia } from '@/queries/abordajes-actions';;
+import { getAbordajeAsistencia } from '@/queries/abordajes';;
 
 describe('Abordajes Actions', () => {
     // Note: These tests depend on existing data in the DB.

@@ -38,18 +38,6 @@ export async function getEnfermedades(query?: string, limit: number = 50) {
 }
 
 /**
- * Crear una nueva enfermedad
- */
-
-/**
- * Actualizar una enfermedad
- */
-
-/**
- * Eliminar una enfermedad
- */
-
-/**
  * Obtener una enfermedad por código
  */
 export async function getEnfermedad(codigo: string) {

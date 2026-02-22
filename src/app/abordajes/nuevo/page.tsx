@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createAbordaje } from '@/actions/abordajes-actions';
-import { getComunidades } from '@/queries/comunidades-actions';;
+import { getComunidades } from '@/queries/comunidades';;
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { AbordajeForm } from '@/components/forms/AbordajeForm';

@@ -26,10 +26,10 @@ import {
     addTejedorToAbordaje,
     registerMedicamentoEntrega
 } from '@/actions/abordajes-actions';
-import { getComunidades } from '@/queries/comunidades-actions';;
-import { getTejedores } from '@/queries/tejedores-actions';;
-import { getMedicamentos } from '@/queries/medicamentos-actions';;
-import { getPacientes } from '@/queries/pacientes-actions';;
+import { getComunidades } from '@/queries/comunidades';;
+import { getTejedores } from '@/queries/tejedores';;
+import { getMedicamentos } from '@/queries/medicamentos';;
+import { getPacientes } from '@/queries/pacientes';;
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { AbordajeWithRelations } from '@/types/app-types';
 import { Comunidad } from '@/db/schema/comunidades';

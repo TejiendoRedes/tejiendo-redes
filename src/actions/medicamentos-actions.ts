@@ -18,7 +18,7 @@ import { like, or } from 'drizzle-orm';
 /**
  * Crear un nuevo medicamento
  */
-export async function createMedicamento(data: unknown) {
+export async function createMedicamento(data: typeof medicamentos.$inferInsert) {
     try {
         await requireAuth();
 
@@ -52,7 +52,7 @@ export async function createMedicamento(data: unknown) {
 /**
  * Actualizar un medicamento
  */
-export async function updateMedicamento(codigo: string, data: unknown) {
+export async function updateMedicamento(codigo: string, data: Partial<typeof medicamentos.$inferInsert>) {
     try {
         await requireAuth();
 

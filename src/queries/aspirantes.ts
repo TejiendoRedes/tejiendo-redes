@@ -42,18 +42,6 @@ export async function getAspirante(cedula: string) {
 
 
 /**
- * Crear un nuevo aspirante (Postulación)
- */
-
-/**
- * Actualizar datos de un aspirante
- */
-
-/**
- * Eliminar una postulación
- */
-
-/**
  * Promover Aspirante a Tejedor
  * Esta función mueve los datos de la tabla aspirantes a la tabla tejedores
  */

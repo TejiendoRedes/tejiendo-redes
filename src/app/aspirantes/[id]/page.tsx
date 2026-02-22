@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Edit, User, Phone, Briefcase } from 'lucide-react';
-import { getEntityDetails } from '@/queries/global-search-actions';;
+import { getEntityDetails } from '@/queries/global-search';;
 import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
 

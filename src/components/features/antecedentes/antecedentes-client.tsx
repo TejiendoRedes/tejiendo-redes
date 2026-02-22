@@ -9,8 +9,8 @@ import { Edit, Trash2, Activity } from 'lucide-react';
 import { Antecedente } from '@/db/schema/antecedentes';
 import { Paciente } from '@/db/schema/pacientes';
 import { createAntecedente, deleteAntecedente, updateAntecedente } from '@/actions/antecedentes-actions';
-import { getNextAntecedenteCodigo } from '@/queries/antecedentes-actions';;
-import { getPacientes } from '@/queries/pacientes-actions';;
+import { getNextAntecedenteCodigo } from '@/queries/antecedentes';;
+import { getPacientes } from '@/queries/pacientes';;
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
 import {
     Dialog,

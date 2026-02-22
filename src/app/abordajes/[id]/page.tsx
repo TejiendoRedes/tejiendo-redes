@@ -1,6 +1,6 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { getAbordajeById } from '@/queries/abordajes-actions';;
+import { getAbordajeById } from '@/queries/abordajes';;
 import { AbordajeDashboard } from '@/components/abordajes/AbordajeDashboard';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

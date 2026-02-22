@@ -34,18 +34,6 @@ export async function getComunidades() {
 }
 
 /**
- * Crear una nueva comunidad
- */
-
-/**
- * Actualizar una comunidad
- */
-
-/**
- * Eliminar una comunidad
- */
-
-/**
  * Obtener una comunidad por código
  */
 export async function getComunidad(codigo: string) {

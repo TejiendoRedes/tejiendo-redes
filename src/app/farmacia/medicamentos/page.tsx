@@ -1,4 +1,4 @@
-import { getMedicamentos } from '@/queries/medicamentos-actions';;
+import { getMedicamentos } from '@/queries/medicamentos';;
 import MedicamentosClient from '@/components/features/medicamentos/medicamentos-client';
 
 export default async function MedicamentosPage() {

@@ -40,18 +40,6 @@ export async function getMedicamentos(query?: string, limit: number = 50) {
 }
 
 /**
- * Crear un nuevo medicamento
- */
-
-/**
- * Actualizar un medicamento
- */
-
-/**
- * Eliminar un medicamento
- */
-
-/**
  * Obtener resumen de medicamentos solicitados (peticiones)
  */
 export async function getMedicamentosEntregados() {

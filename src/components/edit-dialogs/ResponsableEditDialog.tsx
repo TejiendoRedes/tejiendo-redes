@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
 import { updateResponsable } from '@/actions/responsables-actions';
-import { getResponsable } from '@/queries/responsables-actions';;
+import { getResponsable } from '@/queries/responsables';;
 import { ResponsableForm } from '@/components/forms/ResponsableForm';
 import {
     Dialog,

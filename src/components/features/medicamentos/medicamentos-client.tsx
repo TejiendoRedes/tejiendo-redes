@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, AlertCircle, Plus, Package, Pill } from 'lucide-react';
 import { Medicamento } from '@/db/schema/medicamentos';
 import { createMedicamento, deleteMedicamento, updateMedicamento } from '@/actions/medicamentos-actions';
-import { getMedicamentosEntregados } from '@/queries/medicamentos-actions';;
+import { getMedicamentosEntregados } from '@/queries/medicamentos';;
 import {
     Dialog,
     DialogContent,

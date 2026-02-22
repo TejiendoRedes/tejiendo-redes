@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList } from 'lucide-react';
 import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado } from '@/actions/peticiones-actions';
-import { getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/queries/peticiones-actions';;
+import { getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/queries/peticiones';;
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,

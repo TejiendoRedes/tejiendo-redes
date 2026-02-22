@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
 import { updatePaciente } from '@/actions/pacientes-actions';
-import { getPaciente } from '@/queries/pacientes-actions';;
-import { getComunidades } from '@/queries/comunidades-actions';;
+import { getPaciente } from '@/queries/pacientes';;
+import { getComunidades } from '@/queries/comunidades';;
 import { PacienteForm } from '@/components/forms/PacienteForm';
 import {
     Dialog,

@@ -40,14 +40,6 @@ export async function getAbordajeById(id: string) {
 }
 
 /**
- * Crear un nuevo abordaje
- */
-
-/**
- * Actualizar un abordaje existente
- */
-
-/**
  * Agregar comunidad a un abordaje
  */
 
@@ -61,10 +53,6 @@ export async function getAbordajeById(id: string) {
 
 /**
  * Remover tejedor de un abordaje
- */
-
-/**
- * Eliminar un abordaje
  */
 
 /**
@@ -89,6 +77,3 @@ export async function getAbordajeAsistencia(abordajeId: string) {
  * Registrar Check-in de paciente
  */
 
-/**
- * Actualizar asistencia (Estado, notas, etc)
- */

@@ -51,14 +51,3 @@ export async function getMedicos(query?: string, limit: number = 50) {
     }
 }
 
-/**
- * Crear un nuevo médico (asignar rol médico a un tejedor)
- */
-
-/**
- * Actualizar un médico
- */
-
-/**
- * Eliminar (desasignar) un médico
- */

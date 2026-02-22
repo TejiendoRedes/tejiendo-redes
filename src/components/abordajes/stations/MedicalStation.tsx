@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Stethoscope, Clock, CheckCircle2, User, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import { updateAbordajeAsistencia } from '@/actions/abordajes-actions';
-import { getAbordajeAsistencia } from '@/queries/abordajes-actions';;
-import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import { getAbordajeAsistencia } from '@/queries/abordajes';;
+import { getEnfermedades } from '@/queries/enfermedades';;
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { ConsultaForm } from '../ConsultaForm'; // Adjust path if needed
 import { toast } from 'sonner';

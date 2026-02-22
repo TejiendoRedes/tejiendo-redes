@@ -32,7 +32,7 @@ import { PeticionSchema } from '@/schemas/peticiones';
 /**
  * Crear una nueva petición (sin restar existencias hasta aprobación)
  */
-export async function createPeticion(data: unknown) {
+export async function createPeticion(data: typeof peticiones.$inferInsert) {
     try {
         await requireAuth();
 

@@ -1,4 +1,4 @@
-import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import { getEnfermedades } from '@/queries/enfermedades';;
 import EnfermedadesClient from '@/components/features/enfermedades/enfermedades-client';
 
 export default async function EnfermedadesPage() {

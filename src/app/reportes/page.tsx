@@ -1,6 +1,6 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { getReporteAbordajes, getReporteComunidades, getReportePacientes, getReporteMorbilidad, getReporteMedicamentos, getComunidadesParaFiltro } from '@/queries/reportes-actions';
+import { getReporteAbordajes, getReporteComunidades, getReportePacientes, getReporteMorbilidad, getReporteMedicamentos, getComunidadesParaFiltro } from '@/queries/reportes';
 import ReportesClient from '@/components/features/reportes/ReportesClient';
 export default async function ReportesPage({
     searchParams,

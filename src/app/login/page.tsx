@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import LoginForm from '@/components/LoginForm';
+import LoginForm from '@/components/forms/LoginForm';
 
 export default function LoginPage() {
     return (

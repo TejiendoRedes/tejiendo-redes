@@ -1,4 +1,4 @@
-import { getAspirantes } from '@/queries/aspirantes-actions';;
+import { getAspirantes } from '@/queries/aspirantes';;
 import AspirantesClient from '@/components/features/aspirantes/aspirantes-client';
 import { MainLayout } from '@/components/layout/MainLayout';
 

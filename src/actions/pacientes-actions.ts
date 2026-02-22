@@ -16,7 +16,7 @@ import { PacienteSchema } from '@/schemas/pacientes';
 /**
  * Crear un nuevo paciente
  */
-export async function createPaciente(data: unknown) {
+export async function createPaciente(data: typeof pacientes.$inferInsert) {
     try {
         await requireAuth();
 
@@ -52,7 +52,7 @@ export async function createPaciente(data: unknown) {
 /**
  * Actualizar un paciente
  */
-export async function updatePaciente(cedula: string, data: unknown) {
+export async function updatePaciente(cedula: string, data: Partial<typeof pacientes.$inferInsert>) {
     try {
         await requireAuth();
 

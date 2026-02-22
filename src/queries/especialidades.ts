@@ -23,14 +23,3 @@ export async function getEspecialidades() {
     }
 }
 
-/**
- * Crear una nueva especialidad
- */
-
-/**
- * Actualizar una especialidad
- */
-
-/**
- * Eliminar una especialidad
- */

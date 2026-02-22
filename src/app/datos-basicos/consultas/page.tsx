@@ -1,8 +1,8 @@
-import { getConsultas } from '@/queries/consultas-actions';;
-import { getPacientes } from '@/queries/pacientes-actions';;
-import { getMedicos } from '@/queries/medicos-actions';;
-import { getAbordajes } from '@/queries/abordajes-actions';;
-import { getEnfermedades } from '@/queries/enfermedades-actions';;
+import { getConsultas } from '@/queries/consultas';;
+import { getPacientes } from '@/queries/pacientes';;
+import { getMedicos } from '@/queries/medicos';;
+import { getAbordajes } from '@/queries/abordajes';;
+import { getEnfermedades } from '@/queries/enfermedades';;
 import ConsultasClient from '@/components/features/consultas/consultas-client';
 
 export default async function ConsultasPage() {

@@ -55,19 +55,11 @@ export async function getComunidadesParaSolicitud() {
 }
 
 /**
- * Crear una nueva solicitud de abordaje
- */
-
-/**
  * Confirmar solicitud y crear abordaje
  */
 
 /**
  * Rechazar solicitud
- */
-
-/**
- * Eliminar solicitud
  */
 
 /**

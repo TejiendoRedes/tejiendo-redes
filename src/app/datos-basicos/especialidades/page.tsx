@@ -1,4 +1,4 @@
-import { getEspecialidades } from '@/queries/especialidades-actions';;
+import { getEspecialidades } from '@/queries/especialidades';;
 import EspecialidadesClient from '@/components/features/especialidades/especialidades-client';
 
 export default async function EspecialidadesPage() {

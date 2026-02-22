@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { getPacientes } from '@/queries/pacientes-actions';;
+import { getPacientes } from '@/queries/pacientes';;
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Search, Check } from 'lucide-react';
@@ -39,7 +39,7 @@ export function Step1PatientSelection({ onSelect }: Step1PatientSelectionProps) 
         }
 
         // Need comunidades for the form
-        const { getComunidades } = await import('@/queries/comunidades-actions');
+        const { getComunidades } = await import('@/queries/comunidades');
         const comRes = await getComunidades();
         if (comRes.success) {
             setComunidades(comRes.data || []);

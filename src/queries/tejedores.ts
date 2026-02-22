@@ -28,18 +28,6 @@ export async function getTejedores() {
 }
 
 /**
- * Crear un nuevo tejedor
- */
-
-/**
- * Actualizar un tejedor existente
- */
-
-/**
- * Eliminar un tejedor
- */
-
-/**
  * Obtener un tejedor por cédula
  */
 export async function getTejedor(cedula: string) {

@@ -1,5 +1,5 @@
-import { getComunidades } from '@/queries/comunidades-actions';;
-import { getResponsables } from '@/queries/responsables-actions';;
+import { getComunidades } from '@/queries/comunidades';;
+import { getResponsables } from '@/queries/responsables';;
 import ComunidadesClient from '@/components/features/comunidades/comunidades-client';
 
 export default async function ComunidadesPage() {

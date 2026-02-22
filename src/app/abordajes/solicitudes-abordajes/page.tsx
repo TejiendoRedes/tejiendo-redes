@@ -1,5 +1,5 @@
-import { getSolicitudesAbordajes } from '@/queries/solicitudes-abordajes-actions';;
-import { getComunidadesParaSolicitud } from '@/queries/solicitudes-abordajes-actions';;
+import { getSolicitudesAbordajes } from '@/queries/solicitudes-abordajes';;
+import { getComunidadesParaSolicitud } from '@/queries/solicitudes-abordajes';;
 import SolicitudesAbordajesClient from '@/components/features/solicitudes-abordajes/solicitudes-abordajes-client';
 
 export default async function SolicitudesAbordajesPage() {

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { searchGlobal, SearchResult } from '@/actions/global-search-actions';
 import { checkInPatient } from '@/actions/abordajes-actions';
-import { getAbordajeAsistencia } from '@/queries/abordajes-actions';;
+import { getAbordajeAsistencia } from '@/queries/abordajes';;
 import { toast } from 'sonner';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';

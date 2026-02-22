@@ -9,7 +9,7 @@ import { Activity, User, ClipboardList, Stethoscope, ChevronRight, ChevronLeft, 
 import { toast } from 'sonner';
 
 // Actions
-import { getPacientes } from '@/queries/pacientes-actions';;
+import { getPacientes } from '@/queries/pacientes';;
 import { createConsulta } from '@/actions/consultas-actions';
 
 // Sub-components (to be implemented next)

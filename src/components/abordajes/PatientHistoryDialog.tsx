@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { getPatientHistory } from '@/queries/consultas-actions';;
+import { getPatientHistory } from '@/queries/consultas';;
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Loader2, Calendar, User, Stethoscope, FileText, Activity } from 'lucide-react';

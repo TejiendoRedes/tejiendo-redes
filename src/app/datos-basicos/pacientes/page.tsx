@@ -1,5 +1,5 @@
-import { getPacientes } from '@/queries/pacientes-actions';;
-import { getComunidades } from '@/queries/comunidades-actions';;
+import { getPacientes } from '@/queries/pacientes';;
+import { getComunidades } from '@/queries/comunidades';;
 import PacientesClient from '@/components/features/pacientes/pacientes-client';
 
 export default async function PacientesPage() {

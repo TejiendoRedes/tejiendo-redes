@@ -43,18 +43,6 @@ export async function getPacientes(query?: string, limit: number = 50) {
 }
 
 /**
- * Crear un nuevo paciente
- */
-
-/**
- * Actualizar un paciente
- */
-
-/**
- * Eliminar un paciente
- */
-
-/**
  * Obtener un paciente por cédula
  */
 export async function getPaciente(cedula: string) {

@@ -195,7 +195,7 @@ export async function checkInPatient(codigoAbordaje: string, cedulaPaciente: str
 /**
  * Actualizar asistencia (Estado, notas, etc)
  */
-export async function updateAbordajeAsistencia(id: number, data: any) {
+export async function updateAbordajeAsistencia(id: number, data: Record<string, unknown>) {
     try {
         await requireAuth();
         await AbordajesService.updateAsistencia(id, data);

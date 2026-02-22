@@ -1,5 +1,5 @@
-import { getOrganismos } from '@/queries/organismos-actions';;
-import { getTejedores } from '@/queries/tejedores-actions';;
+import { getOrganismos } from '@/queries/organismos';;
+import { getTejedores } from '@/queries/tejedores';;
 import OrganismosClient from '@/components/features/organismos/organismos-client';
 
 export default async function OrganismosPage() {

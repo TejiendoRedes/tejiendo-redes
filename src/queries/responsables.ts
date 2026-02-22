@@ -62,18 +62,6 @@ export async function getResponsables(query?: string, limit: number = 50) {
 }
 
 /**
- * Crear un nuevo responsable
- */
-
-/**
- * Actualizar un responsable
- */
-
-/**
- * Eliminar un responsable
- */
-
-/**
  * Obtener un responsable por su Cédula
  */
 export async function getResponsable(cedula: string) {

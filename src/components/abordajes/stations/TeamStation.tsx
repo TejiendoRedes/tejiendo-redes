@@ -11,7 +11,7 @@ import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { addTejedorToAbordaje, removeTejedorFromAbordaje } from '@/actions/abordajes-actions';
-import { getTejedores } from '@/queries/tejedores-actions';;
+import { getTejedores } from '@/queries/tejedores';;
 
 import { AbordajeWithRelations } from '@/types/app-types';
 

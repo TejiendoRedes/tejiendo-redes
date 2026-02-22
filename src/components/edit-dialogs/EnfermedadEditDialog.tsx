@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
 import { updateEnfermedad } from '@/actions/enfermedades-actions';
-import { getEnfermedad } from '@/queries/enfermedades-actions';;
+import { getEnfermedad } from '@/queries/enfermedades';;
 import { EnfermedadForm } from '@/components/forms/EnfermedadForm';
 import {
     Dialog,

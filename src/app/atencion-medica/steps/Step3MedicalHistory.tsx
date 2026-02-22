@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, Plus, History as HistoryIcon } from 'lucide-react';
 import { createAntecedente, updateAntecedente } from '@/actions/antecedentes-actions';
-import { getAntecedentes, getNextAntecedenteCodigo } from '@/queries/antecedentes-actions';;
+import { getAntecedentes, getNextAntecedenteCodigo } from '@/queries/antecedentes';;
 import { toast } from 'sonner';
 import { BloodPressureInput } from '@/components/ui/blood-pressure-input';
 

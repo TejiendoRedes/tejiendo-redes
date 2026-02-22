@@ -1,4 +1,4 @@
-import { getTejedores } from '@/queries/tejedores-actions';;
+import { getTejedores } from '@/queries/tejedores';;
 import TejedoresClient from '@/components/features/tejedores/tejedores-client';
 
 export default async function TejedoresPage() {

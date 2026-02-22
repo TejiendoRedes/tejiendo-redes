@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useEditModalStore } from '@/lib/store/edit-modal-store';
 import { updateAbordaje } from '@/actions/abordajes-actions';
-import { getAbordajeById } from '@/queries/abordajes-actions';;
-import { getComunidades } from '@/queries/comunidades-actions';;
+import { getAbordajeById } from '@/queries/abordajes';;
+import { getComunidades } from '@/queries/comunidades';;
 import { AbordajeForm } from '@/components/forms/AbordajeForm';
 import {
     Dialog,

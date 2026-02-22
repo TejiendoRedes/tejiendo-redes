@@ -47,14 +47,3 @@ export async function getAntecedentes() {
     }
 }
 
-/**
- * Crear un nuevo antecedente
- */
-
-/**
- * Actualizar un antecedente
- */
-
-/**
- * Eliminar un antecedente
- */

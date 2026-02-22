@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
 import { toast } from 'sonner';
 import { registerMedicamentoEntrega } from '@/actions/abordajes-actions';
-import { getPacientes } from '@/queries/pacientes-actions';;
-import { getMedicamentos } from '@/queries/medicamentos-actions';;
-import { getMedicos } from '@/queries/medicos-actions';;
+import { getPacientes } from '@/queries/pacientes';;
+import { getMedicamentos } from '@/queries/medicamentos';;
+import { getMedicos } from '@/queries/medicos';;
 
 interface EntregaMedicamentoFormProps {
     abordajeId: string;
