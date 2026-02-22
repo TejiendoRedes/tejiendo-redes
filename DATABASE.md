@@ -1,10 +1,54 @@
-# Base de Datos - Sistema de Abordajes Comunitarios
+# Base de Datos — Tejiendo Redes
 
-## 🚀 Configuración Inicial
+## Visión General
 
-### 1. Configurar Variables de Entorno
+El proyecto utiliza **Drizzle ORM** como capa de abstracción sobre una base de datos **MySQL**. Los esquemas se definen en TypeScript en `src/db/schema/`, y Drizzle genera migraciones SQL versionadas en la carpeta `drizzle/`.
 
-Crea un archivo `.env.local` en la raíz del proyecto (copia desde `.env.local.example`):
+### Arquitectura de Archivos
+
+```
+src/db/
+├── schema/                 # Definición de tablas en TypeScript
+│   ├── index.ts            # Barrel export de todos los schemas
+│   ├── relations.ts        # Relaciones entre tablas (Drizzle relations API)
+│   ├── users.ts            # Usuarios del sistema
+│   ├── tejedores.ts        # Voluntarios
+│   ├── aspirantes.ts       # Aspirantes a tejedores
+│   ├── pacientes.ts        # Pacientes
+│   ├── comunidades.ts      # Comunidades atendidas
+│   ├── responsable.ts      # Responsables comunitarios
+│   ├── abordajes.ts        # Eventos de abordaje
+│   ├── abordaje-asistencia.ts  # Asistencia en abordajes
+│   ├── consultas.ts        # Consultas médicas
+│   ├── medicamentos.ts     # Inventario farmacéutico
+│   ├── peticiones.ts       # Solicitudes/entregas de medicamentos
+│   ├── medicos.ts          # Médicos (tejedores con especialidad)
+│   ├── especialidades.ts   # Catálogo de especialidades médicas
+│   ├── enfermedades.ts     # Catálogo de enfermedades
+│   ├── organismos.ts       # Instituciones asociadas
+│   ├── antecedentes.ts     # Historial médico de pacientes
+│   ├── solicitudes-abordajes.ts  # Solicitudes de nuevos abordajes
+│   ├── mantenimiento.ts    # Registro de mantenimiento del sistema
+│   └── audit_logs.ts       # Logs de auditoría
+├── client.ts               # Pool de conexión MySQL (mysql2/promise)
+├── index.ts                # Instancia Drizzle + exports
+├── migrate.ts              # Script de migración programática
+├── hard-reset.ts           # Reset destructivo completo
+├── reset.ts                # Truncar tablas y re-sembrar
+├── drop-bridge-tables.ts   # Eliminar solo tablas puente
+├── seed-complex.ts         # Datos de prueba complejos
+├── manual-migrate.ts       # Migración manual
+├── apply-logistics.ts      # Aplicar campos logísticos
+└── seeds/                  # Archivos de seed data
+```
+
+---
+
+## Configuración Inicial
+
+### 1. Variables de Entorno
+
+En `.env.local`:
 
 ```env
 DATABASE_HOST=localhost
@@ -14,9 +58,7 @@ DATABASE_PASSWORD=tu_contraseña
 DATABASE_NAME=bd_sistema_abordajes
 ```
 
-### 2. Crear la Base de Datos en MySQL
-
-Asegúrate de tener MySQL instalado y corriendo. Luego crea la base de datos:
+### 2. Crear la Base de Datos
 
 ```sql
 CREATE DATABASE IF NOT EXISTS `bd_sistema_abordajes`
@@ -24,172 +66,241 @@ CREATE DATABASE IF NOT EXISTS `bd_sistema_abordajes`
   COLLATE utf8mb4_general_ci;
 ```
 
-### 3. Generar y Aplicar Migraciones
+### 3. Aplicar Esquema
 
 ```bash
-# Generar archivos de migración desde el esquema
-npm run db:generate
-
-# Aplicar migraciones a la base de datos
-npm run db:migrate
+npm run db:refresh
 ```
 
-## 📚 Comandos Disponibles
+---
 
-| Comando | Descripción |
-|---------|-------------|
-| `npm run db:generate` | Genera archivos de migración SQL desde los esquemas TypeScript |
-| `npm run db:migrate` | Aplica las migraciones a la base de datos |
-| `npm run db:push` | Sincroniza el esquema directamente sin migraciones (⚠️ solo desarrollo) |
-| `npm run db:studio` | Abre Drizzle Studio para explorar la BD visualmente |
-| `npm run db:seed` | Puebla la base de datos con datos de ejemplo iniciales |
+## Scripts de Base de Datos — Guía Detallada
 
-## 🏗️ Estructura del Esquema
+### `npm run db:generate`
 
-El esquema de base de datos está organizado en:
+**Qué hace:** Lee los archivos TypeScript en `src/db/schema/` y genera archivos de migración SQL en `drizzle/`. No toca la base de datos.
 
-### Tablas Base
-- **`responsable`** - Responsables de comunidades
-- **`tejedores`** - Voluntarios de la organización
-- **`especialidades`** - Catálogo de especialidades médicas
-- **`enfermedades`** - Catálogo de enfermedades
+**Cuándo usarlo:** Después de modificar cualquier archivo de schema (agregar tabla, columna, etc.).
 
-### Tablas Principales
-- **`comunidades`** - Comunidades atendidas
-- **`pacientes`** - Pacientes registrados
-- **`abordaje`** - Eventos de abordaje comunitario
-- **`medicamentos`** - Inventario de medicamentos
-- **`organismos`** - Organismos asociados
+**¿Borra datos?** 🟢 No.
 
-### Tablas de Relación
-- **`medicos`** - Médicos (tejedores con especialidad)
-- **`antecedentes`** - Historial médico de pacientes
-- **`consultas`** - Consultas médicas realizadas
+---
 
-### Tablas Puente (Many-to-Many)
-- **`abordaje_comunidad`** - Relación abordajes ↔ comunidades
-- **`tejedores_abordaje`** - Relación tejedores ↔ abordajes
-- **`consultas_enfermedades`** - Relación consultas ↔ enfermedades
-- **`medicamentos_pacientes`** - Entrega de medicamentos a pacientes
+### `npm run db:migrate`
 
-## 💻 Uso en el Código
+**Qué hace:** Aplica las migraciones pendientes (archivos SQL en `drizzle/`) a la base de datos. Solo ejecuta las que no se han aplicado aún.
 
-### Importar la Base de Datos
+**Cuándo usarlo:** Después de `db:generate`, o al clonar el proyecto por primera vez.
+
+**¿Borra datos?** 🟢 No (a menos que una migración incluya `DROP` o `ALTER` destructivos).
+
+---
+
+### `npm run db:refresh`
+
+**Qué hace:** Ejecuta `db:generate` + `db:migrate` en secuencia. Es el atajo para el flujo diario de desarrollo.
+
+**Cuándo usarlo:** ⭐ **Este es el comando más usado en el día a día.** Úsalo cada vez que modifiques un schema.
+
+**¿Borra datos?** 🟢 No (normalmente).
+
+---
+
+### `npm run db:push`
+
+**Qué hace:** Sincroniza el esquema TypeScript directamente con la BD, sin generar archivos de migración. Es más rápido pero no deja trazabilidad.
+
+**Cuándo usarlo:** Solo para prototipado rápido cuando trabajas solo y no te importa la trazabilidad.
+
+**¿Borra datos?** ⚠️ Posible — puede hacer `ALTER` destructivos automáticamente.
+
+> **Recomendación:** Usa `db:refresh` en lugar de `db:push` siempre que sea posible.
+
+---
+
+### `npm run db:seed`
+
+**Qué hace:** Inserta datos iniciales básicos: usuarios por defecto del sistema (superusuario, admin, etc.).
+
+**Cuándo usarlo:** Después de un `db:hard-reset` o al configurar el proyecto por primera vez.
+
+**¿Borra datos?** 🟢 No — solo inserta.
+
+---
+
+### `npm run db:seed:complex`
+
+**Qué hace:** Inserta datos de prueba complejos: tejedores, pacientes, comunidades, abordajes, consultas y medicamentos de ejemplo. Genera un dataset realista para testing.
+
+**Cuándo usarlo:** Cuando necesitas datos realistas para probar funcionalidades o hacer demos.
+
+**¿Borra datos?** 🟢 No — solo inserta. Puede fallar si ya existen datos con las mismas claves.
+
+---
+
+### `npm run db:reset`
+
+**Qué hace:** Trunca (vacía) todas las tablas de datos y luego ejecuta el seed básico para recrear usuarios por defecto. Las tablas y la estructura se mantienen intactas.
+
+**Cuándo usarlo:** Cuando quieres empezar con datos limpios sin alterar la estructura de las tablas.
+
+**¿Borra datos?** 🔴 Sí — elimina todos los datos pero mantiene la estructura.
+
+---
+
+### `npm run db:hard-reset`
+
+**Qué hace:** Elimina TODAS las tablas de la base de datos. Desactiva temporalmente las comprobaciones de claves foráneas (`SET FOREIGN_KEY_CHECKS = 0`) para poder eliminar tablas en cualquier orden. Después de esto, necesitas ejecutar `db:refresh` para recrear las tablas.
+
+**Cuándo usarlo:** Cuando hay conflictos graves de migraciones, o cuando necesitas empezar completamente desde cero.
+
+**¿Borra datos?** 🔴 Sí — **DESTRUCCIÓN TOTAL**. Elimina datos y estructura.
+
+**Flujo completo después de un hard-reset:**
+```bash
+npm run db:hard-reset
+npm run db:refresh
+npm run db:seed        # Opcional: datos iniciales
+```
+
+---
+
+### `npm run db:soft-refresh`
+
+**Qué hace:** Verifica si hay conflictos potenciales en el esquema antes de aplicar cambios. Es una versión más segura y cautelosa de `db:refresh`.
+
+**Cuándo usarlo:** Cuando quieres validar que los cambios de esquema no causen problemas antes de aplicarlos.
+
+**¿Borra datos?** 🟢 No.
+
+---
+
+### `npm run db:drop-bridge`
+
+**Qué hace:** Elimina las tablas puente (many-to-many) que conectan entidades: tablas como `abordaje_comunidad`, `tejedores_abordaje`, `consultas_enfermedades`, etc. Es útil cuando las claves foráneas de estas tablas impiden modificar las tablas principales.
+
+**Cuándo usarlo:** Cuando recibes errores como `Cannot drop index 'PRIMARY': needed in a foreign key constraint` al intentar modificar tablas principales.
+
+**¿Borra datos?** 🟡 Parcial — solo las tablas puente.
+
+**Flujo típico:**
+```bash
+npm run db:drop-bridge
+npm run db:refresh
+```
+
+---
+
+### `npm run db:studio`
+
+**Qué hace:** Abre Drizzle Studio, una interfaz web visual para explorar la base de datos en `https://local.drizzle.studio`.
+
+**Cuándo usarlo:** Para explorar datos, verificar registros, ejecutar queries manuales, o depurar.
+
+---
+
+## Modelo de Datos
+
+### Entidades Principales
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  responsable │────▶│  comunidades │     │ especialidad │
+└──────────────┘     └──────────────┘     └──────┬───────┘
+                           │                     │
+                     ┌─────┘                     │
+                     ▼                           ▼
+               ┌──────────┐              ┌──────────┐
+               │ abordaje │◀─────────────│  medicos  │
+               └──────────┘              └──────────┘
+                  │    │                       │
+          ┌───────┘    └────────┐              │
+          ▼                    ▼              ▼
+    ┌──────────┐        ┌──────────┐   ┌──────────────┐
+    │ tejedor  │        │ paciente │───│  consultas   │
+    └──────────┘        └──────────┘   └──────────────┘
+         │                   │                │
+         │                   │                ▼
+         │                   │         ┌──────────────┐
+         │              ┌────┘         │ enfermedades │
+         │              ▼              └──────────────┘
+         │        ┌──────────┐
+         │        │anteceden.│
+         │        └──────────┘
+         │              │
+         ▼              ▼
+    ┌─────────────────────────┐
+    │   peticiones/entregas   │◀───┌──────────────┐
+    │   (medicamentos)        │    │ medicamentos  │
+    └─────────────────────────┘    └──────────────┘
+```
+
+### Códigos Autogenerados
+
+Cada entidad usa códigos con formato `PREFIJO-NNN` generados secuencialmente:
+
+| Entidad | Prefijo | Ejemplo |
+|---|---|---|
+| Comunidad | `COM-` | `COM-001` |
+| Abordaje | `ABD-` | `ABD-015` |
+| Consulta | `CON-` | `CON-042` |
+| Medicamento | `MED-` | `MED-003` |
+| Especialidad | `ESP-` | `ESP-001` |
+
+La generación se realiza de forma thread-safe usando `MAX() + FOR UPDATE` en transacciones (ver `src/lib/id-generator.ts`).
+
+---
+
+## Uso en el Código
+
+### Importar
 
 ```typescript
 import { db, schema } from '@/db';
-```
-
-### Ejemplos de Queries
-
-#### SELECT - Leer datos
-
-```typescript
-// Obtener todos los tejedores
-const allTejedores = await db.select().from(schema.tejedores);
-
-// Obtener un paciente específico
-const paciente = await db.select()
-  .from(schema.pacientes)
-  .where(eq(schema.pacientes.cedulaPaciente, '12345678'))
-  .limit(1);
-```
-
-#### INSERT - Crear registros
-
-```typescript
-// Crear un nuevo responsable
-await db.insert(schema.responsable).values({
-  cedulaResponsable: '12345678',
-  nombreResponsable: 'Juan',
-  apellidoResponsable: 'Pérez',
-  direccionResponsable: 'Av. Principal',
-  telefonoResponsable: '04121234567',
-  correoResponsable: 'juan@example.com',
-  cargo: 'Presidente'
-});
-```
-
-#### UPDATE - Actualizar registros
-
-```typescript
 import { eq } from 'drizzle-orm';
+```
 
-// Actualizar existencia de medicamento
+### Queries Tipados
+
+```typescript
+// SELECT
+const pacientes = await db.select().from(schema.pacientes);
+
+// INSERT
+await db.insert(schema.comunidades).values({
+  codigoComunidad: 'COM-001',
+  nombreComunidad: 'San Martín',
+  cedulaResponsable: '12345678',
+});
+
+// UPDATE
 await db.update(schema.medicamentos)
   .set({ existencia: 50 })
   .where(eq(schema.medicamentos.codigoMedicamento, 'MED-001'));
-```
 
-#### DELETE - Eliminar registros
-
-```typescript
-// Eliminar un abordaje
+// DELETE
 await db.delete(schema.abordaje)
   .where(eq(schema.abordaje.codigoAbordaje, 'ABD-001'));
 ```
 
-#### JOINS - Consultas con relaciones
+---
 
-```typescript
-import { eq } from 'drizzle-orm';
+## Troubleshooting
 
-// Obtener comunidades con sus responsables
-const comunidadesConResponsables = await db.select()
-  .from(schema.comunidades)
-  .leftJoin(
-    schema.responsable,
-    eq(schema.comunidades.cedulaResponsable, schema.responsable.cedulaResponsable)
-  );
-```
+| Error | Solución |
+|---|---|
+| `Cannot connect to MySQL` | Verifica que MySQL esté corriendo y las credenciales en `.env.local` sean correctas |
+| `Table doesn't exist` | Ejecuta `npm run db:refresh` para crear las tablas |
+| `Foreign key constraint fails` | Verifica que los registros referenciados existan. Si es en migración, usa `npm run db:drop-bridge` y luego `npm run db:refresh` |
+| `Cannot drop index 'PRIMARY'` | Ejecuta `npm run db:drop-bridge` seguido de `npm run db:refresh` |
+| `Duplicate entry` | El registro ya existe. Verifica los datos antes de insertar |
 
-## 🔒 Seguridad
+---
 
-- ✅ Las credenciales están en `.env.local` (NO comitear al repositorio)
-- ✅ Todos los queries usan prepared statements (protección SQL injection)
-- ✅ Foreign keys configuradas para integridad referencial
-- ✅ Constraints ON DELETE y ON UPDATE apropiados
+## Seguridad
 
-## 🎨 Drizzle Studio
-
-Para explorar la base de datos visualmente:
-
-```bash
-npm run db:studio
-```
-
-Esto abrirá una interfaz web en `https://local.drizzle.studio` donde puedes:
-- Ver todas las tablas y sus datos
-- Ejecutar queries
-- Editar registros
-- Visualizar relaciones
-
-## 📝 Notas Importantes
-
-1. **Códigos Autogenerados**: Las tablas usan códigos como `COM-001`, `ESP-001`, etc. Asegúrate de implementar la lógica de generación en tu aplicación.
-
-2. **Tipos TypeScript**: Todos los esquemas tienen tipos inferidos automáticamente:
-   ```typescript
-   import type { Tejedor, NewTejedor } from '@/db/schema/tejedores';
-   ```
-
-3. **Character Set**: Toda la DB usa `utf8mb4` para soporte completo de caracteres especiales y emojis.
-
-4. **Fechas y Horas**: 
-   - Los campos `DATE` se mapean a objetos `Date` de JavaScript
-   - Los campos `TIME` se manejan como strings en formato `HH:MM:SS`
-
-## 🐛 Troubleshooting
-
-### Error: "Cannot connect to MySQL"
-- Verifica que MySQL esté corriendo
-- Confirma las credenciales en `.env.local`
-- Verifica que el puerto 3306 esté abierto
-
-### Error: "Table doesn't exist"
-- Ejecuta `npm run db:migrate` para crear las tablas
-- O usa `npm run db:push` para desarrollo
-
-### Error: "Foreign key constraint fails"
-- Verifica que los registros referenciados existan
-- Respeta el orden de inserción (ej: crear `responsable` antes de `comunidades`)
+- ✅ Credenciales en `.env.local` (excluido del repositorio via `.gitignore`)
+- ✅ Queries tipados con prepared statements (protección contra SQL injection)
+- ✅ Claves foráneas configuradas para integridad referencial
+- ✅ Character set `utf8mb4` para soporte completo de caracteres especiales
+- ✅ Timezone configurado en UTC

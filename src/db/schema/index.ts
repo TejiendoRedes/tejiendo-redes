@@ -1,3 +1,14 @@
+/**
+ * @module db/schema
+ * @description Barrel export de todas las tablas de la base de datos.
+ *
+ * Cada archivo en este directorio define una tabla MySQL usando Drizzle ORM.
+ * Los tipos `$inferSelect` y `$inferInsert` se exportan automáticamente
+ * para uso en Server Actions y componentes.
+ *
+ * Las relaciones entre tablas se definen en `relations.ts`.
+ */
+
 // Export all schema tables
 export * from './responsable';
 export * from './users';

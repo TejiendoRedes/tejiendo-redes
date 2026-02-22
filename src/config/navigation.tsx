@@ -1,3 +1,14 @@
+/**
+ * @module config/navigation
+ * @description Configuración del menú de navegación del sidebar.
+ *
+ * Define la estructura jerárquica del menú con control de acceso por roles.
+ * Los items con `roles` definido solo se muestran a usuarios con esos roles.
+ * Los items sin `roles` son visibles para todos los usuarios autenticados.
+ *
+ * @see {@link file://src/components/layout/Sidebar.tsx} - Componente que renderiza este menú.
+ */
+
 import React from 'react';
 import {
     Home,

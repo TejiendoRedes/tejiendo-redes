@@ -1,4 +1,17 @@
-// Context de autenticación
+/**
+ * @module AuthContext
+ * @description Provider de autenticación para el lado cliente.
+ *
+ * Proporciona el estado del usuario autenticado y funciones de login/logout
+ * a todos los componentes del árbol React a través de React Context.
+ *
+ * Al montar, verifica automáticamente si existe una sesión válida consultando
+ * `/api/auth/me` y obtiene un token CSRF fresco de `/api/auth/csrf`.
+ *
+ * @see {@link file://src/lib/auth.ts} - Lógica de JWT del servidor.
+ * @see {@link file://src/app/providers.tsx} - Donde se monta este provider.
+ */
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Tejedor } from '@/types/models';
 import { useRouter } from 'next/navigation';

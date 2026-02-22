@@ -1,3 +1,19 @@
+/**
+ * @module middleware
+ * @description Middleware principal de Next.js que intercepta todas las requests (excepto assets estáticos).
+ *
+ * Ejecuta las siguientes capas de seguridad en orden:
+ * 1. **Rate Limiting** — Limita intentos de login (5/15min) y registro (3/hora) por IP.
+ * 2. **CSRF Validation** — Valida tokens CSRF en requests POST a rutas de autenticación.
+ * 3. **Session Validation** — Desencripta la cookie JWT para obtener el usuario actual.
+ * 4. **Route Protection** — Redirige a `/login` si no hay sesión válida en rutas protegidas.
+ * 5. **Role-Based Access Control (RBAC)** — Redirige al dashboard correcto según el rol.
+ * 6. **Security Headers** — Aplica CSP, HSTS, X-Frame-Options, etc. a todas las respuestas.
+ *
+ * @see {@link file://src/lib/auth.ts} - Funciones de JWT usadas aquí.
+ * @see {@link file://src/lib/security/} - Módulos de seguridad individuales.
+ */
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { decrypt } from '@/lib/auth';

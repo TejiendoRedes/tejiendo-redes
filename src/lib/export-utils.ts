@@ -1,19 +1,60 @@
+/**
+ * @module export-utils
+ * @description Utilidades para exportar datos tabulares a formatos PDF y CSV.
+ *
+ * Este módulo proporciona funciones genéricas que aceptan datos de cualquier tipo
+ * y una configuración de columnas para generar archivos descargables.
+ *
+ * - **PDF**: Usa `jsPDF` + `jspdf-autotable` para tablas con estilo profesional.
+ * - **CSV**: Usa `xlsx` para generar archivos CSV compatibles con Excel.
+ *
+ * Ambas funciones son client-side (se ejecutan en el navegador) ya que
+ * interactúan con `document` para disparar la descarga.
+ */
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { utils, write } from 'xlsx';
 
+/**
+ * Define una columna para la exportación de datos.
+ * Cada columna puede extraer valores directamente de una key del objeto
+ * o usar una función `render` personalizada para transformar el dato.
+ *
+ * @template T - Tipo del objeto de datos (ej. `Paciente`, `Tejedor`).
+ */
 export interface ExportColumn<T> {
+    /** Texto del encabezado de la columna en el archivo exportado */
     header: string;
+    /** Clave del objeto de datos para extraer el valor directamente */
     key?: keyof T;
-    dataKey?: keyof T; // Alias for key
+    /** Alias para `key` — se puede usar cualquiera de las dos */
+    dataKey?: keyof T;
+    /** Función personalizada para transformar el dato antes de exportarlo */
     render?: (item: T) => string | number | null | undefined;
 }
 
 /**
- * Utility for exporting data to CSV
+ * Exporta un array de datos a un archivo CSV y dispara la descarga automática.
+ *
+ * Usa la librería `xlsx` internamente para generar el CSV, lo que garantiza
+ * un manejo correcto de caracteres especiales y codificación UTF-8.
+ *
+ * @template T - Tipo del objeto de datos.
+ * @param data - Array de objetos a exportar.
+ * @param columns - Configuración de columnas (headers, keys y renders).
+ * @param filename - Nombre del archivo sin extensión (se añade `.csv` automáticamente).
+ *
+ * @example
+ * ```typescript
+ * exportToCSV(pacientes, [
+ *     { header: 'Cédula', key: 'cedulaPaciente' },
+ *     { header: 'Nombre Completo', render: (p) => `${p.nombrePaciente} ${p.apellidoPaciente}` },
+ * ], 'listado-pacientes');
+ * ```
  */
 export const exportToCSV = <T extends Record<string, any>>(data: T[], columns: ExportColumn<T>[], filename: string) => {
-    // Flatten data based on columns and render functions
+    // Transformar datos según columnas configuradas
     const exportData = data.map(item => {
         const row: Record<string, string | number | null | undefined> = {};
         columns.forEach(col => {
@@ -28,9 +69,7 @@ export const exportToCSV = <T extends Record<string, any>>(data: T[], columns: E
     utils.book_append_sheet(workbook, worksheet, "Datos");
     write(workbook, { bookType: 'csv', type: 'buffer' });
 
-    // Generate CSV buffer and download
-    // Using xlsx write directly doesn't trigger download in browser easily without helpers.
-    // Easier to just use utils.sheet_to_csv and Blob.
+    // Generar CSV como string y disparar descarga
     const csvOutput = utils.sheet_to_csv(worksheet);
 
     const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
@@ -47,7 +86,26 @@ export const exportToCSV = <T extends Record<string, any>>(data: T[], columns: E
 };
 
 /**
- * Utility for exporting data to PDF
+ * Exporta un array de datos a un archivo PDF con tabla formateada y dispara la descarga.
+ *
+ * Genera un documento PDF con:
+ * - Título opcional con fecha de generación.
+ * - Tabla con encabezados azules (#4285F4) y filas alternas en gris claro.
+ * - Font size reducido (8pt) para maximizar datos por página.
+ *
+ * @template T - Tipo del objeto de datos.
+ * @param data - Array de objetos a exportar.
+ * @param columns - Configuración de columnas (headers, keys y renders).
+ * @param filename - Nombre del archivo sin extensión (se añade `.pdf` automáticamente).
+ * @param title - Título opcional que aparece en la parte superior del PDF.
+ *
+ * @example
+ * ```typescript
+ * exportToPDF(abordajes, [
+ *     { header: 'Código', key: 'codigoAbordaje' },
+ *     { header: 'Fecha', render: (a) => format(a.fechaAbordaje, 'dd/MM/yyyy') },
+ * ], 'reporte-abordajes', 'Listado de Abordajes Comunitarios');
+ * ```
  */
 export const exportToPDF = <T extends Record<string, any>>(data: T[], columns: ExportColumn<T>[], filename: string, title?: string) => {
     const doc = new jsPDF();
@@ -60,7 +118,7 @@ export const exportToPDF = <T extends Record<string, any>>(data: T[], columns: E
         doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 30);
     }
 
-    // Prepare body data using render functions if available
+    // Preparar datos del body usando renders personalizados
     const body = data.map(row =>
         columns.map(col => {
             const fieldKey = (col.key || col.dataKey) as keyof T;

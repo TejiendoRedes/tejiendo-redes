@@ -1,0 +1,26 @@
+# Reglas del Proyecto: Tejiendo Redes (AI-Friendly Architecture)
+
+## Contexto del Proyecto
+Aplicación web construida con **Next.js 15 (App Router)** para la gestión comunitaria "Tejiendo Redes". Utiliza React Server Components (RSC) y Drizzle ORM. El objetivo es mantener una base de código limpia, escalable y amigable para el desarrollo con IA (Cursor, Windsurf, Copilot, etc.).
+
+## Arquitectura y Estructura Destino (Clean Architecture + Feature-Sliced)
+
+- **`src/app/`**: Solo define el enrutamiento y las páginas (`page.tsx`, `layout.tsx`). Las páginas deben ser "delgadas", actuando únicamente como coordinadores que hacen *fetch* de datos (Server Components) y renderizan componentes visuales.
+- **`src/components/features/`**: Componentes con lógica de negocio visual específica de un dominio (ej. Formularios, Tabillas interactivas).
+- **`src/components/ui/`**: Componentes base, estables, genéricos y puramente visuales (ShadcnUI, botones, inputs).
+- **`src/queries/`**: Funciones de lectura a la base de datos (ej. `[modulo]-queries.ts`). Se utilizan primariamente en Server Components. NUNCA incluyen la directiva `"use server"` en la raíz de sus archivos si su única función es hacer un GET para renderizado, para no exponer lógica privada innecesariamente.
+- **`src/actions/`**: Mutaciones de datos (POST, PUT, DELETE). Todos estos archivos o funciones DEBEN tener `"use server"`. Devolver idealmente una estructura de resultado estándar (ej. `{ success, message, data, error }`).
+- **`src/schemas/`**: Esquemas de validación Zod (`[modulo]-schema.ts`). Compartidos entre cliente (react-hook-form) y servidor (Server Actions).
+
+## Base de Datos (Drizzle ORM + MySQL)
+
+- **`src/db/schema/`**: Cada archivo representa un módulo o entidad.
+- **Mantenimiento Local**: Para reflejar cambios en la BD usa `npm run db:push` o `npm run db:soft-refresh`.
+- **Consultas**: Prefiere usar la API relacional (`db.query.tabla.findMany()`) si es sencillo, y la API SQL-like (`db.select().from()`) para joins intensos.
+
+## Reglas de Desarrollo (Regla de Oro: "Si no está roto, no lo rompas")
+
+1. **Refactorización Segura:** Al refactorizar hacia la nueva arquitectura corporativa, mantén toda la lógica existente. Mueve código y reestructura, pero no elimines flujos funcionales.
+2. **Keep it Small (KISS):** Mantén los componentes y funciones pequeños. Si un archivo `page.tsx` se acerca a las 150 líneas, es hora de mover la UI a un Client Component dentro de `src/components/features`.
+3. **Tipado Estricto:** Siempre inferir y exportar tipos a partir de los esquemas de base de datos (`typeof tabla.$inferSelect`) o esquemas Zod (`z.infer<typeof Schema>`). Evita el tipado débil o implítico.
+4. **Estados:** Utiliza los Server Components al máximo. Delega la interactividad y los estados a Client Components (`"use client"`) lo más profundo posible en el árbol (hojas del árbol de renderizado).

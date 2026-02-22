@@ -1,6 +1,22 @@
+/**
+ * @module db/client
+ * @description Pool de conexión MySQL usando `mysql2/promise`.
+ *
+ * Crea un pool singleton con las siguientes características:
+ * - **Conexión máxima:** 10 conexiones simultáneas (optimizado para serverless).
+ * - **Idle timeout:** 60 segundos para liberar conexiones inactivas.
+ * - **Keep-alive:** Habilitado para prevenir desconexiones en conexiones largas.
+ * - **SSL:** Habilitado para conexiones remotas (ej. Aiven).
+ * - **Charset:** UTF-8 MB4 para soporte completo de caracteres especiales.
+ * - **Timezone:** UTC para consistencia en fechas.
+ *
+ * La configuración se lee de variables de entorno en `.env.local`.
+ *
+ * @see {@link file://src/db/index.ts} - Instancia Drizzle que consume este pool.
+ */
+
 import mysql from 'mysql2/promise';
 
-// Database configuration from environment variables
 const dbConfig = {
     host: process.env.DATABASE_HOST || 'localhost',
     port: parseInt(process.env.DATABASE_PORT || '3306'),
