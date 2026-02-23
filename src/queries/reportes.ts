@@ -268,13 +268,14 @@ export async function getReporteMedicamentos(params: unknown) {
         }
 
         const { fechaInicio, fechaFin, codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
-        const conditions = [eq(peticiones.estado, 'entregado')];
 
-        // Filtros de fecha sobre fecha de entrega
-        if (fechaInicio) conditions.push(gte(peticiones.fechaEntrega, new Date(fechaInicio)));
-        if (fechaFin) conditions.push(lte(peticiones.fechaEntrega, new Date(fechaFin)));
+        // Condiciones para las peticiones (entregas)
+        const peticionConditions = [eq(peticiones.estado, 'entregado')];
 
-        // Filtros de ubicación a través de pacientes → comunidades
+        if (fechaInicio) peticionConditions.push(gte(peticiones.fechaEntrega, new Date(fechaInicio)));
+        if (fechaFin) peticionConditions.push(lte(peticiones.fechaEntrega, new Date(fechaFin)));
+
+        // Filtros de ubicación a través de pacientes -> comunidades
         const comunidadConditions = [];
         if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
         if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
@@ -289,21 +290,21 @@ export async function getReporteMedicamentos(params: unknown) {
                 .innerJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
                 .where(and(...comunidadConditions));
 
-            conditions.push(sql`${peticiones.codigoPaciente} IN (${pacientesEnComunidades})`);
+            peticionConditions.push(sql`${peticiones.codigoPaciente} IN (${pacientesEnComunidades})`);
         }
 
+        // Construir la consulta principal partiendo de medicamentos para asegurar que todos aparezcan
         const result = await db
             .select({
                 codigo_medicamento: medicamentos.codigoMedicamento,
                 nombre_medicamento: medicamentos.nombreMedicamento,
                 presentacion: medicamentos.presentacion,
-                total_entregado: sql<number>`SUM(${peticiones.cantidad})`.as('total_entregado'),
+                total_entregado: sql<number>`COALESCE(SUM(CASE WHEN ${and(...peticionConditions)} THEN ${peticiones.cantidad} ELSE 0 END), 0)`.as('total_entregado'),
             })
-            .from(peticiones)
-            .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
-            .where(and(...conditions))
+            .from(medicamentos)
+            .leftJoin(peticiones, eq(medicamentos.codigoMedicamento, peticiones.codigoMedicamento))
             .groupBy(medicamentos.codigoMedicamento, medicamentos.nombreMedicamento, medicamentos.presentacion)
-            .orderBy(desc(sql`total_entregado`));
+            .orderBy(desc(sql`total_entregado`), medicamentos.nombreMedicamento);
 
         return { success: true, data: result };
     } catch (error) {

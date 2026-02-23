@@ -18,7 +18,8 @@ import {
     X,
     MoreVertical,
     CheckCircle2,
-    Clock
+    Clock,
+    Pill
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -32,6 +33,7 @@ import { TeamStation } from './stations/TeamStation';
 
 import { HistoryStation } from './stations/HistoryStation';
 import { StatisticsStation } from './stations/StatisticsStation';
+import { PharmacyStation } from './stations/PharmacyStation';
 
 import { AbordajeWithRelations } from '@/types/app-types';
 
@@ -215,6 +217,13 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                             Historial
                         </TabsTrigger>
                         <TabsTrigger
+                            value="farmacia"
+                            className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none px-4 h-full"
+                        >
+                            <Pill className="w-4 h-4 mr-2" />
+                            Farmacia
+                        </TabsTrigger>
+                        <TabsTrigger
                             value="estadisticas"
                             className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none px-4 h-full"
                         >
@@ -238,6 +247,10 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
 
                     <TabsContent value="historial" className="mt-0">
                         <HistoryStation abordaje={abordaje} />
+                    </TabsContent>
+
+                    <TabsContent value="farmacia" className="mt-0">
+                        <PharmacyStation abordaje={abordaje} />
                     </TabsContent>
 
                     <TabsContent value="estadisticas" className="mt-0">

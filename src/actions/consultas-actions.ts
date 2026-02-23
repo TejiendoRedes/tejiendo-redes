@@ -53,23 +53,18 @@ export async function createConsulta(
         const newCode = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
 
         // Obtener fecha y hora actual en zona horaria de Venezuela (America/Caracas, UTC-4)
-        const now = new Date();
-        const options: Intl.DateTimeFormatOptions = {
+        const venezuelaTime = new Intl.DateTimeFormat('es-VE', {
             timeZone: 'America/Caracas',
-            hour12: false,
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
-        };
-        const formatter = new Intl.DateTimeFormat('es-VE', options);
-        let horaFormateada = formatter.format(now);
-        // Ensure formatting correctly returned hh:mm:ss, otherwise fallback
-        if (horaFormateada.length !== 8) {
-            const vHours = now.getHours().toString().padStart(2, '0');
-            const vMinutes = now.getMinutes().toString().padStart(2, '0');
-            const vSeconds = now.getSeconds().toString().padStart(2, '0');
-            horaFormateada = `${vHours}:${vMinutes}:${vSeconds}`;
-        }
+            second: '2-digit',
+            hour12: false
+        }).format(new Date());
+
+        const horaFormateada = venezuelaTime;
+        const fechaActual = new Date(new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Caracas'
+        }).format(new Date()));
 
 
         await db.transaction(async (tx) => {

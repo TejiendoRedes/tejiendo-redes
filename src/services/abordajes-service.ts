@@ -9,6 +9,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
 import { pacientes } from '@/db/schema/pacientes';
 import { medicos } from '@/db/schema/medicos';
+import { peticiones } from '@/db/schema/peticiones';
 
 export class AbordajesService {
     /**
@@ -58,7 +59,7 @@ export class AbordajesService {
         await this.syncStatusesIfNeeded();
 
         // Execute all queries in parallel with Promise.all
-        const [abordajeData, comunidadesData, tejedoresData, consultasData, medicamentosData] =
+        const [abordajeData, comunidadesData, tejedoresData, consultasData, medsPacientesData, peticionesMedsData] =
             await Promise.all([
                 db.query.abordaje.findFirst({
                     where: eq(abordaje.codigoAbordaje, id),
@@ -113,6 +114,24 @@ export class AbordajesService {
                     .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
                     .leftJoin(pacientes, eq(medicamentosPacientes.cedulaPaciente, pacientes.cedulaPaciente))
                     .where(eq(medicamentosPacientes.codigoAbordaje, id)),
+                db.select({
+                    codigoMedicamento: medicamentos.codigoMedicamento,
+                    cedulaPaciente: peticiones.codigoPaciente,
+                    nombrePaciente: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
+                    cantidadEntregada: peticiones.cantidad,
+                    indicaciones: peticiones.notas,
+                    nombreMedicamento: medicamentos.nombreMedicamento,
+                    fechaEntrega: peticiones.fechaEntrega,
+                })
+                    .from(peticiones)
+                    .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
+                    .leftJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
+                    .where(
+                        and(
+                            eq(peticiones.codigoAbordaje, id),
+                            eq(peticiones.estado, 'entregado')
+                        )
+                    ),
             ]);
 
         if (!abordajeData) return null;
@@ -129,7 +148,7 @@ export class AbordajesService {
             comunidades: comunidadesData,
             tejedores: tejedoresData,
             consultas: consultasWithDate,
-            medicamentos_entregados: medicamentosData,
+            medicamentos_entregados: [...medsPacientesData, ...peticionesMedsData],
             total_consultas: consultasData.length,
             pacientes_unicos: new Set(consultasData.map(c => c.cedulaPaciente)).size,
         };

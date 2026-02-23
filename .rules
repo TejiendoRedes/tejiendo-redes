@@ -1,26 +1,61 @@
-# Reglas del Proyecto: Tejiendo Redes (AI-Friendly Architecture)
+# 📜 Reglas de Oro: Tejiendo Redes (v3.0 - IA-Native)
 
-## Contexto del Proyecto
-Aplicación web construida con **Next.js 15 (App Router)** para la gestión comunitaria "Tejiendo Redes". Utiliza React Server Components (RSC) y Drizzle ORM. El objetivo es mantener una base de código limpia, escalable y amigable para el desarrollo con IA (Cursor, Windsurf, Copilot, etc.).
+Este documento es la ley suprema del proyecto. Cualquier cambio debe alinearse con estas directrices para mantener la integridad, seguridad y "IA-friendliness" del sistema.
 
-## Arquitectura y Estructura Destino (Clean Architecture + Feature-Sliced)
+---
 
-- **`src/app/`**: Solo define el enrutamiento y las páginas (`page.tsx`, `layout.tsx`). Las páginas deben ser "delgadas", actuando únicamente como coordinadores que hacen *fetch* de datos (Server Components) y renderizan componentes visuales.
-- **`src/components/features/`**: Componentes con lógica de negocio visual específica de un dominio (ej. Formularios, Tabillas interactivas).
-- **`src/components/ui/`**: Componentes base, estables, genéricos y puramente visuales (ShadcnUI, botones, inputs).
-- **`src/queries/`**: Funciones de lectura a la base de datos (ej. `[modulo]-queries.ts`). Se utilizan primariamente en Server Components. NUNCA incluyen la directiva `"use server"` en la raíz de sus archivos si su única función es hacer un GET para renderizado, para no exponer lógica privada innecesariamente.
-- **`src/actions/`**: Mutaciones de datos (POST, PUT, DELETE). Todos estos archivos o funciones DEBEN tener `"use server"`. Devolver idealmente una estructura de resultado estándar (ej. `{ success, message, data, error }`).
-- **`src/schemas/`**: Esquemas de validación Zod (`[modulo]-schema.ts`). Compartidos entre cliente (react-hook-form) y servidor (Server Actions).
+## 🏗 Arquitectura y Flujo de Datos
 
-## Base de Datos (Drizzle ORM + MySQL)
+### 1. El "Result Pattern" (Mandatorio)
+Todas las **Server Actions** (`src/actions`) deben retornar este contrato exacto:
+```typescript
+export interface ActionResponse<T = any> {
+  success: boolean;
+  message: string;      // Feedback para el usuario (Toast)
+  data?: T;             // Datos opcionales de retorno
+  error?: string;       // Detalle técnico para logs o depuración
+}
+```
 
-- **`src/db/schema/`**: Cada archivo representa un módulo o entidad.
-- **Mantenimiento Local**: Para reflejar cambios en la BD usa `npm run db:push` o `npm run db:soft-refresh`.
-- **Consultas**: Prefiere usar la API relacional (`db.query.tabla.findMany()`) si es sencillo, y la API SQL-like (`db.select().from()`) para joins intensos.
+### 2. Separación de Responsabilidades (Capa de Datos)
+- **Capa de Lectura (`src/queries/`)**: Funciones puras de Drizzle para obtener datos. No deben tener `"use server"`.
+- **Capa de Escritura (`src/actions/`)**: Server Actions con `"use server"`. Orquestan validaciones (Zod), lógica de negocio y mutaciones en la DB.
 
-## Reglas de Desarrollo (Regla de Oro: "Si no está roto, no lo rompas")
+### 3. Frontend: "Thin Pages" & "Rich Components"
+- **App Router Pages**: Deben ser pequeñas y actuar solo como orquestadores.
+- **Client Components**: Solo en las hojas finales. Usa interactividad solo donde sea necesario.
+- **Zonificación Característica**: Organiza componentes en `src/components/features/[feature_name]`.
 
-1. **Refactorización Segura:** Al refactorizar hacia la nueva arquitectura corporativa, mantén toda la lógica existente. Mueve código y reestructura, pero no elimines flujos funcionales.
-2. **Keep it Small (KISS):** Mantén los componentes y funciones pequeños. Si un archivo `page.tsx` se acerca a las 150 líneas, es hora de mover la UI a un Client Component dentro de `src/components/features`.
-3. **Tipado Estricto:** Siempre inferir y exportar tipos a partir de los esquemas de base de datos (`typeof tabla.$inferSelect`) o esquemas Zod (`z.infer<typeof Schema>`). Evita el tipado débil o implítico.
-4. **Estados:** Utiliza los Server Components al máximo. Delega la interactividad y los estados a Client Components (`"use client"`) lo más profundo posible en el árbol (hojas del árbol de renderizado).
+---
+
+## ⚡ Estándares de Código e IA-Friendliness
+
+### 1. Manejo de Tiempo (Zona Horaria VZLA)
+Todo registro de fecha y hora DEBE ser explícito para la zona horaria de Venezuela (`America/Caracas`). NUNCA confíes en la hora local del servidor/navegador.
+```typescript
+// Ejemplo correcto
+const vTime = new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', ... }).format(new Date());
+```
+
+### 2. Tipado "Strong & Lean"
+- Usa `InferSelectModel` e `InferInsertModel` de Drizzle para evitar definiciones manuales redundantes.
+- Prohibido el uso de `any`. Si la estructura es incierta, usa `unknown` o interfaces parciales.
+
+### 3. JSDoc Narrativo
+Cada función exportada DEBE tener un bloque JSDoc que explique **qué** hace y **por qué**, no solo el tipo de parámetros (que ya está en TS).
+
+---
+
+## 🤖 Guía para Programación con IA
+
+Si eres una IA trabajando en este proyecto, sigue estos pasos:
+1. **Analiza el Esquema Primero**: Lee siempre `src/db/schema/` antes de tocar cualquier query o acción.
+2. **Result Pattern Check**: Si vas a modificar una acción vieja que no sigue el `ActionResponse`, **refactorízala** primero.
+3. **Naming**: Archivos en `kebab-case`. Componentes en `PascalCase`. Variables descriptivas (ej: `pacienteSeleccionado` vs `pac`).
+
+---
+
+## 🛠 Comandos Críticos
+- `npm run dev:turbo`: Entorno rápido de desarrollo.
+- `npm run db:push`: Sincroniza esquema (siempre verifica primero `drizzle.config.ts`).
+- `npm run db:refresh`: Hard reset de base de datos para pruebas limpias.

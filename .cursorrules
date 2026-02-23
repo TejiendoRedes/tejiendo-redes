@@ -1,53 +1,58 @@
-# Reglas del Proyecto: Tejiendo Redes (AI-Friendly Layered Architecture)
+# Proyecto: Tejiendo Redes - Reglas de Oro para IA (Architecture v2.0)
 
-Este archivo de reglas es el cerebro de la IA (Cursor, Windsurf, Copilot, etc.). Define cómo estructurar, refactorizar y crear código en este proyecto de Next.js.
+Este documento define la arquitectura "IA-Friendly" y las normas estrictas de desarrollo para asegurar la escalabilidad y mantenibilidad por parte de futuros equipos.
 
-## 🏗 Arquitectura de Capas Estricta (Layered Architecture)
+## 🏗 Arquitectura de Referencia (Clean + Feature-Based)
 
-### 1. `src/app/` (Enrutamiento y Vistas de Alto Nivel)
-- **SOLO:** Componentes de página (`page.tsx`), layouts (`layout.tsx`) y archivos de convención de Next.js.
-- **PROHIBIDO:** Definir lógica de negocio pesada o mutaciones aquí.
-- **Data Fetching:** Se realiza directamente en los Server Components usando funciones de `src/queries`.
-
-### 2. `src/actions/` (Mutaciones de Datos / Escritura)
-- **FUNCIÓN:** Único lugar para `Server Actions`. Todos los archivos deben tener `"use server";`.
-- **REGLA:** Deben usar esquemas de `src/schemas` para validar antes de procesar.
-- **RETORNO ESTÁNDAR:** Siempre devolver un objeto con este formato:
-  ```typescript
-  { success: boolean, message?: string, data?: T, error?: string }
-  ```
-
-### 3. `src/queries/` (Lectura de Datos / Solo Lectura)
-- **FUNCIÓN:** Funciones asíncronas para leer de la DB usando Drizzle.
-- **REGLA:** NUNCA usar `"use server"` aquí. Son funciones de solo lectura para Server Components.
-
-### 4. `src/components/features/` (Lógica de Dominio)
-- **CONCEPTO:** Componentes que conocen el negocio (ej. `FormularioPaciente.tsx`, `TablaAtencion.tsx`).
-- **UBICACIÓN:** Mover cualquier componente complejo de `src/app` a esta carpeta.
-
-### 5. `src/components/ui/` (Lego Blocks)
-- **CONCEPTO:** Componentes atómicos y genéricos (ShadcnUI). No conocen el negocio.
-
-### 6. `src/schemas/` (Contratos de Datos)
-- **FUNCIÓN:** Definiciones de Zod que unifican la validación en el Cliente y el Servidor.
+### 📂 Estructura de Directorios
+- `src/app/`: Rutas, layouts y páginas. Deben ser "Thin Pages".
+- `src/actions/`: Lógica de escritura (POST/PUT/DELETE). Solo Server Actions con `"use server"`.
+- `src/queries/`: Lógica de lectura (GET). Solo funciones de Drizzle. NUNCA `"use server"`.
+- `src/components/features/`: Componentes con lógica de dominio (ej. `BuscadorPacientes`, `FormAbordaje`).
+- `src/components/ui/`: UI atómica (Shadcn/Primitive). Sin conocimiento de negocio.
+- `src/schemas/`: Validaciones Zod (`[feature]-schema.ts`).
+- `src/db/schema/`: Definición de tablas Drizzle.
 
 ---
 
-## 🤖 Guía de Interacción para IAs (AI-Friendly)
+## 📜 Reglas de Implementación
 
-1. **No Rompas el Código Funcional:** Si una función ya funciona, no la borres. Refactoriza moviéndola a la capa correspondiente paso a paso.
-2. **Nomenclatura Explícita:**
-   - Queries: `get[Entidad]`, `get[Entidad]ById`.
-   - Actions: `create[Entidad]`, `update[Entidad]`, `delete[Entidad]`.
-   - Componentes Propios: PascalCase.
-3. **Manejo de Errores Robustos:** Usa `try/catch` en todos los Actions. Nunca dejes que un error de servidor llegue crudo al cliente.
-4. **Tipado Estricto (TypeScript):** Prohibido el uso de `any`. Si una consulta de Drizzle es compleja, define un interface o usa `InferSelectModel`.
-5. **Comentarios de Valor:** No expliques qué hace el código (la IA ya lo lee), explica por qué se tomó una decisión arquitectónica si es inusual.
-6. **Build First:** Antes de dar una tarea por terminada, la IA debe asegurarse de que `npm run build` pase sin errores.
+### 1. Data Flow & Result Pattern
+Toda acción de servidor (`src/actions`) DEBE devolver un objeto unificado para evitar errores silenciosos:
+```typescript
+interface ActionResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+  error?: string;
+}
+```
+
+### 2. Tipado Estricto (TypeScript First)
+- **Drizzle Types:** Usa `InferSelectModel` y `InferInsertModel` para tipar argumentos de funciones.
+- **Zod Sync:** Los formularios deben usar `z.infer<typeof Schema>` para sus valores.
+- **No `any`:** El uso de `any` es motivo de rechazo instantáneo.
+
+### 3. IA-Friendliness (Documentación Crítica)
+- **JSDoc en Funciones Core:** Cada Query y Action debe tener un bloque JSDoc explicando sus parámetros y retorno.
+- **Comentarios de Proceso:** Si un flujo es complejo, comenta el "por qué" no el "qué".
+- **Naming:** Kebab-case para archivos (`mi-componente.tsx`), PascalCase para carpetas de componentes y clases de React.
+
+### 4. Base de Datos
+- **Consultas Eficientes:** Prefiere el `db.query` (Relational API) para lecturas legibles.
+- **Sincronización:** Documenta cualquier cambio de esquema. Para sincronizar localmente: `npm run db:push`.
 
 ---
 
-## 🛠 Comandos Críticos
-- `npm run build`: Verificar que no hay errores de tipos o de Next.js.
-- `npm run db:push`: Sincronizar cambios de esquema de Drizzle.
-- `npm run dev:turbo`: Entorno de desarrollo rápido.
+## 🤖 Guía de Comportamiento para la IA
+1. **Modo Conservador:** NO borres lógica de negocio existente sin permiso. Mueve el código a su nueva capa, pero mantén el flujo funcional.
+2. **KISS (Keep It Simple):** Si un componente supera las 200 líneas, divídelo en componentes más pequeños en `src/components/features`.
+3. **Verificación de Build:** Siempre que realices cambios estructurales, verifica con `npm run build` o solicita al usuario que verifique los tipos.
+
+---
+
+## 🛠 Comandos de Ciclo de Vida
+- `npm run dev:turbo`: Desarrollo rápido.
+- `npm run db:generate` & `npm run db:migrate`: Migraciones oficiales.
+- `npm run db:push`: Sincronización rápida de esquema (solo para desarrollo).
+- `vitest`: Ejecutar pruebas unitarias.
