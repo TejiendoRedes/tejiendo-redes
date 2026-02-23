@@ -1,31 +1,29 @@
-# 🚀 Master Prompt: Plan de Modernización "Tejiendo Redes"
+# Prompt de Reestructuración Masiva: Tejiendo Redes
 
-Copia y pega este prompt en una nueva sesión de IA para iniciar una fase de reestructuración profunda y profesional del proyecto.
+Actúa como un **Arquitecto Senior de Software Experto en Next.js 15 y Drizzle ORM**. Tu misión es realizar un "lavado de cara" completo a la arquitectura del proyecto sin alterar la lógica de negocio ni la estructura de la base de datos.
+
+## 🎯 Objetivos de la Tarea
+
+1.  **Estandarización de Retornos:**
+    - Refactoriza todas las funciones en `src/actions/` para que sigan el **Result Pattern**: `{ success: boolean, message: string, data?: T, error?: string }`.
+2.  **Organización de Componentes:**
+    - Mueve componentes de lógica compleja de la carpeta `ui/` a `components/features/`.
+    - Asegura que `src/components/ui/` contenga solo componentes visuales puros.
+3.  **Refuerzo de Tipado:**
+    - Elimina cualquier uso de `any`.
+    - Usa `InferSelectModel` e `InferInsertModel` de Drizzle para tipar los argumentos y retornos de Queries y Actions.
+4.  **Limpieza de Código:**
+    - Elimina comentarios JSDoc vacíos o redundantes.
+    - Asegura que cada Query y Action tenga un JSDoc descriptivo.
+5.  **Actualización de Importaciones:** 
+    - Después de mover archivos, actualiza todas las referencias e importaciones para asegurar que el proyecto compile.
+
+## 📜 Reglas de Ejecución
+
+- **NO** modifiques los archivos en `src/db/schema/`.
+- **NO** cambies la lógica de las validaciones Zod, solo muévelas si es necesario a `src/schemas/`.
+- **Verifica** el build después de cada grupo de cambios usando `npm run build`.
+- Si encuentras un flujo extremadamente complejo, **documenta** el proceso en lugar de simplificarlo agresivamente para evitar bugs.
 
 ---
-
-## 🤖 Sistema: Actúa como un Arquitecto de Software Senior & AI Specialist
-
-"Tu misión es realizar un 'lavado de cara' arquitectónico al proyecto **Tejiendo Redes**. El objetivo es llevar el código de un estado funcional a un estado de **Arquitectura Premium, IA-Friendly y Altamente Mantenible**, siguiendo estrictamente el archivo `.rules`.
-
-### 📋 Tus Tareas en Orden de Ejecución:
-
-#### Fase 1: Auditoría de Datos (Result Pattern)
-Revisa `src/actions/` y `src/queries/`. Identifica funciones que no usen el `ActionResponse` o que carezcan de JSDoc. Reporta antes de actuar.
-
-#### Fase 2: Reestructuración de Componentes (Atomic/Feature Design)
-Extrae los 'God Components' (páginas gigantes en `src/app`) hacia componentes modulares en `src/components/features/[feature]`. Las páginas deben quedar 'delgadas' (Thin Pages).
-
-#### Fase 3: Estandarización de Tipos y Zod
-Sincroniza todos los formularios con esquemas Zod centralizados en `src/schemas/`. Asegúrate de que los tipos de Drizzle (`InferSelectModel`, `InferInsertModel`) se usen en toda la capa de datos.
-
-#### Fase 4: Pulido de UX/Aesthetics
-Sin cambiar la lógica, mejora la visualización de datos usando patrones de diseño modernos (Gradients, Glassmorphism suave, micro-animaciones de Tailwind Animate).
-
-### 🛡 Reglas Inquebrantables:
-1. **No romper la base de datos**: No cambies los nombres de las columnas ni tablas.
-2. **GMT-4 (Venezuela)**: Mantén rigurosamente el manejo de zona horaria en todas las operaciones de fecha.
-3. **Incremental**: Realiza los cambios por módulos (ej: primero Pacientes, luego Abordajes).
-
-### 🚀 Acción Inicial:
-Realiza una exploración completa del directorio `src/`. Dime cuáles son los 3 archivos con mayor deuda técnica según las `.rules` y propón un plan para refactorizar el primero."
+*Instrucción final: Analiza primero toda la estructura actual y propón un plan de migración paso a paso antes de empezar a editar.*
