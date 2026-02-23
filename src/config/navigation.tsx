@@ -83,16 +83,6 @@ export const menuItems: MenuItem[] = [
         roles: ['admin', 'superuser', 'medico'],
     },
     {
-        label: 'Farmacia',
-        path: '/farmacia',
-        icon: <Pill className="w-4 h-4" />,
-        roles: ['admin', 'superuser', 'operador'],
-        children: [
-            { label: 'Medicamentos', path: '/farmacia/medicamentos', icon: <Heart className="w-4 h-4" /> },
-            { label: 'Entrega de Medicamentos', path: '/farmacia/peticiones', icon: <FileQuestion className="w-4 h-4" /> },
-        ],
-    },
-    {
         label: 'Reportes',
         path: '/reportes',
         icon: <FileText className="w-5 h-5" />,

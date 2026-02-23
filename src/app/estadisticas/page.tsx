@@ -4,10 +4,9 @@ import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ExecutiveTab } from '@/components/dashboard/ExecutiveTab';
 import { EpidemiologyTab } from '@/components/dashboard/EpidemiologyTab';
-import { PharmacyTab } from '@/components/dashboard/PharmacyTab';
 import { OperationsTab } from '@/components/dashboard/OperationsTab';
-import { type DashboardFilters as FilterType,  } from '@/actions/dashboard';
-import { getDashboardFilters, getExecutiveKPIs, getEpidemiologicalData, getPharmacyData, getOperationsData } from '@/queries/dashboard';;
+import { type DashboardFilters as FilterType } from '@/actions/dashboard';
+import { getDashboardFilters, getExecutiveKPIs, getEpidemiologicalData, getOperationsData } from '@/queries/dashboard';
 
 interface PageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -26,13 +25,11 @@ export default async function EstadisticasPage(props: PageProps) {
         communities,
         executiveData,
         epidemiologyData,
-        pharmacyData,
         operationsData
     ] = await Promise.all([
         getDashboardFilters(),
         getExecutiveKPIs(filters),
         getEpidemiologicalData(filters),
-        getPharmacyData(filters),
         getOperationsData(filters),
     ]);
 
@@ -49,10 +46,9 @@ export default async function EstadisticasPage(props: PageProps) {
                 <DashboardFilters communities={communities} />
 
                 <Tabs defaultValue="executive" className="space-y-6">
-                    <TabsList className="bg-white p-1 border rounded-lg h-auto grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <TabsList className="bg-white p-1 border rounded-lg h-auto grid grid-cols-1 md:grid-cols-3 gap-2">
                         <TabsTrigger value="executive" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Resumen Ejecutivo</TabsTrigger>
                         <TabsTrigger value="epidemiology" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Perfil Epidemiológico</TabsTrigger>
-                        <TabsTrigger value="pharmacy" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Farmacia e Insumos</TabsTrigger>
                         <TabsTrigger value="operations" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Operatividad</TabsTrigger>
                     </TabsList>
 
@@ -62,10 +58,6 @@ export default async function EstadisticasPage(props: PageProps) {
 
                     <TabsContent value="epidemiology">
                         <EpidemiologyTab data={epidemiologyData} />
-                    </TabsContent>
-
-                    <TabsContent value="pharmacy">
-                        <PharmacyTab data={pharmacyData} />
                     </TabsContent>
 
                     <TabsContent value="operations">

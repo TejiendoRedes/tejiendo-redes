@@ -65,14 +65,14 @@ export function StatisticsStation({ abordaje }: { abordaje: AbordajeWithRelation
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
-    // Composición del Equipo (Profesiones)
-    const profesionFreq = abordaje.tejedores?.reduce((acc, curr) => {
-        const prof = curr.profesionTejedor || 'Otro';
-        acc[prof] = (acc[prof] || 0) + 1;
+    // Composición del Equipo (Tipos de Voluntario)
+    const voluntarioTipoFreq = abordaje.tejedores?.reduce((acc, curr) => {
+        const tipo = curr.tipodeVoluntario || 'Otro';
+        acc[tipo] = (acc[tipo] || 0) + 1;
         return acc;
     }, {} as Record<string, number>) || {};
 
-    const profesionesData = Object.entries(profesionFreq)
+    const voluntarioTipoData = Object.entries(voluntarioTipoFreq)
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
@@ -313,13 +313,13 @@ export function StatisticsStation({ abordaje }: { abordaje: AbordajeWithRelation
                 <Card className="shadow-sm">
                     <CardHeader>
                         <CardTitle className="text-lg">Composición del Equipo</CardTitle>
-                        <CardDescription>Distribución de los voluntarios por profesión</CardDescription>
+                        <CardDescription>Distribución de los voluntarios por tipo de voluntario</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[300px] flex items-center justify-center">
-                        {profesionesData.length > 0 ? (
+                        {voluntarioTipoData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
-                                    data={profesionesData}
+                                    data={voluntarioTipoData}
                                     margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
                                     layout="vertical"
                                 >
@@ -335,7 +335,7 @@ export function StatisticsStation({ abordaje }: { abordaje: AbordajeWithRelation
                                     />
                                     <Tooltip cursor={{ fill: '#f3f4f6' }} content={<CustomTooltipBar unit="tejedores" />} />
                                     <Bar dataKey="value" fill="#f59e0b" radius={[0, 4, 4, 0]} maxBarSize={40}>
-                                        {profesionesData.map((entry, index) => (
+                                        {voluntarioTipoData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[(index + 5) % COLORS.length]} />
                                         ))}
                                     </Bar>

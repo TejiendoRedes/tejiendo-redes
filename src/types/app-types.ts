@@ -18,6 +18,7 @@ export interface AbordajeTejedorData {
     nombreTejedor: string;
     apellidoTejedor: string;
     profesionTejedor: string;
+    tipodeVoluntario: string;
     rolAbordaje: string | null;
 }
 

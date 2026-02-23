@@ -20,8 +20,8 @@ export type MedicamentoEntrega = z.infer<typeof MedicamentoEntregaSchema>;
 export const CreateAbordajeSchema = z.object({
     codigoComunidad: z.string().min(1, "Debe seleccionar una comunidad"),
     fechaAbordaje: z.coerce.date({ required_error: "La fecha es requerida" }),
-    horaInicio: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato de hora inválido (HH:MM)"),
-    horaFin: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato de hora inválido (HH:MM)"),
+    horaInicio: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, "Formato de hora inválido (HH:MM)"),
+    horaFin: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/, "Formato de hora inválido (HH:MM)"),
     descripcion: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
     tipoAbordaje: z.string().optional(),
     participantesEstimados: z.coerce.number().int().nonnegative().optional(),

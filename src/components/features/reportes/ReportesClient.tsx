@@ -56,10 +56,44 @@ export default function ReportesClient({
     const [chartViews, setChartViews] = useState<Record<string, 'table' | 'bar' | 'pie'>>({
         abordajes: 'table',
         comunidades: 'table',
-        pacientes: 'table',
+        pacientes: 'bar', // Changed default for patients to show the new charts
         morbilidad: 'table',
         medicamentos: 'table'
     });
+
+    // Lógica de Grupos Etarios
+    const ageGroups = React.useMemo(() => {
+        const groups = {
+            'Niñez (0-12)': 0,
+            'Adolescencia (13-17)': 0,
+            'Adultez (18-59)': 0,
+            'Adulto Mayor (60+)': 0,
+            'No especificado': 0
+        };
+
+        const calculateAge = (birthday: Date | string | null) => {
+            if (!birthday) return -1;
+            const birthDate = new Date(birthday);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        };
+
+        reportePacientes.forEach(p => {
+            const age = calculateAge(p.fecha_nacimiento);
+            if (age === -1) groups['No especificado']++;
+            else if (age <= 12) groups['Niñez (0-12)']++;
+            else if (age <= 17) groups['Adolescencia (13-17)']++;
+            else if (age <= 59) groups['Adultez (18-59)']++;
+            else groups['Adulto Mayor (60+)']++;
+        });
+
+        return Object.entries(groups).map(([name, value]) => ({ name, value }));
+    }, [reportePacientes]);
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
@@ -561,13 +595,41 @@ export default function ReportesClient({
                                 />
                             )}
                             {chartViews.pacientes === 'bar' && (
-                                <div className="h-[400px] w-full flex items-center justify-center bg-gray-50 border border-dashed rounded-md mt-4">
-                                    <span className="text-gray-500">Gráfico no disponible para reporte a nivel de individuo</span>
+                                <div className="h-[400px] w-full mt-4">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={ageGroups} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="name" />
+                                            <YAxis />
+                                            <RechartsTooltip />
+                                            <Legend />
+                                            <Bar dataKey="value" name="Cantidad de Pacientes" fill="#8884d8" label={{ position: 'top' }} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
                             )}
                             {chartViews.pacientes === 'pie' && (
-                                <div className="h-[400px] w-full flex items-center justify-center bg-gray-50 border border-dashed rounded-md mt-4">
-                                    <span className="text-gray-500">Gráfico no disponible para reporte a nivel de individuo</span>
+                                <div className="h-[400px] w-full mt-4 flex flex-col items-center">
+                                    <h3 className="text-gray-700 font-semibold mb-2">Distribución por Grupos Etarios</h3>
+                                    <ResponsiveContainer width="100%" height="80%">
+                                        <PieChart>
+                                            <Pie
+                                                data={ageGroups}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                cx="50%"
+                                                cy="50%"
+                                                outerRadius={150}
+                                                label={(props: any) => `${props.name}: ${(props.percent * 100).toFixed(1)}%`}
+                                            >
+                                                {ageGroups.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <RechartsTooltip />
+                                            <Legend />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
                             )}
                         </CardContent>
@@ -656,7 +718,9 @@ export default function ReportesClient({
                             )}
                             {chartViews.morbilidad === 'pie' && (
                                 <div className="h-[500px] w-full mt-4 flex flex-col items-center">
-                                    <h3 className="text-gray-700 font-semibold mb-2">Porcentaje de Casos por Enfermedad (Top 10)</h3>
+                                    <h3 className="text-gray-700 font-semibold mb-2">
+                                        Porcentaje de Casos por Enfermedad {dataMorbilidad.length > 10 ? '(Top 10)' : `(Top ${dataMorbilidad.length})`}
+                                    </h3>
                                     <ResponsiveContainer width="100%" height="90%">
                                         <PieChart>
                                             <Pie
@@ -666,7 +730,7 @@ export default function ReportesClient({
                                                 cx="50%"
                                                 cy="50%"
                                                 outerRadius={180}
-                                                label={({ percent }) => percent !== undefined ? `${(percent * 100).toFixed(1)}%` : ''}
+                                                label={(props: any) => props.percent !== undefined ? `${(props.percent * 100).toFixed(1)}%` : ''}
                                             >
                                                 {dataMorbilidad.slice(0, 10).map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -676,6 +740,27 @@ export default function ReportesClient({
                                             <Legend layout="horizontal" verticalAlign="bottom" />
                                         </PieChart>
                                     </ResponsiveContainer>
+                                </div>
+                            )}
+
+                            {/* Nueva sección de Distribución Etaria para Morbilidad */}
+                            {(chartViews.morbilidad === 'bar' || chartViews.morbilidad === 'pie') && (
+                                <div className="mt-8 pt-8 border-t border-gray-200">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Contexto: Distribución Etaria General</h3>
+                                    <div className="h-[300px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={ageGroups}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="name" />
+                                                <YAxis />
+                                                <RechartsTooltip />
+                                                <Bar dataKey="value" name="Pacientes" fill="#82ca9d" />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <p className="text-sm text-gray-500 text-center mt-2 italic">
+                                        Esta gráfica muestra la distribución de edad de todos los pacientes filtrados para contextualizar los casos de morbilidad.
+                                    </p>
                                 </div>
                             )}
                         </CardContent>
@@ -746,7 +831,9 @@ export default function ReportesClient({
                             )}
                             {chartViews.medicamentos === 'pie' && (
                                 <div className="h-[500px] w-full mt-4 flex flex-col items-center">
-                                    <h3 className="text-gray-700 font-semibold mb-2">Distribución de Medicamentos Entregados (Top 10)</h3>
+                                    <h3 className="text-gray-700 font-semibold mb-2">
+                                        Distribución de Medicamentos Entregados {reporteMedicamentos.length > 10 ? '(Top 10)' : `(Top ${reporteMedicamentos.length})`}
+                                    </h3>
                                     <ResponsiveContainer width="100%" height="90%">
                                         <PieChart>
                                             <Pie
@@ -756,7 +843,7 @@ export default function ReportesClient({
                                                 cx="50%"
                                                 cy="50%"
                                                 outerRadius={180}
-                                                label={({ percent }) => percent !== undefined ? `${(percent * 100).toFixed(1)}%` : ''}
+                                                label={(props: any) => props.percent !== undefined ? `${(props.percent * 100).toFixed(1)}%` : ''}
                                             >
                                                 {reporteMedicamentos.slice(0, 10).map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

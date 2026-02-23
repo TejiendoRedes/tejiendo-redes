@@ -29,17 +29,27 @@ export function AbordajeForm({
 }: AbordajeFormProps) {
     const defaultDate = new Date().toISOString().split('T')[0];
 
-    // Parse initial date if exists
     const initialDateStr = initialData?.fechaAbordaje
         ? new Date(initialData.fechaAbordaje).toISOString().split('T')[0]
         : defaultDate;
+
+    // Format time to HH:MM (strip seconds if present from DB)
+    const formatTimeToHM = (timeStr?: string | null) => {
+        if (!timeStr) return undefined;
+        // If it's HH:mm:ss, take only HH:mm
+        const parts = timeStr.split(':');
+        if (parts.length >= 2) {
+            return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+        }
+        return timeStr;
+    };
 
     const [formData, setFormData] = useState({
         codigoAbordaje: initialData?.codigoAbordaje || '',
         descripcion: initialData?.descripcion || '',
         fechaAbordaje: initialDateStr,
-        horaInicio: initialData?.horaInicio || '08:00',
-        horaFin: initialData?.horaFin || '12:00',
+        horaInicio: formatTimeToHM(initialData?.horaInicio) || '08:00',
+        horaFin: formatTimeToHM(initialData?.horaFin) || '12:00',
         estado: initialData?.estado || 'Pendiente',
         codigoComunidad: initialData?.codigoComunidad || '',
         tipoAbordaje: initialData?.tipoAbordaje || '',

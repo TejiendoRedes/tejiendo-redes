@@ -1,61 +1,42 @@
-# 📜 Reglas de Oro: Tejiendo Redes (v3.0 - IA-Native)
+# 📜 Reglas de Arquitectura: Tejiendo Redes (v3.1) - AI-READY 🤖
 
-Este documento es la ley suprema del proyecto. Cualquier cambio debe alinearse con estas directrices para mantener la integridad, seguridad y "IA-friendliness" del sistema.
+Este archivo define los estándares técnicos para el desarrollo continuado del proyecto. Cualquier IA o desarrollador DEBE seguir estas reglas estrictamente para mantener la consistencia.
 
----
+## 🏗 Arquitectura de Capas (Next.js 15 App Router)
 
-## 🏗 Arquitectura y Flujo de Datos
+1.  **Esquema de Datos (`src/db/schema/`)**: Única fuente de verdad. Las tablas se definen aquí usando Drizzle ORM.
+2.  **Consultas (`src/queries/`)**: **LECTURA SOLAMENTE** (GET). Funciones asíncronas que obtienen datos. Deben ser deterministas y sin efectos secundarios.
+3.  **Acciones (`src/actions/`)**: **ESCRITURA SOLAMENTE** (POST/PUT/DELETE). Server Actions de Next.js. Manejan validación (Zod) y mutaciones.
+4.  **Componentes**:
+    - `src/components/ui/`: Componentes base (Shadcn + Radix). Pura presentación.
+    - `src/components/features/`: Componentes complejos con lógica de negocio divididos por dominio.
+    - `src/components/shared/`: Componentes transversales reutilizables.
 
-### 1. El "Result Pattern" (Mandatorio)
-Todas las **Server Actions** (`src/actions`) deben retornar este contrato exacto:
+## 🔄 Patrón de Respuesta (Result Pattern)
+
+Todas las funciones en `queries/` y `actions/` DEBEN retornar este objeto para facilitar el manejo de errores en el cliente:
 ```typescript
-export interface ActionResponse<T = any> {
+{
   success: boolean;
-  message: string;      // Feedback para el usuario (Toast)
-  data?: T;             // Datos opcionales de retorno
-  error?: string;       // Detalle técnico para logs o depuración
+  data?: T;
+  error?: string;
+  message?: string; // Opcional para feedback visual
 }
 ```
 
-### 2. Separación de Responsabilidades (Capa de Datos)
-- **Capa de Lectura (`src/queries/`)**: Funciones puras de Drizzle para obtener datos. No deben tener `"use server"`.
-- **Capa de Escritura (`src/actions/`)**: Server Actions con `"use server"`. Orquestan validaciones (Zod), lógica de negocio y mutaciones en la DB.
+## 🛠 Estándares de Código
 
-### 3. Frontend: "Thin Pages" & "Rich Components"
-- **App Router Pages**: Deben ser pequeñas y actuar solo como orquestadores.
-- **Client Components**: Solo en las hojas finales. Usa interactividad solo donde sea necesario.
-- **Zonificación Característica**: Organiza componentes en `src/components/features/[feature_name]`.
+- **TypeScript**: Tipado estricto. Prohibido el uso de `any`. Usa los tipos generados por Drizzle (`InferSelectModel`, `InferInsertModel`).
+- **Validación**: Usa Zod para validar inputs en Server Actions. Los esquemas deben vivir en `src/schemas/`.
+- **Estilos**: Tailwind CSS puro. Sigue el sistema de diseño definido en `tailwind.config.ts`.
+- **Efectos**: Minimiza el uso de `useEffect`. Prefiere componentes de servidor y Server Actions.
 
----
+## 🤖 Directrices para la IA (Prompts y Contexto)
 
-## ⚡ Estándares de Código e IA-Friendliness
-
-### 1. Manejo de Tiempo (Zona Horaria VZLA)
-Todo registro de fecha y hora DEBE ser explícito para la zona horaria de Venezuela (`America/Caracas`). NUNCA confíes en la hora local del servidor/navegador.
-```typescript
-// Ejemplo correcto
-const vTime = new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', ... }).format(new Date());
-```
-
-### 2. Tipado "Strong & Lean"
-- Usa `InferSelectModel` e `InferInsertModel` de Drizzle para evitar definiciones manuales redundantes.
-- Prohibido el uso de `any`. Si la estructura es incierta, usa `unknown` o interfaces parciales.
-
-### 3. JSDoc Narrativo
-Cada función exportada DEBE tener un bloque JSDoc que explique **qué** hace y **por qué**, no solo el tipo de parámetros (que ya está en TS).
+1.  **Lectura Sugerida**: Antes de cualquier cambio, la IA debe leer `.rules` y `package.json`.
+2.  **Verificación de Uso**: Antes de modificar una función, usa `grep` para entender su impacto en el resto del proyecto.
+3.  **Refactorización Incrementral**: No cambies lógica de negocio mientras refactorizas arquitectura. Mantén la funcionalidad idéntica.
+4.  **Documentación**: Genera JSDoc para funciones exportadas en `queries/` y `actions/`.
 
 ---
-
-## 🤖 Guía para Programación con IA
-
-Si eres una IA trabajando en este proyecto, sigue estos pasos:
-1. **Analiza el Esquema Primero**: Lee siempre `src/db/schema/` antes de tocar cualquier query o acción.
-2. **Result Pattern Check**: Si vas a modificar una acción vieja que no sigue el `ActionResponse`, **refactorízala** primero.
-3. **Naming**: Archivos en `kebab-case`. Componentes en `PascalCase`. Variables descriptivas (ej: `pacienteSeleccionado` vs `pac`).
-
----
-
-## 🛠 Comandos Críticos
-- `npm run dev:turbo`: Entorno rápido de desarrollo.
-- `npm run db:push`: Sincroniza esquema (siempre verifica primero `drizzle.config.ts`).
-- `npm run db:refresh`: Hard reset de base de datos para pruebas limpias.
+*Este proyecto está diseñado para ser mantenido y escalado con asistencia de Inteligencia Artificial (Copilot, Cursor, etc.).*

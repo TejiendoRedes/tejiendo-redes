@@ -81,6 +81,7 @@ export class AbordajesService {
                     nombreTejedor: tejedores.nombreTejedor,
                     apellidoTejedor: tejedores.apellidoTejedor,
                     profesionTejedor: tejedores.profesionTejedor,
+                    tipodeVoluntario: tejedores.tipodeVoluntario,
                     rolAbordaje: tejedoresAbordaje.rolEnAbordaje,
                 })
                     .from(tejedoresAbordaje)
