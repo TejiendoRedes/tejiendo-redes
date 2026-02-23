@@ -19,7 +19,6 @@ import {
     MoreVertical,
     CheckCircle2,
     Clock,
-    Pill
 } from 'lucide-react';
 import {
     DropdownMenu,

@@ -20,6 +20,7 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
     const mainItems = [
         { label: 'Inicio', path: '/dashboard', icon: <Home className="w-5 h-5" /> },
         { label: 'Abordajes', path: '/abordajes', icon: <ClipboardList className="w-5 h-5" /> },
+        { label: 'Farmacia', path: '/farmacia', icon: <Pill className="w-5 h-5" /> },
         { label: 'Reportes', path: '/reportes', icon: <FileText className="w-5 h-5" /> },
     ];
 

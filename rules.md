@@ -1,58 +1,41 @@
-# 📜 Reglas de Oro para IA: Proyecto Tejiendo Redes
+# 📜 Reglas de Oro para IA: Tejiendo Redes (v2.1)
 
-Este documento define los estándares arquitectónicos y de codificación obligatorios. Cualquier IA que trabaje en este proyecto debe leer esto primero para garantizar coherencia y mantenibilidad.
+Este documento es la ley para cualquier IA que trabaje en este proyecto. El objetivo es mantener una arquitectura limpia, predecible y altamente mantenible.
 
-## 🏗 Arquitectura de Capas (Clean Architecture)
+## 🏗 Arquitectura y Flujo de Datos
 
-El proyecto sigue una estructura de capas estricta para separar la persistencia, la lógica y la interfaz.
+### 1. El Patrón de Resultado (Result Pattern)
+Todas las **Server Actions** (`src/actions`) DEBEN devolver un objeto con esta estructura:
+```typescript
+{
+  success: boolean;
+  message: string;
+  data?: T;
+  error?: string;
+}
+```
+Esto asegura que el frontend pueda manejar errores de forma consistente.
 
-### 1. Capa de Datos (Drizzle ORM)
-- **Ubicación**: `src/db/schema/`
-- **Regla**: No modificar esquemas sin aprobación expresa. Usar tipos inferidos: `typeof table.$inferSelect`.
+### 2. Separación de Responsabilidades
+- **`src/queries/`**: Lógica de LECTURA. Solo funciones de Drizzle. **NUNCA** uses `"use server"` aquí.
+- **`src/actions/`**: Lógica de ESCRITURA. Solo Server Actions con `"use server"`.
+- **`src/components/ui/`**: Componentes visuales puros (Shadcn). No conocen la lógica de negocio.
+- **`src/components/features/`**: Componentes con lógica de dominio (ej. `FormularioPaciente`).
 
-### 2. Capa de Servicios: Consultas (Lectura)
-- **Ubicación**: `src/queries/`
-- **Regla**: Solo lectura (SELECT). **PROHIBIDO** usar `"use server"` aquí. 
-- **Patrón**: Todas las funciones deben retornar el **Result Pattern**: `{ success: boolean, data?: T, error?: string }`.
+### 3. Tipado Estricto (TypeScript)
+- **Prohibido el uso de `any`**.
+- Usa los tipos generados por Drizzle: `typeof consultas.$inferSelect`.
+- Las validaciones de formularios deben estar en `src/schemas/` usando **Zod**.
 
-### 3. Capa de Servicios: Actions (Escritura)
-- **Ubicación**: `src/actions/`
-- **Regla**: Solo mutaciones (INSERT, UPDATE, DELETE). **OBLIGATORIO** usar `"use server"`.
-- **Patrón**: Debe retornar `{ success: boolean, message: string, data?: T, error?: string }`.
+## 🤖 Directrices para la IA
 
-### 4. Capa de Interfaz (Frontend)
-- **Componentes Base**: `src/components/ui/` (Componentes visuales puros).
-- **Componentes de Negocio**: `src/components/features/` (Contienen lógica de dominio).
-- **Formularios**: `src/components/forms/` (Centralizar validaciones Zod aquí).
-
-## 🤖 Directrices para el Desarrollo con IA
-
-### 1. IA-Friendly Naming & Structure
-- **Archivos**: Siempre `kebab-case.tsx` (ej. `listado-pacientes.tsx`).
-- **Exportaciones**: Preferir exportaciones nombradas (`export function Name`) sobre defaults.
-- **Importaciones**: Usar siempre aliases `@/...`.
-
-### 2. Manejo de Errores (Resilience)
-- Envolver toda lógica en `try/catch`.
-- Nunca dejar bloques `catch` vacíos; registrar el error y devolver un mensaje amigable al usuario.
-
-### 3. Tipado Estricto
-- **Ajuste Prohibido**: `any` es pecado. Si un tipo es complejo, créalo en `src/types/`.
-- Validar todas las entradas de formularios y APIs con **Zod**.
-
-### 4. Comentarios y JSDoc
-- Cada función exportada **debe** tener JSDoc indicando:
-  ```typescript
-  /**
-   * [Descripción breve en español]
-   * @param {Type} param - [Descripción]
-   * @returns {Promise<Result<Type>>}
-   */
-  ```
-
-## 🚀 Flujo de Trabajo para Refactorización
-- **Principio**: Si vas a mover un código, asegúrate de que el destinatario siga los estándares de arriba.
-- **Verificación**: Después de cualquier cambio estructural, ejecuta `npm run build` para asegurar la integridad de los tipos.
+1. **Documentación:** Cada función nueva debe incluir JSDoc explicando qué hace, sus parámetros y su retorno.
+2. **Naming:** 
+   - Archivos: `kebab-case.tsx`
+   - Componentes: `PascalCase`
+   - Funciones: `camelCase`
+3. **No Romper Lógica:** Antes de refactorizar, entiende el flujo existente. Si algo funciona, muévelo a la capa correcta pero mantén su funcionalidad.
+4. **Verificación:** Siempre que cambies algo estructural, pide al usuario correr `npm run build` para verificar tipos.
 
 ---
-*Este proyecto es el legado de un servicio comunitario. Mantén el código digno para quienes vendrán después.*
+*Este proyecto es de servicio comunitario. La claridad del código es tan importante como su funcionamiento.*

@@ -5,13 +5,14 @@ Este documento define la arquitectura "IA-Friendly" y las normas estrictas de de
 ## 🏗 Arquitectura de Referencia (Clean + Feature-Based)
 
 ### 📂 Estructura de Directorios
-- `src/app/`: Rutas, layouts y páginas. Deben ser "Thin Pages".
+- `src/app/`: Rutas, layouts y páginas. Deben ser "Thin Pages" (máximo 50-100 líneas).
 - `src/actions/`: Lógica de escritura (POST/PUT/DELETE). Solo Server Actions con `"use server"`.
 - `src/queries/`: Lógica de lectura (GET). Solo funciones de Drizzle. NUNCA `"use server"`.
-- `src/components/features/`: Componentes con lógica de dominio (ej. `BuscadorPacientes`, `FormAbordaje`).
+- `src/components/features/`: Componentes con lógica de dominio y estado complejo.
 - `src/components/ui/`: UI atómica (Shadcn/Primitive). Sin conocimiento de negocio.
-- `src/schemas/`: Validaciones Zod (`[feature]-schema.ts`).
+- `src/schemas/`: Validaciones Zod (`[feature].schema.ts`).
 - `src/db/schema/`: Definición de tablas Drizzle.
+- `src/types/`: Definiciones de interfaces globales y tipos derivados de Drizzle.
 
 ---
 
@@ -29,30 +30,29 @@ interface ActionResponse<T = any> {
 ```
 
 ### 2. Tipado Estricto (TypeScript First)
-- **Drizzle Types:** Usa `InferSelectModel` y `InferInsertModel` para tipar argumentos de funciones.
+- **Drizzle Types:** Usa `InferSelectModel<typeof table>` para retornos y `InferInsertModel<typeof table>` para inserciones.
 - **Zod Sync:** Los formularios deben usar `z.infer<typeof Schema>` para sus valores.
-- **No `any`:** El uso de `any` es motivo de rechazo instantáneo.
+- **No `any`:** El uso de `any` está prohibido. Usa `unknown` si es necesario o define interfaces.
 
 ### 3. IA-Friendliness (Documentación Crítica)
-- **JSDoc en Funciones Core:** Cada Query y Action debe tener un bloque JSDoc explicando sus parámetros y retorno.
-- **Comentarios de Proceso:** Si un flujo es complejo, comenta el "por qué" no el "qué".
-- **Naming:** Kebab-case para archivos (`mi-componente.tsx`), PascalCase para carpetas de componentes y clases de React.
+- **JSDoc Mandatorio:** Cada Query y Action debe tener un bloque JSDoc explicando sus parámetros y retorno.
+- **Logical Grouping:** Importaciones ordenadas (React -> Next -> Lucide -> UI -> Business Logic -> Types).
+- **Naming:** Kebab-case para archivos (`mi-componente.tsx`), PascalCase para clases y componentes React.
 
 ### 4. Base de Datos
-- **Consultas Eficientes:** Prefiere el `db.query` (Relational API) para lecturas legibles.
-- **Sincronización:** Documenta cualquier cambio de esquema. Para sincronizar localmente: `npm run db:push`.
+- **Consultas Eficientes:** Usa la Relational API de Drizzle (`db.query...`) para lecturas complejas.
+- **Seguridad:** NUNCA expongas las tablas directamente al frontend; usa selectores de campos específicos.
 
 ---
 
 ## 🤖 Guía de Comportamiento para la IA
-1. **Modo Conservador:** NO borres lógica de negocio existente sin permiso. Mueve el código a su nueva capa, pero mantén el flujo funcional.
-2. **KISS (Keep It Simple):** Si un componente supera las 200 líneas, divídelo en componentes más pequeños en `src/components/features`.
-3. **Verificación de Build:** Siempre que realices cambios estructurales, verifica con `npm run build` o solicita al usuario que verifique los tipos.
+1. **Modo Conservador:** NO elimines lógica de negocio existente. Mueve el código a su capa correspondiente pero mantén el flujo funcional.
+2. **KISS (Keep It Simple):** Divide componentes grandes en sub-componentes dentro de la misma carpeta de "feature".
+3. **Validación:** Tras cambios estructurales, verifica la integridad de los tipos con `tsc`.
 
 ---
 
 ## 🛠 Comandos de Ciclo de Vida
-- `npm run dev:turbo`: Desarrollo rápido.
-- `npm run db:generate` & `npm run db:migrate`: Migraciones oficiales.
-- `npm run db:push`: Sincronización rápida de esquema (solo para desarrollo).
-- `vitest`: Ejecutar pruebas unitarias.
+- `npm run dev:turbo`: Desarrollo rápido con Turbopack.
+- `npm run db:push`: Sincronización rápida de esquema para desarrollo local.
+- `npm run lint`: Verificación de sintaxis y estilos.
