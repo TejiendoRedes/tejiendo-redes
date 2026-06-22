@@ -73,6 +73,7 @@ export async function middleware(request: NextRequest) {
     const isLoginPage = pathname.startsWith('/login');
     const isUnirsePage = pathname.startsWith('/unirse');
     const isPublicApi = pathname.startsWith('/api/auth') || pathname.startsWith('/api/public');
+    const isPrototipo = pathname.startsWith('/prototipo');
     const isStaticAsset =
         pathname.startsWith('/_next') ||
         pathname.match(/\.(png|jpg|jpeg|gif|svg|ico)$/) ||
@@ -85,7 +86,7 @@ export async function middleware(request: NextRequest) {
         response = redirectToDashboard(session.role, request);
     }
     // 2. If user is NOT logged in and tries to access protected content
-    else if (!session && !isLoginPage && !isUnirsePage && !isPublicApi && !isStaticAsset) {
+    else if (!session && !isLoginPage && !isUnirsePage && !isPublicApi && !isStaticAsset && !isPrototipo) {
         response = NextResponse.redirect(new URL('/login', request.url));
     }
     // 3. Robust Role-Based Access Control

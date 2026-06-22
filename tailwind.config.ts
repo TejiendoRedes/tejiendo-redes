@@ -10,6 +10,7 @@ const config: Config = {
         extend: {
             fontFamily: {
                 sans: [
+                    'var(--font-fira-sans)',
                     '-apple-system',
                     'BlinkMacSystemFont',
                     '"Segoe UI"',
