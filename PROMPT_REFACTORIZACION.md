@@ -1,44 +1,41 @@
-# 🚀 Prompt Global de Refactorización: Tejiendo Redes
+# Prompt de Re-estructuración Arquitectónica (V2.0)
 
-Este documento contiene un súper-prompt diseñado para ser copiado y entregado a una IA (Cursor, ChatGPT, Claude) para realizar un "lavado de cara" arquitectónico al proyecto sin romper la funcionalidad actual.
+Actúa como un Arquitecto de Software Senior experto en Next.js, Drizzle ORM y patrones de diseño modernos. Tu objetivo es re-estructurar el proyecto "Tejiendo Redes" para que sea 100% IA-friendly y siga una arquitectura limpia basada en capacidades (Features).
 
----
+## 🎯 Objetivo
+Transformar el código actual hacia el estándar definido en `.cursorrules` sin romper la lógica de negocio ni modificar las tablas de la base de datos.
 
-## 📝 Instrucciones para la IA
+## 🏗 Arquitectura Objetivo
 
-### Contexto del Proyecto
-Eres un ingeniero de software senior experto en Next.js 15, TypeScript y Drizzle ORM. Estás trabajando en "Tejiendo Redes", una plataforma de servicio comunitario para la gestión de salud y atención social.
+1.  **Thin Pages (`src/app/`):** Las páginas deben ser mínimas. Solo obtienen datos (usando queries) y pasan props a los componentes de feature.
+2.  **Feature-Based Components (`src/components/features/`):** Mueve la lógica de negocio de los componentes genéricos a carpetas por funcionalidad.
+3.  **Result Pattern (`src/actions/`):** Todas las Server Actions deben devolver `{ success: boolean, message: string, data?: T, error?: string }`.
+4.  **Drizzle Queries (`src/queries/`):** Centraliza todas las lecturas de BD aquí. Usa tipado estricto de Drizzle (`InferSelectModel`).
+5.  **Zod Schemas (`src/schemas/`):** Define todas las validaciones en archivos `.schema.ts`.
 
-### Objetivo
-Reestructurar el código para que sea 100% consistente con una arquitectura moderna de Server Components y Server Actions, eliminando deuda técnica y mejorando la legibilidad para futuros desarrollos.
+## 🛠 Instrucciones de Proceso (Paso a Paso)
 
-### Reglas de Oro
-1.  **NO ROMPAS LA LÓGICA**: La funcionalidad debe ser idéntica.
-2.  **NO CAMBIES LA DB**: No modifiques archivos en `src/db/schema/` ni añadas/quites columnas.
-3.  **RESULT PATTERN**: Asegura que todas las funciones en `queries/` y `actions/` retornen `{ success, data, error }`.
+### Paso 1: Análisis de Dependencias
+- Identifica componentes "monolíticos" (más de 200 líneas).
+- Lista las queries inline en componentes de cliente que deben moverse a `src/queries/`.
 
-### Tareas Paso a Paso (Checklist para la IA)
+### Paso 2: Refactorización de Datos
+- Crea o actualiza archivos en `src/queries/` para cada entidad.
+- Asegúrate de que cada función tenga JSDoc descriptivo.
 
-#### 1. Estandarización de Tipos y Retornos
-- Revisa `src/queries/` y asegúrate de que todas las funciones manejen errores con `try/catch` y retornen el patrón de resultado.
-- Usa tipos de Drizzle (`InferSelectModel`) para los argumentos de las funciones en lugar de interfaces personalizadas duplicadas.
+### Paso 3: Estandarización de Acciones
+- Envuelve los retornos de todas las acciones en `src/actions/` con el `Result Pattern`.
+- Añade validación de Zod al inicio de cada acción si no existe.
 
-#### 2. Migración de Lógica de Componentes
-- Identifica lógica de base de datos o cálculos complejos dentro de componentes en `src/app/` o `src/components/features/`.
-- Mueve las lecturas a `src/queries/` y las mutaciones a `src/actions/`.
-- Asegura que los componentes de página sean Server Components (`async function Page()`) que pasen datos a componentes de cliente de forma limpia.
+### Paso 4: Limpieza de UI
+- Separa los componentes de Shadcn (`src/components/ui/`) de los componentes con lógica (`src/components/features/`).
+- Elimina comentarios JSDoc vacíos y referencias a funciones muertas.
 
-#### 3. Limpieza y Consistencia (Look & Feel)
-- Elimina comentarios JSDoc vacíos o referencias a funciones que ya no existen.
-- Normaliza los nombres de archivos: usa `kebab-case` para archivos y carpetas.
-- Mueve formularios de autenticación a `src/components/forms/` si no están allí.
-
-#### 4. Documentación Automática
-- Genera JSDoc útil para cada función exportada indicando qué hace y qué parámetros recibe.
-
-### Prompt Maestro (Copia esto):
-
-> "Analiza la arquitectura actual del proyecto basándote en el archivo `.rules`. Tu tarea es realizar una refactorización progresiva de los módulos de [NOMBRE_DEL_MODULO] siguiendo el patrón de Capas (Queries para lectura, Actions para escritura). Debes asegurar que todas las funciones retornen `{ success, data, error }`, usar tipos estrictos de TypeScript/Drizzle, y extraer cualquier lógica de negocio de los componentes hacia la capa de servicios correspondiente. No modifiques la estructura de la base de datos ni cambies el comportamiento de cara al usuario. Presenta los cambios en bloques pequeños y explicados."
+## ⚠️ Reglas Críticas
+- **NUNCA** modifiques la estructura de las tablas en `src/db/schema/` durante este refactor.
+- **SIEMPRE** usa `"use server"` solo en `src/actions/`.
+- **PROHIBIDO** el uso de `any`.
+- **MANTÉN** la funcionalidad actual; el sistema debe seguir siendo operativo tras cada pequeño cambio (Small Commits).
 
 ---
-*Este prompt asegura que cualquier equipo futuro pueda heredar el proyecto y reestructurarlo con una IA de forma segura y eficiente.*
+**Nota para la IA:** Antes de empezar cada archivo, lee completamente su contenido y el de sus dependencias para no perder contexto de negocio.
