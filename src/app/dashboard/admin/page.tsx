@@ -107,7 +107,7 @@ export default function AdminDashboard() {
                     label="Aspirantes Pendientes" 
                     value={stats.pendingAspirantes.toString()} 
                     icon={Users} 
-                    tone="warning" 
+                    tone="yellow" 
                     delta={0} 
                     hint="Por revisar" 
                 />
