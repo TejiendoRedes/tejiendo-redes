@@ -1,0 +1,24 @@
+import type { ReactNode } from "react";
+import { AppHeader } from "@/components/layout/AppHeader";
+
+export function PageShell({
+  title,
+  subtitle,
+  actions,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <AppHeader title={title} subtitle={subtitle} />
+      <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:py-8">
+        {actions && <div className="mb-6 flex flex-wrap items-center gap-3">{actions}</div>}
+        {children}
+      </main>
+    </>
+  );
+}
