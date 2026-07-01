@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -271,13 +272,13 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     const getEstadoBadge = (estado: string) => {
         switch (estado) {
             case 'pendiente':
-                return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pendiente</Badge>;
+                return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Pendiente</Badge>;
             case 'entregado':
-                return <Badge variant="default" className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Entregado</Badge>;
+                return <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5" /> Entregado</Badge>;
             case 'cancelado':
-                return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Cancelado</Badge>;
+                return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 flex items-center gap-1.5"><XCircle className="w-3.5 h-3.5" /> Cancelado</Badge>;
             default:
-                return <Badge variant="outline">{estado}</Badge>;
+                return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">{estado}</Badge>;
         }
     };
 
@@ -417,20 +418,16 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold">Entrega de Medicamentos</h1>
-                        <p className="text-gray-600 mt-2">
-                            Gestiona las entregas de medicamentos de forma independiente o en abordajes
-                        </p>
-                    </div>
-                    <Button onClick={handleAdd} className="flex items-center gap-2">
+            <PageShell 
+                title="Entrega de Medicamentos" 
+                subtitle="Gestiona las entregas de medicamentos de forma independiente o en abordajes"
+                actions={
+                    <Button onClick={handleAdd} className="gap-2 bg-[#1e3a8a] text-white hover:bg-blue-800 rounded-xl shadow-sm">
                         <Plus className="w-4 h-4" />
                         Nueva Entrega
                     </Button>
-                </div>
-
+                }
+            >
                 <DataTable
                     data={peticiones}
                     columns={columns}
@@ -544,7 +541,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                         </form>
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout >
     );
 }

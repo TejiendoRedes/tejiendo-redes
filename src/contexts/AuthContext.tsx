@@ -26,7 +26,10 @@ interface AuthContextType {
   refreshCsrf: () => Promise<string>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = (globalThis as any)._authContext || createContext<AuthContextType | undefined>(undefined);
+if (process.env.NODE_ENV !== 'production') {
+  (globalThis as any)._authContext = AuthContext;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Tejedor | null>(null);

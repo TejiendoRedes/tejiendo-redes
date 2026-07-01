@@ -122,3 +122,22 @@ export async function getEnfermedadesByConsulta(codigoConsulta: string) {
     }
 }
 
+/**
+ * Obtener antecedentes de un paciente
+ */
+export async function getAntecedentesByPaciente(cedulaPaciente: string) {
+    try {
+        await requireAuth();
+        const { antecedentes } = await import('@/db/schema/antecedentes');
+        const data = await db.select()
+            .from(antecedentes)
+            .where(eq(antecedentes.cedulaPaciente, cedulaPaciente))
+            .limit(1);
+        
+        return { success: true, data: data[0] || null };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'los antecedentes', 'obtener');
+        return { success: false, error: errorMessage };
+    }
+}
+

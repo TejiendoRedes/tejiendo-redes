@@ -72,7 +72,7 @@ export default function LoginForm() {
                         placeholder="nombre.apellido"
                         value={usuario}
                         onChange={(e) => setUsuario(e.target.value)}
-                        className="h-12 rounded-xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-[#1e3a8a] focus-visible:ring-2 focus-visible:ring-[#1e3a8a]/20"
                         autoComplete="username"
                         required
                         disabled={loading}
@@ -87,7 +87,7 @@ export default function LoginForm() {
                     </Label>
                     <Link
                         href="/"
-                        className="text-xs text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                        className="text-xs text-[#1e3a8a] transition-colors hover:text-blue-900 hover:underline"
                     >
                         ¿Olvidaste tu contraseña?
                     </Link>
@@ -100,7 +100,7 @@ export default function LoginForm() {
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="h-12 rounded-xl border-slate-200 bg-white pl-10 pr-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-10 pr-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-[#1e3a8a] focus-visible:ring-2 focus-visible:ring-[#1e3a8a]/20"
                         autoComplete="current-password"
                         required
                         disabled={loading}
@@ -108,7 +108,7 @@ export default function LoginForm() {
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e3a8a]"
                         aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -118,7 +118,7 @@ export default function LoginForm() {
 
             <Button
                 type="submit"
-                className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-700/25 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="h-12 w-full rounded-xl bg-[#1e3a8a] text-base font-semibold text-white shadow-lg shadow-[#1e3a8a]/20 transition-all hover:bg-blue-900 hover:shadow-[#1e3a8a]/25 focus-visible:ring-2 focus-visible:ring-[#1e3a8a] focus-visible:ring-offset-2"
                 disabled={loading}
             >
                 {loading ? (

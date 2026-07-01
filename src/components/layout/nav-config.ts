@@ -48,7 +48,7 @@ export const navGroups: NavGroup[] = [
     title: "Operaciones",
     items: [
       { label: "Abordajes", to: "/abordajes", icon: CalendarHeart },
-      { label: "Farmacia", to: "/farmacia", icon: Pill },
+      { label: "Farmacia", to: "/farmacia/peticiones", icon: Pill },
       { label: "Inventario", to: "/farmacia/medicamentos", icon: Boxes },
     ],
   },

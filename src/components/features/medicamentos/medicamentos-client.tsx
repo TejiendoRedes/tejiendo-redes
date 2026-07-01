@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -203,85 +204,82 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
 
     return (
         <MainLayout>
-            <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                            <Package className="w-8 h-8 text-blue-600" />
-                            Medicamentos
-                        </h1>
-                        <p className="text-gray-500 mt-1">
-                            Gestión integral del inventario de medicamentos y suministros.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Resumen de alertas con diseño premium */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white border-l-4 border-l-red-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-red-500 mb-1">Existencia Crítica / Agotada</p>
+            <PageShell 
+                title="Inventario de Medicamentos" 
+                subtitle="Gestión integral de existencias e insumos médicos"
+                actions={
+                    <Button onClick={handleAdd} className="gap-2 bg-[#1e3a8a] text-white hover:bg-blue-800 rounded-xl shadow-sm">
+                        <Plus className="w-4 h-4" />
+                        Nuevo Medicamento
+                    </Button>
+                }
+            >
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    {/* Alerta Roja */}
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Agotados / Crítico</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {initialData.filter((m) => m.existencia < 20).length}
                                 </p>
                             </div>
-                            <div className="bg-red-50 p-3 rounded-lg">
-                                <AlertCircle className="w-6 h-6 text-red-600" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600 transition-colors group-hover:bg-red-100">
+                                <AlertCircle className="w-5 h-5" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white border-l-4 border-l-yellow-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-yellow-600 mb-1">Existencia Baja / Media</p>
+                    {/* Alerta Amarilla */}
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Existencia Baja</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {initialData.filter((m) => m.existencia >= 20 && m.existencia < 50).length}
                                 </p>
                             </div>
-                            <div className="bg-yellow-50 p-3 rounded-lg">
-                                <AlertCircle className="w-6 h-6 text-yellow-600" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+                                <AlertCircle className="w-5 h-5" />
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-white border-l-4 border-l-green-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-green-600 mb-1">Existencia Óptima</p>
+                    {/* Alerta Verde */}
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Existencia Óptima</p>
                                 <p className="text-3xl font-bold text-gray-900">
                                     {initialData.filter((m) => m.existencia >= 50).length}
                                 </p>
                             </div>
-                            <div className="bg-green-50 p-3 rounded-lg">
-                                <AlertCircle className="w-6 h-6 text-green-600" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100">
+                                <AlertCircle className="w-5 h-5" />
                             </div>
                         </div>
+                    </div>
+
+                    {/* Solicitudes */}
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Entregados</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {solicitudesData ? solicitudesData.totales.totalUnidades.toLocaleString('es-VE') : '0'}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100">
+                                <Package className="w-5 h-5" />
+                            </div>
+                        </div>
+                        {solicitudesData && (
+                            <p className="text-xs text-gray-500 mt-2 truncate">
+                                {solicitudesData.totales.totalMedicamentos} medicamentos distintos
+                            </p>
+                        )}
                     </div>
                 </div>
-
-                {/* Resumen de Medicamentos Solicitados */}
-                {solicitudesData && (
-                    <div className="bg-white border-l-4 border-l-blue-500 shadow-sm rounded-xl p-5 hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 mb-1">Medicamentos Solicitados</p>
-                                <div className="space-y-1">
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {solicitudesData.totales.totalUnidades.toLocaleString('es-VE')}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                        {solicitudesData.totales.totalMedicamentos} tipos de medicamentos
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                                <Package className="w-6 h-6 text-blue-600" />
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 <DataTable
                     data={initialData}
@@ -312,7 +310,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                         />
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

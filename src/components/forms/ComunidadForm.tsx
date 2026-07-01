@@ -267,7 +267,7 @@ export function ComunidadForm({
                 </Button>
                 <Button
                     type="submit"
-                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95"
+                    className="px-8 shadow-lg shadow-blue-900/20 transition-all active:scale-95"
                     disabled={isLoading}
                 >
                     {isLoading ? 'Guardando...' : (submitLabel || (initialData ? 'Actualizar Comunidad' : 'Guardar Comunidad'))}

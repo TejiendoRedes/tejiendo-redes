@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { HeartHandshake } from 'lucide-react';
+import { HeartHandshake, ArrowLeft } from 'lucide-react';
 import LoginForm from '@/components/forms/LoginForm';
 
 export default function LoginPage() {
@@ -46,7 +46,14 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel - login form */}
-      <div className="flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+      <div className="relative flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+        <Link
+          href="/"
+          className="absolute left-6 top-6 flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-[#1e3a8a]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Volver al inicio</span>
+        </Link>
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700 rounded-3xl border border-white/60 bg-white/80 shadow-2xl backdrop-blur-xl">
           <div className="space-y-3 pb-2 pt-8 text-center">
             <div className="mx-auto flex justify-center lg:hidden">
@@ -76,7 +83,7 @@ export default function LoginPage() {
               ¿Quieres ser voluntario?{" "}
               <Link
                 href="/unirse"
-                className="font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                className="font-medium text-[#1e3a8a] transition-colors hover:text-blue-900 hover:underline"
               >
                 Únete aquí
               </Link>

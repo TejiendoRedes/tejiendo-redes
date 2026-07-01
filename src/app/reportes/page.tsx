@@ -1,5 +1,6 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageShell } from '@/components/layout/PageShell';
 import { getReporteAbordajes, getReporteComunidades, getReportePacientes, getReporteMorbilidad, getReporteMedicamentos, getComunidadesParaFiltro } from '@/queries/reportes';
 import ReportesClient from '@/components/features/reportes/ReportesClient';
 export default async function ReportesPage({
@@ -20,22 +21,13 @@ export default async function ReportesPage({
         tipoComunidad: tipoComunidad as string
     };
 
-    // Obtener todos los datos de reportes en paralelo para mejor rendimiento
-    const [
-        comunidadesResult,
-        abordajesResult,
-        comunidadesReporteResult,
-        pacientesResult,
-        morbilidadResult,
-        medicamentosResult
-    ] = await Promise.all([
-        getComunidadesParaFiltro(),
-        getReporteAbordajes(filters),
-        getReporteComunidades(filters),
-        getReportePacientes(filters),
-        getReporteMorbilidad(filters),
-        getReporteMedicamentos(filters)
-    ]);
+    // Obtener datos secuencialmente para no saturar el pool de conexiones de la base de datos
+    const comunidadesResult = await getComunidadesParaFiltro();
+    const abordajesResult = await getReporteAbordajes(filters);
+    const comunidadesReporteResult = await getReporteComunidades(filters);
+    const pacientesResult = await getReportePacientes(filters);
+    const morbilidadResult = await getReporteMorbilidad(filters);
+    const medicamentosResult = await getReporteMedicamentos(filters);
 
     // Extraer datos o usar arrays vacíos como fallback
     const comunidadesFilter = comunidadesResult.success ? comunidadesResult.data : [];
@@ -47,12 +39,10 @@ export default async function ReportesPage({
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl text-gray-900 mb-2">Reportes</h1>
-                    <p className="text-gray-600">Generación de reportes con filtros personalizados</p>
-                </div>
-
+            <PageShell 
+                title="Reportes" 
+                subtitle="Generación de reportes con filtros personalizados y estadísticas avanzadas"
+            >
                 <ReportesClient
                     comunidades={comunidadesFilter}
                     reporteAbordajes={reporteAbordajes}
@@ -61,7 +51,7 @@ export default async function ReportesPage({
                     dataMorbilidad={dataMorbilidad}
                     reporteMedicamentos={reporteMedicamentos}
                 />
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

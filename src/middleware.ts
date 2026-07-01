@@ -59,6 +59,21 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // 2.5 API Key Authentication for External Integration (v1)
+    if (pathname.startsWith('/api/v1/')) {
+        const apiKey = request.headers.get('x-api-key');
+        const validApiKey = process.env.INTEGRATION_API_KEY || 'tr_dev_api_key_2026';
+        
+        if (!apiKey || apiKey !== validApiKey) {
+            return new NextResponse(JSON.stringify({ error: 'Unauthorized: Invalid or missing API Key' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        // Let the request pass through if valid
+        return NextResponse.next();
+    }
+
     const currentUser = request.cookies.get('session')?.value;
     let session = null;
     if (currentUser) {
@@ -72,7 +87,7 @@ export async function middleware(request: NextRequest) {
     // Public Paths
     const isLoginPage = pathname.startsWith('/login');
     const isUnirsePage = pathname.startsWith('/unirse');
-    const isPublicApi = pathname.startsWith('/api/auth') || pathname.startsWith('/api/public');
+    const isPublicApi = pathname.startsWith('/api/auth') || pathname.startsWith('/api/public') || pathname.startsWith('/api/v1');
     const isPrototipo = pathname.startsWith('/prototipo');
     const isStaticAsset =
         pathname.startsWith('/_next') ||

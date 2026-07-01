@@ -25,6 +25,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { ShieldAlert } from 'lucide-react';
 import { PageShell } from '@/components/layout/PageShell';
 import { MetricCard } from '@/components/ui/MetricCard'; 
 import { StatusBadge } from '@/components/ui/StatusBadge'; 
@@ -51,8 +52,17 @@ const byArea = [
 
 export default function AdminDashboard() {
     const [pendingAspirantes, setPendingAspirantes] = useState<any[]>([]);
-    const [stats, setStats] = useState({ pendingAspirantes: 0, activeAbordajes: 0, totalConsultas: 0 });
+    const [stats, setStats] = useState({ 
+        pendingAspirantes: 0, 
+        activeAbordajes: 0, 
+        totalConsultas: 0,
+        totalPacientes: 0,
+        totalMedicamentos: 0
+    });
     const [recentAbordajes, setRecentAbordajes] = useState<any[]>([]);
+    const [lowStockAlerts, setLowStockAlerts] = useState<any[]>([]);
+    const [topMorbilidades, setTopMorbilidades] = useState<any[]>([]);
+    const [monthlyData, setMonthlyData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -67,6 +77,9 @@ export default function AdminDashboard() {
                 const statsData = await statsRes.json();
                 if (statsData.stats) setStats(statsData.stats);
                 if (statsData.recentAbordajes) setRecentAbordajes(statsData.recentAbordajes);
+                if (statsData.lowStockAlerts) setLowStockAlerts(statsData.lowStockAlerts);
+                if (statsData.topMorbilidades) setTopMorbilidades(statsData.topMorbilidades);
+                if (statsData.monthlyStats) setMonthlyData(statsData.monthlyStats);
             } catch (err) {
                 console.error('Error fetching dashboard data:', err);
             } finally {
@@ -106,10 +119,10 @@ export default function AdminDashboard() {
                 ) : (
                     <>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <MetricCard label="Aspirantes Pendientes" value={stats.pendingAspirantes.toString()} icon={Users} tone="blue" delta={0} hint="Por revisar" />
-                            <MetricCard label="Abordajes Activos" value={stats.activeAbordajes.toString()} icon={CalendarHeart} tone="sky" delta={0} hint="En curso o planificados" />
-                            <MetricCard label="Consultas Históricas" value={stats.totalConsultas.toString()} icon={Stethoscope} tone="success" delta={5} hint="Total de consultas registradas" />
-                            <MetricCard label="Medicamentos Entregados" value="6.320" icon={Pill} tone="yellow" delta={-3} hint="Unidades dispensadas" />
+                            <MetricCard label="Total de Pacientes" value={stats.totalPacientes.toString()} icon={Users} tone="blue" />
+                            <MetricCard label="Consultas Realizadas" value={stats.totalConsultas.toString()} icon={Stethoscope} tone="sky" />
+                            <MetricCard label="Abordajes Activos" value={stats.activeAbordajes.toString()} icon={CalendarHeart} tone="success" hint="En curso o planificados" />
+                            <MetricCard label="Medicamentos Entregados" value={stats.totalMedicamentos.toString()} icon={Pill} tone="yellow" />
                         </div>
 
                         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -121,15 +134,15 @@ export default function AdminDashboard() {
                             >
                                 <div className="h-72 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={monthly} margin={{ left: -16, right: 8, top: 8 }}>
+                                        <AreaChart data={monthlyData} margin={{ left: -16, right: 8, top: 8 }}>
                                             <defs>
                                                 <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="var(--color-brand-blue)" stopOpacity={0.35} />
-                                                    <stop offset="100%" stopColor="var(--color-brand-blue)" stopOpacity={0} />
+                                                    <stop offset="0%" stopColor="#1e3a8a" stopOpacity={0.4} />
+                                                    <stop offset="100%" stopColor="#1e3a8a" stopOpacity={0} />
                                                 </linearGradient>
                                                 <linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="var(--color-brand-sky)" stopOpacity={0.35} />
-                                                    <stop offset="100%" stopColor="var(--color-brand-sky)" stopOpacity={0} />
+                                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+                                                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -143,17 +156,17 @@ export default function AdminDashboard() {
                                                     fontSize: 13,
                                                 }}
                                             />
-                                            <Area type="monotone" dataKey="pacientes" stroke="var(--color-brand-blue)" strokeWidth={2.5} fill="url(#gp)" />
-                                            <Area type="monotone" dataKey="consultas" stroke="var(--color-brand-sky)" strokeWidth={2.5} fill="url(#gc)" />
+                                            <Area type="monotone" dataKey="pacientes" stroke="#1e3a8a" strokeWidth={3} fill="url(#gp)" />
+                                            <Area type="monotone" dataKey="consultas" stroke="#3b82f6" strokeWidth={3} fill="url(#gc)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
                             </Card>
 
-                            <Card title="Consultas por área" description="Distribución por especialidad">
+                            <Card title="Principales Morbilidades" description="Diagnósticos más frecuentes">
                                 <div className="h-72 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={byArea} layout="vertical" margin={{ left: 8, right: 16 }}>
+                                        <BarChart data={topMorbilidades} layout="vertical" margin={{ left: 8, right: 16 }}>
                                             <XAxis type="number" hide />
                                             <YAxis type="category" dataKey="area" width={92} stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
                                             <Tooltip
@@ -165,7 +178,7 @@ export default function AdminDashboard() {
                                                     fontSize: 13,
                                                 }}
                                             />
-                                            <Bar dataKey="n" fill="var(--color-brand-blue)" radius={[0, 8, 8, 0]} barSize={18} />
+                                            <Bar dataKey="n" fill="#1e3a8a" radius={[0, 8, 8, 0]} barSize={20} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -181,7 +194,7 @@ export default function AdminDashboard() {
                                         recentAbordajes.map((a) => (
                                             <li key={a.codigo || a.comunidad} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
                                                 <div className="flex items-center gap-3">
-                                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-primary">
+                                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-[#1e3a8a]">
                                                         <MapPin className="h-5 w-5" />
                                                     </span>
                                                     <div>
@@ -200,6 +213,38 @@ export default function AdminDashboard() {
                                                     >
                                                         {a.estado}
                                                     </StatusBadge>
+                                                </div>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
+                            </Card>
+
+                            <Card title="Solicitudes Pendientes" description="Nuevos voluntarios por revisar" icon={<Users className="h-5 w-5 text-[#1e3a8a]" />}>
+                                <ul className="divide-y divide-border">
+                                    {pendingAspirantes.length === 0 ? (
+                                        <li className="py-4 text-center text-sm text-muted-foreground">No hay solicitudes de voluntarios pendientes.</li>
+                                    ) : (
+                                        pendingAspirantes.map((a) => (
+                                            <li key={a.cedulaAspirante} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                                        <Users className="h-5 w-5" />
+                                                    </span>
+                                                    <div>
+                                                        <p className="font-semibold text-foreground text-sm">{a.nombreAspirante} {a.apellidoAspirante}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {a.profesionAspirante} • C.I. {a.cedulaAspirante}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button size="sm" variant="outline" className="h-8 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200" onClick={() => handleApproval(a.cedulaAspirante, false)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button size="sm" className="h-8 px-2 bg-[#1e3a8a] text-white hover:bg-blue-900" onClick={() => handleApproval(a.cedulaAspirante, true)}>
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </li>
                                         ))

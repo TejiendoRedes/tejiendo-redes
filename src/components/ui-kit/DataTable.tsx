@@ -3,6 +3,21 @@ import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, Plus } from "luci
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+
+export type FilterDef<T> = {
+  key: keyof T;
+  label: string;
+  options: { label: string; value: string }[];
+};
+
 export type Column<T> = {
   key: string;
   header: string;
@@ -19,6 +34,7 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder = "Buscar...",
   pageSize = 6,
   primaryAction,
+  filters,
 }: {
   title: string;
   description?: string;
@@ -28,17 +44,48 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder?: string;
   pageSize?: number;
   primaryAction?: { label: string; onClick?: () => void };
+  filters?: FilterDef<T>[];
 }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
 
   const filtered = useMemo(() => {
+    let result = data;
+
+    // Apply active filters
+    if (filters) {
+      filters.forEach((f) => {
+        const selected = activeFilters[f.key as string];
+        if (selected && selected.length > 0) {
+          result = result.filter((row) => selected.includes(String(row[f.key] ?? "")));
+        }
+      });
+    }
+
+    // Apply search query
     const q = query.trim().toLowerCase();
-    if (!q) return data;
-    return data.filter((row) =>
-      searchKeys.some((k) => String(row[k] ?? "").toLowerCase().includes(q)),
-    );
-  }, [data, query, searchKeys]);
+    if (q) {
+      result = result.filter((row) =>
+        searchKeys.some((k) => String(row[k] ?? "").toLowerCase().includes(q)),
+      );
+    }
+
+    return result;
+  }, [data, query, searchKeys, activeFilters, filters]);
+
+  const toggleFilter = (key: string, value: string) => {
+    setActiveFilters((prev) => {
+      const current = prev[key] || [];
+      if (current.includes(value)) {
+        return { ...prev, [key]: current.filter((v) => v !== value) };
+      }
+      return { ...prev, [key]: [...current, value] };
+    });
+    setPage(0);
+  };
+
+  const activeFiltersCount = Object.values(activeFilters).reduce((acc, curr) => acc + curr.length, 0);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const current = Math.min(page, pageCount - 1);
@@ -64,10 +111,44 @@ export function DataTable<T extends Record<string, unknown>>({
               className="h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </div>
-          <button className="inline-flex h-12 items-center gap-2 rounded-xl border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted">
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="hidden sm:inline">Filtros</span>
-          </button>
+          {filters && filters.length > 0 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex h-12 items-center gap-2 rounded-xl border border-[#1e3a8a]/30 bg-[#1e3a8a]/5 px-4 text-sm font-medium text-[#1e3a8a] transition-colors hover:bg-[#1e3a8a]/10 cursor-pointer">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span className="hidden sm:inline">Filtros</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1e3a8a] text-[10px] font-bold text-white">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {filters.map((f, i) => (
+                  <React.Fragment key={f.key as string}>
+                    {i > 0 && <DropdownMenuSeparator />}
+                    <DropdownMenuLabel>{f.label}</DropdownMenuLabel>
+                    {f.options.map((opt) => (
+                      <DropdownMenuCheckboxItem
+                        key={opt.value}
+                        checked={(activeFilters[f.key as string] || []).includes(opt.value)}
+                        onCheckedChange={() => toggleFilter(f.key as string, opt.value)}
+                        className="cursor-pointer"
+                      >
+                        {opt.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <button disabled className="inline-flex h-12 items-center gap-2 rounded-xl border border-input bg-muted/50 px-4 text-sm font-medium text-muted-foreground cursor-not-allowed">
+              <SlidersHorizontal className="h-4 w-4 opacity-50" />
+              <span className="hidden sm:inline opacity-50">Filtros</span>
+            </button>
+          )}
           {primaryAction && (
             <button
               onClick={primaryAction.onClick}
@@ -137,7 +218,7 @@ export function DataTable<T extends Record<string, unknown>>({
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={current === 0}
-            className="inline-flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
           >
             <ChevronLeft className="h-4 w-4" /> Anterior
           </button>
@@ -146,9 +227,9 @@ export function DataTable<T extends Record<string, unknown>>({
               key={i}
               onClick={() => setPage(i)}
               className={cn(
-                "h-9 w-9 rounded-lg text-sm font-semibold transition-colors",
+                "h-9 w-9 rounded-lg text-sm font-semibold transition-colors cursor-pointer",
                 i === current
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-[#1e3a8a] text-white"
                   : "border border-input bg-background text-foreground hover:bg-muted",
               )}
             >
@@ -158,7 +239,7 @@ export function DataTable<T extends Record<string, unknown>>({
           <button
             onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
             disabled={current >= pageCount - 1}
-            className="inline-flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
           >
             Siguiente <ChevronRight className="h-4 w-4" />
           </button>

@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Stethoscope, User, ClipboardList } from 'lucide-react';
+import { Edit, Trash2, Stethoscope, User, ClipboardList, Phone, MapPin, Eye, Download, Plus, Award } from 'lucide-react';
 import { Tejedor } from '@/db/schema/tejedores';
 import { Especialidad } from '@/db/schema/especialidades';
 import { createMedico, deleteMedico, updateMedico } from '@/actions/medicos-actions';
@@ -16,24 +17,12 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 interface MedicoWithRelations {
     cedulaTejedor: string;
@@ -53,8 +42,40 @@ interface MedicosClientProps {
 export default function MedicosClient({ initialMedicos, tejedores, especialidades }: MedicosClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [viewingMedico, setViewingMedico] = React.useState<MedicoWithRelations | null>(null);
     const [activeTab, setActiveTab] = React.useState('tejedor');
     const [isLoading, setIsLoading] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
+
+    const calcularEdad = (fecha: string | Date | null) => {
+        if (!fecha) return 0;
+        const hoy = new Date();
+        const nacimiento = new Date(fecha);
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        return edad;
+    };
+
+    const getLocationNames = (t: Tejedor | null) => {
+        if (!t) return '-';
+        const estado = (t as any).estadoTejedor;
+        const municipio = (t as any).municipioTejedor;
+        const parroquia = (t as any).parroquiaTejedor;
+
+        if (!estado || !municipio || !parroquia) return '-';
+
+        const estadoNombre = getEstadoNombre(estado);
+        const municipioNombre = getMunicipioNombre(estado, municipio);
+        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
+
+        if (parroquia) {
+            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
+        }
+        return `${estadoNombre}, ${municipioNombre}`;
+    };
 
     const [formData, setFormData] = React.useState({
         cedulaTejedor: '',
@@ -65,7 +86,6 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
 
     const [isEditing, setIsEditing] = React.useState(false);
 
-    // Tejedores que aún no son médicos (solo para crear)
     const tejedoresDisponibles = tejedores.filter(t =>
         !initialMedicos.some(m => m.cedulaTejedor === t.cedulaTejedor)
     );
@@ -90,21 +110,19 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
             matriculaColegioMedico: medico.matriculaColegioMedico,
             matriculaSanidad: medico.matriculaSanidad,
         });
-        // Si editamos, saltamos directo a la especialidad o permitimos ver el tejedor (read-only)
         setActiveTab('especialidad');
         setIsModalOpen(true);
     };
 
     const handleDelete = async (cedula: string) => {
-        if (confirm('¿Está seguro de eliminar esta asignación de médico?')) {
-            const res = await deleteMedico(cedula);
-            if (res.success) {
-                toast.success(res.message);
-                router.refresh();
-            } else {
-                toast.error(res.error);
-            }
+        const res = await deleteMedico(cedula);
+        if (res.success) {
+            toast.success(res.message);
+            router.refresh();
+        } else {
+            toast.error(res.error);
         }
+        setDeleteTarget(null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -142,33 +160,45 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
     const columns: Column<MedicoWithRelations>[] = [
         {
             key: 'cedulaTejedor',
-            label: 'Cédula',
-            sortable: true
+            header: 'Médico',
+            render: (m) => (
+                <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-sm font-bold text-[#1e3a8a]">
+                        {m.tejedor ? `${m.tejedor.nombreTejedor[0]}${m.tejedor.apellidoTejedor[0]}` : '?'}
+                    </span>
+                    <div>
+                        <p className="font-semibold text-foreground">
+                            {m.tejedor ? `${m.tejedor.nombreTejedor} ${m.tejedor.apellidoTejedor}` : 'N/A'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{m.cedulaTejedor}</p>
+                    </div>
+                </div>
+            ),
         },
         {
-            key: 'nombre_completo', // Virtual column key
-            label: 'Nombre Completo',
-            render: (m) => m.tejedor ? `${m.tejedor.nombreTejedor} ${m.tejedor.apellidoTejedor}` : 'N/A',
-            sortable: true,
-        },
-        {
-            key: 'especialidad',
-            label: 'Especialidad',
+            key: 'codigoEspecialidad',
+            header: 'Especialidad',
             render: (m) => m.especialidad ? m.especialidad.nombreEspecialidad : m.codigoEspecialidad
         },
         {
             key: 'telefono', // Virtual column
-            label: 'Teléfono',
-            render: (m) => m.tejedor ? m.tejedor.telefonoTejedor : '-'
-        },
-        {
-            key: 'correo', // Virtual column
-            label: 'Correo',
-            render: (m) => m.tejedor ? m.tejedor.correoTejedor : '-'
+            header: 'Teléfono / Correo',
+            render: (m) => (
+                <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5" /> {m.tejedor?.telefonoTejedor || '-'}
+                    </div>
+                    {m.tejedor?.correoTejedor && (
+                        <div className="text-xs text-muted-foreground">
+                            {m.tejedor.correoTejedor}
+                        </div>
+                    )}
+                </div>
+            )
         },
         {
             key: 'ubicacion', // Virtual column
-            label: 'Ubicación',
+            header: 'Ubicación',
             render: (m) => m.tejedor ? (
                 (() => {
                     const estadoNombre = getEstadoNombre(m.tejedor.estadoTejedor);
@@ -176,10 +206,12 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                     const parroquiaNombre = getParroquiaNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor, m.tejedor.parroquiaTejedor);
 
                     return (
-                        <div className="text-sm">
-                            <div className="font-medium">{estadoNombre || '-'}</div>
-                            <div className="text-gray-500">{municipioNombre || '-'}</div>
-                            <div className="text-gray-400">{parroquiaNombre || '-'}</div>
+                        <div className="flex items-start gap-1.5">
+                            <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                            <div className="text-sm">
+                                <div className="font-medium">{estadoNombre || '-'}</div>
+                                <div className="text-xs text-muted-foreground">{municipioNombre || '-'}</div>
+                            </div>
                         </div>
                     );
                 })()
@@ -187,23 +219,34 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (m) => (
-                <div className="flex gap-2">
+                <div className="flex justify-end gap-1">
                     <Button
                         variant="ghost"
                         size="sm"
-                        title="Editar"
+                        onClick={() => setViewingMedico(m)}
+                        className="hover:bg-blue-50 hover:text-[#1e3a8a] text-gray-500"
+                        title="Ver detalles"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(m)}
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
+                        title="Editar"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700"
+                        onClick={() => setDeleteTarget(m.cedulaTejedor)}
+                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
                         title="Eliminar"
-                        onClick={() => handleDelete(m.cedulaTejedor)}
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
@@ -245,25 +288,85 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
         }
     };
 
+    // Obtenemos especialidades únicas para el filtro
+    const uniqueEspecialidades = Array.from(new Set(initialMedicos.map(m => m.codigoEspecialidad))).map(code => {
+        const especialidad = especialidades.find(e => e.codigoEspecialidad === code);
+        return {
+            label: especialidad ? especialidad.nombreEspecialidad : code,
+            value: code
+        };
+    });
+
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Médicos</h1>
-                        <p className="text-gray-600">
-                            Gestión de médicos registrados en el sistema
-                        </p>
+            <PageShell 
+                title="Personal de Salud" 
+                subtitle="Gestión de médicos registrados en el sistema"
+                actions={
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExport('pdf')} 
+                            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button 
+                            onClick={handleAdd} 
+                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Asignar Médico
+                        </Button>
+                    </div>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Médicos Activos</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialMedicos.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <Stethoscope className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Especialidades Únicas</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {uniqueEspecialidades.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-600 transition-colors group-hover:bg-sky-100">
+                                <Award className="w-5 h-5" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <DataTable
+                    title="Listado de médicos"
+                    description="Busca por cédula o código de especialidad"
                     data={initialMedicos}
                     columns={columns}
-                    searchPlaceholder="Buscar médico..."
-                    onAdd={handleAdd}
-                    addLabel="Asignar Médico"
-                    onExport={handleExport}
+                    searchKeys={['cedulaTejedor', 'codigoEspecialidad']}
+                    searchPlaceholder="Buscar por cédula o especialidad..."
+                    filters={[
+                        {
+                            key: 'codigoEspecialidad',
+                            label: 'Especialidad',
+                            options: uniqueEspecialidades
+                        }
+                    ]}
                 />
 
                 {/* Modal Formulario con Pestañas */}
@@ -271,7 +374,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                     <DialogContent className="max-w-2xl">
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Stethoscope className="w-6 h-6 text-blue-600" />
+                                <Stethoscope className="w-6 h-6 text-primary" />
                                 {isEditing ? 'Editar Asignación' : 'Asignar Nuevo Médico'}
                             </DialogTitle>
                             <DialogDescription>
@@ -309,7 +412,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                                 type="button"
                                                 onClick={() => setActiveTab('especialidad')}
                                                 disabled={!formData.cedulaTejedor}
-                                                className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
+                                                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all"
                                             >
                                                 Siguiente: Datos Médicos
                                             </Button>
@@ -320,20 +423,20 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                 {activeTab === 'especialidad' && (
                                     <div className="space-y-6 py-2">
                                         {/* Resumen del Tejedor Seleccionado */}
-                                        <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-100">
+                                        <div className="bg-primary/10 p-4 rounded-lg flex items-center justify-between border border-primary/20">
                                             <div className="flex items-center gap-3">
-                                                <div className="bg-blue-600 p-2 rounded-full">
-                                                    <User className="w-5 h-5 text-white" />
+                                                <div className="bg-primary p-2 rounded-full">
+                                                    <User className="w-5 h-5 text-primary-foreground" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider">Tejedor Seleccionado</p>
-                                                    <h3 className="text-lg font-bold text-blue-900 leading-tight">
+                                                    <p className="text-xs text-primary font-semibold uppercase tracking-wider">Tejedor Seleccionado</p>
+                                                    <h3 className="text-lg font-bold text-foreground leading-tight">
                                                         {(() => {
                                                             const t = tejedores.find(tej => tej.cedulaTejedor === formData.cedulaTejedor);
                                                             return t ? `${t.nombreTejedor} ${t.apellidoTejedor}` : 'No seleccionado';
                                                         })()}
                                                     </h3>
-                                                    <p className="text-sm text-blue-700">C.I: {formData.cedulaTejedor}</p>
+                                                    <p className="text-sm text-muted-foreground">C.I: {formData.cedulaTejedor}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -390,7 +493,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                             </Button>
                                             <Button
                                                 type="submit"
-                                                className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95"
+                                                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all"
                                                 disabled={isLoading || !formData.codigoEspecialidad || !formData.matriculaColegioMedico || !formData.matriculaSanidad}
                                             >
                                                 {isLoading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Finalizar Asignación')}
@@ -402,7 +505,86 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                         </form>
                     </DialogContent>
                 </Dialog>
-            </div>
+
+                <Dialog open={!!viewingMedico} onOpenChange={(open) => !open && setViewingMedico(null)}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl text-[#1e3a8a]">
+                                Perfil del Médico
+                            </DialogTitle>
+                            <DialogDescription className="hidden">Ver detalles completos del personal de salud</DialogDescription>
+                        </DialogHeader>
+                        {viewingMedico && (
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-4">
+                                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1e3a8a]/10 text-xl font-bold text-[#1e3a8a]">
+                                        {viewingMedico.tejedor ? `${viewingMedico.tejedor.nombreTejedor[0]}${viewingMedico.tejedor.apellidoTejedor[0]}` : '?'}
+                                    </span>
+                                    <div>
+                                        <p className="text-lg font-bold text-gray-900">
+                                            {viewingMedico.tejedor ? `${viewingMedico.tejedor.nombreTejedor} ${viewingMedico.tejedor.apellidoTejedor}` : 'N/A'}
+                                        </p>
+                                        <p className="text-sm text-[#1e3a8a] font-medium">
+                                            {viewingMedico.especialidad ? viewingMedico.especialidad.nombreEspecialidad : viewingMedico.codigoEspecialidad}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase">Credenciales Médicas</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Matrícula Colegio</p>
+                                        <p className="font-medium">{viewingMedico.matriculaColegioMedico}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Matrícula Sanidad</p>
+                                        <p className="font-medium">{viewingMedico.matriculaSanidad}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase mt-2">Datos Personales</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">C.I.</p>
+                                        <p className="font-medium">{viewingMedico.cedulaTejedor}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Edad</p>
+                                        <p className="font-medium">{viewingMedico.tejedor ? `${calcularEdad(viewingMedico.tejedor.fechaNacimiento)} años` : 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Teléfono</p>
+                                        <p className="font-medium">{viewingMedico.tejedor?.telefonoTejedor || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Correo</p>
+                                        <p className="font-medium">{viewingMedico.tejedor?.correoTejedor || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 mb-0.5">Ubicación</p>
+                                        <p className="font-medium">{getLocationNames(viewingMedico.tejedor)}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t flex justify-end">
+                                    <Button onClick={() => setViewingMedico(null)} variant="outline">
+                                        Cerrar
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                <ConfirmDialog
+                    open={!!deleteTarget}
+                    onOpenChange={(open) => !open && setDeleteTarget(null)}
+                    title="Eliminar asignación de médico"
+                    description="¿Está seguro de eliminar esta asignación de médico? Esta acción no eliminará al tejedor del sistema."
+                    confirmLabel="Eliminar"
+                    onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+                />
+            </PageShell>
         </MainLayout>
     );
 }

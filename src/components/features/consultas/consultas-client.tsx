@@ -3,18 +3,18 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Activity, Plus } from 'lucide-react';
+import { Edit, Trash2, Activity, User, Stethoscope, FileText, ArrowRight } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogFooter
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
     SelectContent,
@@ -22,18 +22,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from 'sonner';
 
-import type { Consulta } from '@/db/schema/consultas';
-import type { Paciente } from '@/db/schema/pacientes';
 import type { Enfermedad } from '@/db/schema/enfermedades';
-// We need extended types for lists
-import { createConsulta, updateConsulta, deleteConsulta } from '@/actions/consultas-actions';
-import { getEnfermedadesByConsulta } from '@/queries/consultas';;
+import { deleteConsulta, saveConsultaWizard } from '@/actions/consultas-actions';
+import { getEnfermedadesByConsulta, getAntecedentesByPaciente } from '@/queries/consultas';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ConsultaWizard, type WizardData } from './ConsultaWizard';
 
 interface ConsultasClientProps {
-    consultas: any[]; // Using any for joined result type momentarily
+    consultas: any[];
     pacientes: any[];
     medicos: any[];
     abordajes: any[];
@@ -50,148 +48,247 @@ export default function ConsultasClient({
     const [consultasData, setConsultasData] = React.useState(initialConsultas);
     const router = useRouter();
 
-    // Sincronizar estado local cuando los datos del servidor cambian (router.refresh())
     React.useEffect(() => {
         setConsultasData(initialConsultas);
     }, [initialConsultas]);
 
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [editingId, setEditingId] = React.useState<string | null>(null);
+    // View State
+    const [view, setView] = React.useState<'list' | 'wizard'>('list');
+    const [isSetupOpen, setIsSetupOpen] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
+    const [isLoading, setIsLoading] = React.useState(false);
 
-    // Form State
-    const [formData, setFormData] = React.useState({
-        codigoConsulta: '',
+    // Setup State (Step 0)
+    const [selectedSetup, setSelectedSetup] = React.useState({
         codigoAbordaje: '',
         cedulaPaciente: '',
-        cedulaMedico: '',
-        motivoConsulta: '',
-        diagnosticoTexto: '',
-        recomendaciones: '',
-        tratamiento: '',
+        cedulaMedico: ''
     });
-    const [selectedEnfermedades, setSelectedEnfermedades] = React.useState<string[]>([]);
 
-    const handleAdd = () => {
+    // Wizard Data State
+    const [editingId, setEditingId] = React.useState<string | null>(null);
+    const [wizardInitialData, setWizardInitialData] = React.useState<Partial<WizardData>>({});
+
+    // -- Handlers --
+    const handleAddClick = () => {
         setEditingId(null);
-        setFormData({
-            codigoConsulta: '',
-            codigoAbordaje: '',
-            cedulaPaciente: '',
-            cedulaMedico: '',
-            motivoConsulta: '',
-            diagnosticoTexto: '',
-            recomendaciones: '',
-            tratamiento: '',
-        });
-        setSelectedEnfermedades([]);
-        setIsModalOpen(true);
+        setSelectedSetup({ codigoAbordaje: '', cedulaPaciente: '', cedulaMedico: '' });
+        setIsSetupOpen(true);
     };
 
-    const handleEdit = async (consulta: any) => {
-        setEditingId(consulta.consulta.codigoConsulta);
-        setFormData({
-            codigoConsulta: consulta.consulta.codigoConsulta,
-            codigoAbordaje: consulta.consulta.codigoAbordaje,
-            cedulaPaciente: consulta.consulta.cedulaPaciente,
-            cedulaMedico: consulta.consulta.cedulaMedico,
-            motivoConsulta: consulta.consulta.motivoConsulta,
-            diagnosticoTexto: consulta.consulta.diagnosticoTexto,
-            recomendaciones: consulta.consulta.recomendaciones,
-            tratamiento: consulta.consulta.tratamiento,
-        });
-
-        // Fetch relations
-        const relRes = await getEnfermedadesByConsulta(consulta.consulta.codigoConsulta);
-        if (relRes.success && relRes.data) {
-            setSelectedEnfermedades(relRes.data.map((r: any) => r.codigoEnfermedad));
-        } else {
-            setSelectedEnfermedades([]);
+    const handleSetupNext = async () => {
+        if (!selectedSetup.codigoAbordaje || !selectedSetup.cedulaPaciente || !selectedSetup.cedulaMedico) {
+            toast.error('Por favor complete todos los campos');
+            return;
         }
 
-        setIsModalOpen(true);
+        setIsLoading(true);
+        try {
+            // Load patient antecedents if they exist
+            const antRes = await getAntecedentesByPaciente(selectedSetup.cedulaPaciente);
+            
+            setWizardInitialData({
+                enfermedadesPrevias: antRes.data?.enfermedadesPrevias || '',
+                alergias: antRes.data?.alergias || '',
+                enfermedadesFamilia: antRes.data?.enfermedadesFamilia || '',
+                cirugiasPrevias: antRes.data?.cirugiasPrevias || '',
+                medicamentosActuales: antRes.data?.medicamentosActuales || '',
+                peso: antRes.data?.peso ? String(antRes.data.peso) : '',
+                talla: antRes.data?.talla ? String(antRes.data.talla) : '',
+                temperatura: antRes.data?.temperatura ? String(antRes.data.temperatura) : '',
+                FC: antRes.data?.FC || '',
+                TA: antRes.data?.TA || '',
+                // Empty for new consultation
+                motivoConsulta: '',
+                diagnosticoTexto: '',
+                enfermedadesIds: [],
+                recomendaciones: '',
+                tratamiento: '',
+            });
+
+            setIsSetupOpen(false);
+            setView('wizard');
+        } catch (error) {
+            toast.error('Error al cargar antecedentes del paciente');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleEditClick = async (row: any) => {
+        setIsLoading(true);
+        setEditingId(row.consulta.codigoConsulta);
+        setSelectedSetup({
+            codigoAbordaje: row.consulta.codigoAbordaje,
+            cedulaPaciente: row.consulta.cedulaPaciente,
+            cedulaMedico: row.consulta.cedulaMedico
+        });
+
+        try {
+            // Load patient antecedents
+            const antRes = await getAntecedentesByPaciente(row.consulta.cedulaPaciente);
+            // Load consultation enfermedades
+            const enfRes = await getEnfermedadesByConsulta(row.consulta.codigoConsulta);
+
+            setWizardInitialData({
+                enfermedadesPrevias: antRes.data?.enfermedadesPrevias || '',
+                alergias: antRes.data?.alergias || '',
+                enfermedadesFamilia: antRes.data?.enfermedadesFamilia || '',
+                cirugiasPrevias: antRes.data?.cirugiasPrevias || '',
+                medicamentosActuales: antRes.data?.medicamentosActuales || '',
+                peso: antRes.data?.peso ? String(antRes.data.peso) : '',
+                talla: antRes.data?.talla ? String(antRes.data.talla) : '',
+                temperatura: antRes.data?.temperatura ? String(antRes.data.temperatura) : '',
+                FC: antRes.data?.FC || '',
+                TA: antRes.data?.TA || '',
+                // Consultation specific
+                motivoConsulta: row.consulta.motivoConsulta || '',
+                diagnosticoTexto: row.consulta.diagnosticoTexto || '',
+                enfermedadesIds: enfRes.success ? enfRes.data!.map((e: any) => e.codigoEnfermedad) : [],
+                recomendaciones: row.consulta.recomendaciones || '',
+                tratamiento: row.consulta.tratamiento || '',
+            });
+
+            setView('wizard');
+        } catch (error) {
+            toast.error('Error al cargar datos de la consulta');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleWizardSave = async (data: WizardData) => {
+        setIsLoading(true);
+        try {
+            const consultaData = {
+                codigoAbordaje: selectedSetup.codigoAbordaje,
+                cedulaPaciente: selectedSetup.cedulaPaciente,
+                cedulaMedico: selectedSetup.cedulaMedico,
+                motivoConsulta: data.motivoConsulta,
+                diagnosticoTexto: data.diagnosticoTexto,
+                recomendaciones: data.recomendaciones,
+                tratamiento: data.tratamiento,
+            };
+
+            const antecedentesData = {
+                peso: data.peso || '0',
+                talla: data.talla || '0',
+                temperatura: data.temperatura || '0',
+                FC: data.FC || '',
+                TA: data.TA || '',
+                enfermedadesPrevias: data.enfermedadesPrevias || '',
+                alergias: data.alergias || '',
+                enfermedadesFamilia: data.enfermedadesFamilia || '',
+                cirugiasPrevias: data.cirugiasPrevias || '',
+                medicamentosActuales: data.medicamentosActuales || '',
+            };
+
+            const res = await saveConsultaWizard(
+                consultaData,
+                data.enfermedadesIds,
+                antecedentesData,
+                editingId || undefined
+            );
+
+            if (res.success) {
+                toast.success(res.message);
+                setView('list');
+                router.refresh();
+            } else {
+                toast.error(res.error);
+            }
+        } catch (error) {
+            toast.error('Ocurrió un error inesperado al guardar la consulta');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDelete = async (codigo: string) => {
-        if (confirm('¿Está seguro de eliminar esta consulta?')) {
-            const res = await deleteConsulta(codigo);
-            if (res.success) {
-                setConsultasData(prev => prev.filter(c => c.consulta.codigoConsulta !== codigo));
-                toast.success('Consulta eliminada correctamente');
-            } else {
-                toast.error(res.error || 'Error al eliminar');
-            }
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (editingId) {
-            const res = await updateConsulta(editingId, formData, selectedEnfermedades);
-            if (res.success) {
-                toast.success('Consultas actualizadas');
-                setIsModalOpen(false);
-                router.refresh();
-            } else {
-                toast.error(res.error || 'Error al actualizar');
-            }
+        const res = await deleteConsulta(codigo);
+        if (res.success) {
+            setConsultasData(prev => prev.filter(c => c.consulta.codigoConsulta !== codigo));
+            toast.success('Consulta eliminada correctamente');
+            router.refresh();
         } else {
-            const res = await createConsulta(formData, selectedEnfermedades);
-            if (res.success) {
-                toast.success('Consulta creada');
-                setIsModalOpen(false);
-                router.refresh();
-            } else {
-                toast.error(res.error || 'Error al crear');
-            }
+            toast.error(res.error || 'Error al eliminar');
         }
-    };
-
-    const toggleEnfermedad = (id: string, checked: boolean) => {
-        if (checked) {
-            setSelectedEnfermedades(prev => [...prev, id]);
-        } else {
-            setSelectedEnfermedades(prev => prev.filter(e => e !== id));
-        }
+        setDeleteTarget(null);
     };
 
     const columns: Column<any>[] = [
         {
             key: 'consulta.codigoConsulta',
-            label: 'Código',
-            render: (row) => row.consulta.codigoConsulta
+            header: 'Código',
+            render: (row) => (
+                <div className="font-medium text-foreground">
+                    {row.consulta.codigoConsulta}
+                </div>
+            )
         },
         {
             key: 'nombrePaciente',
-            label: 'Paciente',
-            render: (row) => row.nombrePaciente || row.consulta.cedulaPaciente
+            header: 'Paciente',
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                        <p className="text-sm font-medium">{row.nombrePaciente || 'Sin nombre'}</p>
+                        <p className="text-xs text-muted-foreground">{row.consulta.cedulaPaciente}</p>
+                    </div>
+                </div>
+            )
         },
         {
             key: 'nombreMedico',
-            label: 'Médico',
-            render: (row) => row.nombreMedico || row.consulta.cedulaMedico
+            header: 'Médico',
+            render: (row) => (
+                <div className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                        <p className="text-sm font-medium">{row.nombreMedico || 'Desconocido'}</p>
+                        <p className="text-xs text-muted-foreground">{row.consulta.cedulaMedico}</p>
+                    </div>
+                </div>
+            )
         },
         {
             key: 'codigoAbordaje',
-            label: 'Abordaje',
+            header: 'Abordaje',
             render: (row) => row.codigoAbordaje || row.consulta.codigoAbordaje
         },
         {
             key: 'consulta.motivoConsulta',
-            label: 'Motivo',
-            render: (row) => <span className="truncate max-w-[200px] block">{row.consulta.motivoConsulta}</span>
+            header: 'Motivo',
+            render: (row) => (
+                <div className="flex items-start gap-2">
+                    <FileText className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <span className="truncate max-w-[200px] text-sm text-muted-foreground block" title={row.consulta.motivoConsulta}>
+                        {row.consulta.motivoConsulta}
+                    </span>
+                </div>
+            )
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (row) => (
-                <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
-                        <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(row.consulta.codigoConsulta)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                    </Button>
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={() => handleEditClick(row)}
+                        disabled={isLoading}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                    >
+                        <Edit className="h-3.5 w-3.5" /> Editar
+                    </button>
+                    <button
+                        onClick={() => setDeleteTarget(row.consulta.codigoConsulta)}
+                        disabled={isLoading}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/20 hover:border-destructive/40 disabled:opacity-50"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                    </button>
                 </div>
             ),
         },
@@ -209,7 +306,6 @@ export default function ConsultasClient({
             recomendaciones: row.consulta.recomendaciones,
         }));
 
-        const headers = ['codigo', 'paciente', 'medico', 'abordaje', 'motivo', 'diagnostico', 'tratamiento', 'recomendaciones'];
         const columnsData = [
             { header: 'Código', dataKey: 'codigo' as const },
             { header: 'Paciente', dataKey: 'paciente' as const },
@@ -228,190 +324,131 @@ export default function ConsultasClient({
         }
     };
 
+    const selectedPacienteRecord = pacientes.find(p => p.cedulaPaciente === selectedSetup.cedulaPaciente);
+    const selectedMedicoRecord = medicos.find(m => m.cedulaTejedor === selectedSetup.cedulaMedico);
+    const selectedAbordajeRecord = abordajes.find(a => {
+        const abordajeData = a.abordaje || a;
+        return abordajeData.codigoAbordaje === selectedSetup.codigoAbordaje;
+    });
+
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl text-gray-900 mb-2">Consultas Médicas</h1>
-                    <p className="text-gray-600">
-                        Registro y gestión de consultas médicas asociadas a abordajes
-                    </p>
+            {view === 'list' ? (
+                <PageShell title="Consultas Médicas" subtitle="Registro y gestión de consultas médicas asociadas a abordajes">
+                    <DataTable
+                        title="Listado de consultas"
+                        description="Busca por paciente, médico o código"
+                        data={consultasData}
+                        columns={columns}
+                        searchKeys={['nombrePaciente', 'nombreMedico', 'codigoAbordaje']}
+                        searchPlaceholder="Buscar por paciente o médico..."
+                        primaryAction={{ label: 'Nueva Consulta', onClick: handleAddClick }}
+                        onExport={handleExport}
+                    />
+
+                    <ConfirmDialog
+                        open={!!deleteTarget}
+                        onOpenChange={(open) => !open && setDeleteTarget(null)}
+                        title="Eliminar consulta"
+                        description="¿Está seguro de eliminar esta consulta médica? Toda la información clínica asociada se perderá permanentemente."
+                        confirmLabel="Eliminar"
+                        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+                    />
+                </PageShell>
+            ) : (
+                <div className="pt-4">
+                    <ConsultaWizard 
+                        paciente={selectedPacienteRecord}
+                        medico={selectedMedicoRecord}
+                        abordaje={selectedAbordajeRecord}
+                        enfermedadesDisponibles={enfermedades}
+                        initialData={wizardInitialData}
+                        onSave={handleWizardSave}
+                        onCancel={() => setView('list')}
+                        isLoading={isLoading}
+                    />
                 </div>
+            )}
 
-                <DataTable
-                    data={consultasData}
-                    columns={columns}
-                    searchPlaceholder="Buscar consulta..."
-                    onAdd={handleAdd}
-                    addLabel="Nueva Consulta"
-                    onExport={handleExport}
-                />
+            {/* Modal de Configuración Inicial (Paso 0) */}
+            <Dialog open={isSetupOpen} onOpenChange={setIsSetupOpen}>
+                <DialogContent className="sm:max-w-[450px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Activity className="w-5 h-5 text-primary" />
+                            Configurar Nueva Consulta
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Abordaje</Label>
+                            <Select
+                                value={selectedSetup.codigoAbordaje}
+                                onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, codigoAbordaje: val }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione el abordaje" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {abordajes.map((ab: any) => {
+                                        const abordajeData = ab.abordaje || ab;
+                                        return (
+                                            <SelectItem key={abordajeData.codigoAbordaje} value={abordajeData.codigoAbordaje}>
+                                                {abordajeData.codigoAbordaje} - {new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Activity className="w-6 h-6 text-blue-600" />
-                                {editingId ? 'Editar Consulta' : 'Nueva Consulta'}
-                            </DialogTitle>
-                        </DialogHeader>
-
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Left Column: Basic Info */}
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="codigo">Código Consulta</Label>
-                                    <Input
-                                        id="codigo"
-                                        placeholder={editingId ? "" : "Automático (CON-XXX)"}
-                                        value={formData.codigoConsulta}
-                                        onChange={(e) => setFormData({ ...formData, codigoConsulta: e.target.value })}
-                                        required={!!editingId}
-                                        disabled={true}
-                                        className="bg-gray-50 border-gray-200"
-                                    />
-                                    {!editingId && (
-                                        <p className="text-[10px] text-blue-600 font-medium font-sans">
-                                            El sistema generará el código automáticamente al guardar.
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Abordaje *</Label>
-                                    <Select
-                                        value={formData.codigoAbordaje}
-                                        onValueChange={(val) => setFormData({ ...formData, codigoAbordaje: val })}
-                                        required
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar Abordaje" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {abordajes.map((ab: any) => (
-                                                <SelectItem key={ab.codigoAbordaje} value={ab.codigoAbordaje}>
-                                                    {ab.codigoAbordaje} - {new Date(ab.fecha).toLocaleDateString()}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Paciente *</Label>
-                                    <Select
-                                        value={formData.cedulaPaciente}
-                                        onValueChange={(val) => setFormData({ ...formData, cedulaPaciente: val })}
-                                        required
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar Paciente" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {pacientes.map((p: any) => (
-                                                <SelectItem key={p.cedulaPaciente} value={p.cedulaPaciente}>
-                                                    {p.nombre} {p.apellido} ({p.cedulaPaciente})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Médico *</Label>
-                                    <Select
-                                        value={formData.cedulaMedico}
-                                        onValueChange={(val) => setFormData({ ...formData, cedulaMedico: val })}
-                                        required
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar Médico" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {medicos.map((m: any) => (
-                                                <SelectItem key={m.cedulaTejedor} value={m.cedulaTejedor}>
-                                                    {m.tejedor?.nombre1} {m.tejedor?.apellido1} ({m.especialidad?.nombreEspecialidad || 'General'})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* Right Column: Clinical Details */}
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="motivo">Motivo de Consulta *</Label>
-                                    <Textarea
-                                        id="motivo"
-                                        value={formData.motivoConsulta}
-                                        onChange={(e) => setFormData({ ...formData, motivoConsulta: e.target.value })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="diagnostico">Diagnóstico (Texto) *</Label>
-                                    <Textarea
-                                        id="diagnostico"
-                                        value={formData.diagnosticoTexto}
-                                        onChange={(e) => setFormData({ ...formData, diagnosticoTexto: e.target.value })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="tratamiento">Tratamiento *</Label>
-                                    <Textarea
-                                        id="tratamiento"
-                                        value={formData.tratamiento}
-                                        onChange={(e) => setFormData({ ...formData, tratamiento: e.target.value })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="recomendaciones">Recomendaciones *</Label>
-                                    <Textarea
-                                        id="recomendaciones"
-                                        value={formData.recomendaciones}
-                                        onChange={(e) => setFormData({ ...formData, recomendaciones: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Full Width: Enfermedades Selection */}
-                            <div className="md:col-span-2 space-y-2 border-t pt-4">
-                                <Label className="text-lg font-semibold">Enfermedades Asociadas</Label>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border p-4 rounded-md max-h-40 overflow-y-auto">
-                                    {enfermedades.map((enf) => (
-                                        <div key={enf.codigoEnfermedad} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`enf-${enf.codigoEnfermedad}`}
-                                                checked={selectedEnfermedades.includes(enf.codigoEnfermedad)}
-                                                onCheckedChange={(checked) => toggleEnfermedad(enf.codigoEnfermedad, checked as boolean)}
-                                            />
-                                            <Label htmlFor={`enf-${enf.codigoEnfermedad}`} className="text-sm cursor-pointer">
-                                                {enf.nombreEnfermedad}
-                                            </Label>
-                                        </div>
+                        <div className="space-y-2">
+                            <Label>Paciente</Label>
+                            <Select
+                                value={selectedSetup.cedulaPaciente}
+                                onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaPaciente: val }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Busque y seleccione el paciente" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {pacientes.map((p: any) => (
+                                        <SelectItem key={p.cedulaPaciente} value={p.cedulaPaciente}>
+                                            {p.nombrePaciente || p.nombre} {p.apellidoPaciente || p.apellido} ({p.cedulaPaciente})
+                                        </SelectItem>
                                     ))}
-                                </div>
-                            </div>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                            <div className="md:col-span-2 flex justify-end gap-2 pt-4 border-t">
-                                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                                    Cancelar
-                                </Button>
-                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                                    Guardar Consulta
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                        <div className="space-y-2">
+                            <Label>Médico Tratante</Label>
+                            <Select
+                                value={selectedSetup.cedulaMedico}
+                                onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaMedico: val }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione el médico" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {medicos.map((m: any) => (
+                                        <SelectItem key={m.cedulaTejedor} value={m.cedulaTejedor}>
+                                            Dr(a). {m.tejedor?.nombreTejedor || m.tejedor?.nombre1} {m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSetupOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleSetupNext} disabled={isLoading} className="gap-2">
+                            {isLoading ? 'Cargando...' : 'Comenzar Atención'}
+                            {!isLoading && <ArrowRight className="w-4 h-4" />}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </MainLayout>
     );
 }

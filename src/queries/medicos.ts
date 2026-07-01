@@ -33,7 +33,7 @@ export async function getMedicos(query?: string, limit: number = 50) {
             );
         }
 
-        const result = await queryBuilder.limit(limit);
+        const result = await queryBuilder;
 
         // Transformar data para el cliente (aplanar campos de tejedor para componentes de búsqueda)
         const data = result.map(({ medicos, tejedores, especialidades }) => ({

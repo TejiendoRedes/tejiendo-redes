@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type Tone = "blue" | "sky" | "yellow" | "red" | "success";
 
 const toneMap: Record<Tone, string> = {
-  blue: "bg-primary/10 text-primary",
+  blue: "bg-[#1e3a8a]/10 text-[#1e3a8a]",
   sky: "bg-brand-sky/15 text-brand-sky",
   yellow: "bg-brand-yellow/20 text-warning-foreground",
   red: "bg-brand-red/10 text-brand-red",

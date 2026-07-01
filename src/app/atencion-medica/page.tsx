@@ -28,6 +28,7 @@ export default async function AtencionMedicaPage() {
 
     return (
         <UnifiedMedicalAttention
+            pacientes={pacientesRes.data || []}
             comunidades={comunidadesRes.data || []}
             medicos={medicosRes.data || []}
             abordajes={abordajesRes.data || []}

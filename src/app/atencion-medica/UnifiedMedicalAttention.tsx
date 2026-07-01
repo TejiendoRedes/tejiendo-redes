@@ -1,24 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageShell } from '@/components/layout/PageShell';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, User, ClipboardList, Stethoscope, ChevronRight, ChevronLeft, Save } from 'lucide-react';
+import { Activity, ArrowRight, Stethoscope } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from 'sonner';
 
-// Actions
-import { getPacientes } from '@/queries/pacientes';;
-import { createConsulta } from '@/actions/consultas-actions';
-
-// Sub-components (to be implemented next)
-import { Step1PatientSelection } from './steps/Step1PatientSelection';
-import { Step2PatientInfo } from './steps/Step2PatientInfo';
-import { Step3MedicalHistory } from './steps/Step3MedicalHistory';
-import { Step4Consultation } from './steps/Step4Consultation';
+import { getAntecedentesByPaciente } from '@/queries/consultas';
+import { saveConsultaWizard } from '@/actions/consultas-actions';
+import { ConsultaWizard, type WizardData } from '@/components/features/consultas/ConsultaWizard';
 
 interface UnifiedMedicalAttentionProps {
+    pacientes: any[];
     comunidades: any[];
     medicos: any[];
     abordajes: any[];
@@ -26,154 +30,223 @@ interface UnifiedMedicalAttentionProps {
 }
 
 export default function UnifiedMedicalAttention({
+    pacientes,
     comunidades,
     medicos,
     abordajes,
     enfermedades
 }: UnifiedMedicalAttentionProps) {
-    const [activeStep, setActiveStep] = React.useState('step1');
-    const [selectedPatient, setSelectedPatient] = React.useState<any>(null);
-    const [patientInfo, setPatientInfo] = React.useState<any>(null);
-    const [medicalHistory, setMedicalHistory] = React.useState<any>(null);
-    const [fechaConsulta, setFechaConsulta] = React.useState<string>(new Date().toISOString().split('T')[0]);
-    const [consultationData, setConsultationData] = React.useState<any>({
-        motivoConsulta: '',
-        diagnosticoTexto: '',
-        tratamiento: '',
-        recomendaciones: '',
+    const router = useRouter();
+    const [view, setView] = useState<'setup' | 'wizard'>('setup');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Setup State
+    const [selectedSetup, setSelectedSetup] = useState({
         codigoAbordaje: '',
-        cedulaMedico: '',
-        selectedEnfermedades: []
+        cedulaPaciente: '',
+        cedulaMedico: ''
     });
 
-    const steps = [
-        { id: 'step1', title: 'Paciente', icon: User },
-        { id: 'step2', title: 'Información', icon: User },
-        { id: 'step3', title: 'Antecedentes', icon: ClipboardList },
-        { id: 'step4', title: 'Consulta', icon: Stethoscope },
-    ];
+    const [wizardInitialData, setWizardInitialData] = useState<Partial<WizardData>>({});
 
-    const handlePatientSelected = (patient: any) => {
-        setSelectedPatient(patient);
-        setPatientInfo(patient);
-        // Reset steps after selection if needed
-        setActiveStep('step2');
-    };
+    const handleSetupNext = async () => {
+        if (!selectedSetup.codigoAbordaje || !selectedSetup.cedulaPaciente || !selectedSetup.cedulaMedico) {
+            toast.error('Por favor complete todos los campos requeridos');
+            return;
+        }
 
-    const handleSaveInfo = (info: any, consultaDate?: string) => {
-        setPatientInfo(info);
-        if (consultaDate) setFechaConsulta(consultaDate);
-        setActiveStep('step3');
-    };
+        setIsLoading(true);
+        try {
+            // Cargar antecedentes del paciente si existen
+            const antRes = await getAntecedentesByPaciente(selectedSetup.cedulaPaciente);
+            
+            setWizardInitialData({
+                enfermedadesPrevias: antRes.data?.enfermedadesPrevias || '',
+                alergias: antRes.data?.alergias || '',
+                enfermedadesFamilia: antRes.data?.enfermedadesFamilia || '',
+                cirugiasPrevias: antRes.data?.cirugiasPrevias || '',
+                medicamentosActuales: antRes.data?.medicamentosActuales || '',
+                peso: antRes.data?.peso ? String(antRes.data.peso) : '',
+                talla: antRes.data?.talla ? String(antRes.data.talla) : '',
+                temperatura: antRes.data?.temperatura ? String(antRes.data.temperatura) : '',
+                FC: antRes.data?.FC || '',
+                TA: antRes.data?.TA || '',
+                motivoConsulta: '',
+                diagnosticoTexto: '',
+                enfermedadesIds: [],
+                recomendaciones: '',
+                tratamiento: '',
+            });
 
-    const handleSaveHistory = (history: any) => {
-        setMedicalHistory(history);
-        setActiveStep('step4');
-    };
-
-    const handleFinish = async (finalConsultation: any) => {
-        if (!selectedPatient) return;
-
-        // Save consultation data for persistence when navigating back
-        setConsultationData(finalConsultation);
-
-        const res = await createConsulta(
-            {
-                ...finalConsultation,
-                cedulaPaciente: selectedPatient.cedulaPaciente,
-                fechaConsulta: new Date(fechaConsulta),
-            },
-            finalConsultation.selectedEnfermedades || []
-        );
-
-        if (res.success) {
-            toast.success(res.message);
-            window.location.href = '/atencion-medica';
-        } else {
-            toast.error(res.error || 'Error al guardar la consulta');
+            setView('wizard');
+        } catch (error) {
+            toast.error('Error al cargar antecedentes del paciente');
+        } finally {
+            setIsLoading(false);
         }
     };
 
+    const handleWizardSave = async (data: WizardData) => {
+        setIsLoading(true);
+        try {
+            const consultaData = {
+                codigoAbordaje: selectedSetup.codigoAbordaje,
+                cedulaPaciente: selectedSetup.cedulaPaciente,
+                cedulaMedico: selectedSetup.cedulaMedico,
+                motivoConsulta: data.motivoConsulta,
+                diagnosticoTexto: data.diagnosticoTexto,
+                recomendaciones: data.recomendaciones,
+                tratamiento: data.tratamiento,
+            };
+
+            const antecedentesData = {
+                peso: data.peso || '0',
+                talla: data.talla || '0',
+                temperatura: data.temperatura || '0',
+                FC: data.FC || '',
+                TA: data.TA || '',
+                enfermedadesPrevias: data.enfermedadesPrevias || '',
+                alergias: data.alergias || '',
+                enfermedadesFamilia: data.enfermedadesFamilia || '',
+                cirugiasPrevias: data.cirugiasPrevias || '',
+                medicamentosActuales: data.medicamentosActuales || '',
+            };
+
+            const res = await saveConsultaWizard(
+                consultaData,
+                data.enfermedadesIds,
+                antecedentesData
+            );
+
+            if (res.success) {
+                toast.success('Consulta guardada exitosamente');
+                // Al guardar exitosamente, volvemos al setup para atender a otro paciente
+                setView('setup');
+                setSelectedSetup({ ...selectedSetup, cedulaPaciente: '' });
+                router.refresh();
+            } else {
+                toast.error(res.error);
+            }
+        } catch (error) {
+            toast.error('Ocurrió un error al guardar la consulta');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleWizardCancel = () => {
+        setView('setup');
+    };
+
+    const selectedPacienteRecord = pacientes?.find(p => p.cedulaPaciente === selectedSetup.cedulaPaciente);
+    const selectedMedicoRecord = medicos?.find(m => m.cedulaTejedor === selectedSetup.cedulaMedico);
+    const selectedAbordajeRecord = abordajes?.find(a => {
+        const abordajeData = a.abordaje || a;
+        return abordajeData.codigoAbordaje === selectedSetup.codigoAbordaje;
+    });
+
     return (
         <MainLayout>
-            <div className="space-y-6 max-w-5xl mx-auto">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Registro de Consulta</h1>
-                    <p className="text-gray-600">
-                        Proceso integral de registro, actualización y consulta médica.
-                    </p>
-                </div>
+            <PageShell 
+                title="Atención Médica" 
+                subtitle={view === 'setup' ? "Consulta clínica · Seleccionar abordaje" : "Consulta clínica · Registro paso a paso"}
+            >
+                {view === 'setup' ? (
+                    <div className="space-y-6 max-w-2xl mx-auto pt-8">
+                        <Card className="p-8 border-none shadow-2xl bg-white rounded-3xl">
+                            <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+                                <Activity className="w-8 h-8 text-blue-600" />
+                                <h2 className="text-xl font-bold text-gray-900">Configuración Inicial</h2>
+                            </div>
 
-                <Card className="border-none shadow-2xl bg-white rounded-3xl overflow-hidden">
-                    <CardHeader className="pb-0 border-b border-gray-50 bg-gray-50/30">
-                        <div className="flex justify-between items-center px-6 py-4 max-w-4xl mx-auto">
-                            {steps.map((step, index) => {
-                                const Icon = step.icon;
-                                const isActive = activeStep === step.id;
-                                const isCompleted = steps.findIndex(s => s.id === activeStep) > index;
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label className="text-gray-700 font-semibold">1. Seleccione el Abordaje</Label>
+                                    <Select
+                                        value={selectedSetup.codigoAbordaje}
+                                        onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, codigoAbordaje: val }))}
+                                    >
+                                        <SelectTrigger className="h-12 bg-gray-50/50">
+                                            <SelectValue placeholder="Busque y seleccione el abordaje activo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {abordajes?.map((ab: any, i: number) => {
+                                                const abordajeData = ab.abordaje || ab; // Manejar tanto estructura anidada como plana
+                                                return (
+                                                    <SelectItem key={`${abordajeData.codigoAbordaje}-${i}`} value={abordajeData.codigoAbordaje}>
+                                                        {abordajeData.codigoAbordaje} - {new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                                return (
-                                    <React.Fragment key={step.id}>
-                                        <div className="flex flex-col items-center gap-2 group transition-all">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${isActive ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110' :
-                                                isCompleted ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-white text-gray-400 border border-gray-100 shadow-sm'
-                                                }`}>
-                                                <Icon className={`w-6 h-6 ${isActive ? 'animate-pulse' : ''}`} />
-                                            </div>
-                                            <span className={`text-[10px] uppercase tracking-widest font-black transition-colors duration-300 ${isActive ? 'text-blue-600' : isCompleted ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                {step.title}
-                                            </span>
-                                        </div>
-                                        {index < steps.length - 1 && (
-                                            <div className="flex-1 h-[2px] mx-4 bg-gray-100 rounded-full relative overflow-hidden hidden sm:block">
-                                                <div className={`absolute top-0 left-0 h-full bg-blue-600/50 transition-all duration-700 ease-in-out ${isCompleted ? 'w-full' : 'w-0'
-                                                    }`} />
-                                            </div>
-                                        )}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <Tabs value={activeStep} className="w-full">
-                            <TabsContent value="step1" className="mt-0">
-                                <Step1PatientSelection onSelect={handlePatientSelected} />
-                            </TabsContent>
+                                <div className="space-y-2">
+                                    <Label className="text-gray-700 font-semibold">2. Seleccione el Paciente</Label>
+                                    <Select
+                                        value={selectedSetup.cedulaPaciente}
+                                        onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaPaciente: val }))}
+                                        disabled={!pacientes || pacientes.length === 0}
+                                    >
+                                        <SelectTrigger className="h-12 bg-gray-50/50">
+                                            <SelectValue placeholder="Busque por nombre o cédula" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {pacientes?.map((p: any, i: number) => (
+                                                <SelectItem key={`${p.cedulaPaciente}-${i}`} value={p.cedulaPaciente}>
+                                                    {p.nombrePaciente || p.nombre} {p.apellidoPaciente || p.apellido} (V-{p.cedulaPaciente})
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            <TabsContent value="step2" className="mt-0">
-                                <Step2PatientInfo
-                                    patient={patientInfo}
-                                    comunidades={comunidades}
-                                    fechaConsulta={fechaConsulta}
-                                    onBack={() => setActiveStep('step1')}
-                                    onNext={handleSaveInfo}
-                                />
-                            </TabsContent>
+                                <div className="space-y-2">
+                                    <Label className="text-gray-700 font-semibold">3. Médico Tratante</Label>
+                                    <Select
+                                        value={selectedSetup.cedulaMedico}
+                                        onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaMedico: val }))}
+                                    >
+                                        <SelectTrigger className="h-12 bg-gray-50/50">
+                                            <SelectValue placeholder="Seleccione el médico a cargo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {medicos?.map((m: any, i: number) => (
+                                                <SelectItem key={`${m.cedulaTejedor}-${i}`} value={m.cedulaTejedor}>
+                                                    Dr(a). {m.tejedor?.nombreTejedor || m.tejedor?.nombre1} {m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            <TabsContent value="step3" className="mt-0">
-                                <Step3MedicalHistory
-                                    patient={selectedPatient}
-                                    onBack={() => setActiveStep('step2')}
-                                    onNext={handleSaveHistory}
-                                />
-                            </TabsContent>
-
-                            <TabsContent value="step4" className="mt-0">
-                                <Step4Consultation
-                                    patient={selectedPatient}
-                                    medicos={medicos}
-                                    abordajes={abordajes}
-                                    enfermedades={enfermedades}
-                                    initialData={consultationData}
-                                    onBack={() => setActiveStep('step3')}
-                                    onFinish={handleFinish}
-                                />
-                            </TabsContent>
-                        </Tabs>
-                    </CardContent>
-                </Card>
-            </div>
+                                <Button 
+                                    onClick={handleSetupNext} 
+                                    disabled={isLoading} 
+                                    className="w-full h-12 mt-8 text-base font-bold bg-[#1e3a8a] hover:bg-blue-900 rounded-xl text-white"
+                                >
+                                    {isLoading ? 'Cargando expediente...' : 'Comenzar Atención Médica'}
+                                    {!isLoading && <ArrowRight className="w-5 h-5 ml-2" />}
+                                </Button>
+                            </div>
+                        </Card>
+                    </div>
+                ) : (
+                    <div className="pt-4">
+                        <ConsultaWizard 
+                            paciente={selectedPacienteRecord}
+                            medico={selectedMedicoRecord}
+                            abordaje={selectedAbordajeRecord}
+                            enfermedadesDisponibles={enfermedades}
+                            initialData={wizardInitialData}
+                            onSave={handleWizardSave}
+                            onCancel={handleWizardCancel}
+                            isLoading={isLoading}
+                        />
+                    </div>
+                )}
+            </PageShell>
         </MainLayout>
     );
 }

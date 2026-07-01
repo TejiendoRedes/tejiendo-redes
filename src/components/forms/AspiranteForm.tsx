@@ -284,7 +284,7 @@ export function AspiranteForm({
                 <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
                     Cancelar
                 </Button>
-                <Button type="submit" className="px-8 bg-blue-600" disabled={isLoading}>
+                <Button type="submit" className="px-8" disabled={isLoading}>
                     {isLoading ? (
                         <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -53,56 +53,55 @@ function getAbordajeConditions(filters: DashboardFilters) {
 export async function getExecutiveKPIs(filters: DashboardFilters) {
     const whereCondition = getAbordajeConditions(filters);
 
-    // Run independent queries in PARALLEL
-    const [totalPacientesQuery, totalAbordajesQuery, totalMedicamentosQuery, evolutionQuery, geoQuery] = await Promise.all([
-        // 1. Total Pacientes
-        db.select({ count: count(consultas.cedulaPaciente) })
-            .from(consultas)
-            .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
-            .where(whereCondition),
+    // 1. Total Pacientes
+    const totalPacientesQuery = await db.select({ count: count(consultas.cedulaPaciente) })
+        .from(consultas)
+        .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(whereCondition);
 
-        // 2. Total Abordajes
-        db.select({ count: sql<number>`count(distinct ${abordaje.codigoAbordaje})` })
-            .from(abordaje)
-            .leftJoin(consultas, eq(abordaje.codigoAbordaje, consultas.codigoAbordaje))
-            .where(and(
-                whereCondition,
-                or(
-                    inArray(abordaje.estado, ['Finalizado', 'En Curso']),
-                    sql`${consultas.codigoConsulta} IS NOT NULL`
-                )
-            )),
+    // 2. Total Abordajes
+    const totalAbordajesQuery = await db.select({ count: sql<number>`count(distinct ${abordaje.codigoAbordaje})` })
+        .from(abordaje)
+        .leftJoin(consultas, eq(abordaje.codigoAbordaje, consultas.codigoAbordaje))
+        .where(and(
+            whereCondition,
+            or(
+                inArray(abordaje.estado, ['Finalizado', 'En Curso', 'Completado']),
+                sql`${consultas.codigoConsulta} IS NOT NULL`
+            )
+        ));
 
-        // 3. Medicamentos Entregados
-        db.select({ sum: sum(medicamentosPacientes.cantidadEntregada) })
-            .from(medicamentosPacientes)
-            .innerJoin(abordaje, eq(medicamentosPacientes.codigoAbordaje, abordaje.codigoAbordaje))
-            .where(whereCondition),
+    // 3. Medicamentos Entregados (using peticiones instead of medicamentosPacientes)
+    // Dynamic import to avoid circular dependencies if any, but we can just import peticiones at the top
+    const { peticiones } = await import('@/db/schema/peticiones');
+    const totalMedicamentosQuery = await db.select({ sum: sum(peticiones.cantidad) })
+        .from(peticiones)
+        .innerJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(and(whereCondition, eq(peticiones.estado, 'entregado')));
 
-        // 5. Evolución (Group by Month)
-        db.select({
-            mes: sql<string>`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`,
-            cantidad: count(consultas.codigoConsulta),
-        })
-            .from(consultas)
-            .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
-            .where(whereCondition)
-            .groupBy(sql`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`)
-            .orderBy(asc(sql`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`)),
+    // 5. Evolución (Group by Month)
+    const evolutionQuery = await db.select({
+        mes: sql<string>`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`,
+        cantidad: count(consultas.codigoConsulta),
+    })
+        .from(consultas)
+        .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(whereCondition)
+        .groupBy(sql`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`)
+        .orderBy(asc(sql`DATE_FORMAT(${abordaje.fechaAbordaje}, '%Y-%m')`));
 
-        // 6. Distribución Geográfica
-        db.select({
-            comunidad: comunidades.nombreComunidad,
-            pacientes: count(consultas.codigoConsulta),
-        })
-            .from(consultas)
-            .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
-            .innerJoin(comunidades, eq(abordaje.codigoComunidad, comunidades.codigoComunidad))
-            .where(whereCondition)
-            .groupBy(comunidades.nombreComunidad)
-            .orderBy(desc(count(consultas.codigoConsulta)))
-            .limit(5)
-    ]);
+    // 6. Distribución Geográfica
+    const geoQuery = await db.select({
+        comunidad: comunidades.nombreComunidad,
+        pacientes: count(consultas.codigoConsulta),
+    })
+        .from(consultas)
+        .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
+        .innerJoin(comunidades, eq(abordaje.codigoComunidad, comunidades.codigoComunidad))
+        .where(whereCondition)
+        .groupBy(comunidades.nombreComunidad)
+        .orderBy(desc(count(consultas.codigoConsulta)))
+        .limit(5);
 
     const totalPacientes = totalPacientesQuery[0]?.count || 0;
     const totalAbordajes = Number(totalAbordajesQuery[0]?.count || 0);
@@ -232,42 +231,42 @@ export async function getEpidemiologicalData(filters: DashboardFilters) {
 export async function getPharmacyData(filters: DashboardFilters) {
     const whereCondition = getAbordajeConditions(filters);
 
-    const [topMeds, lowStock, consumptionResult] = await Promise.all([
-        // 1. Top Meds
-        db.select({
-            nombre: medicamentos.nombreMedicamento,
-            cantidad: sum(medicamentosPacientes.cantidadEntregada)
-        })
-            .from(medicamentosPacientes)
-            .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
-            .innerJoin(abordaje, eq(medicamentosPacientes.codigoAbordaje, abordaje.codigoAbordaje))
-            .where(whereCondition)
-            .groupBy(medicamentos.nombreMedicamento)
-            .orderBy(desc(sum(medicamentosPacientes.cantidadEntregada)))
-            .limit(10),
+    const { peticiones } = await import('@/db/schema/peticiones');
 
-        // 2. Low Stock (Independent of date filters usually, but nice to have)
-        db.select({
-            codigoMedicamento: medicamentos.codigoMedicamento,
-            nombreMedicamento: medicamentos.nombreMedicamento,
-            presentacion: medicamentos.presentacion,
-            existencia: medicamentos.existencia
-        })
-            .from(medicamentos)
-            .where(lte(medicamentos.existencia, 15))
-            .limit(20),
+    // 1. Top Meds
+    const topMeds = await db.select({
+        nombre: medicamentos.nombreMedicamento,
+        cantidad: sum(peticiones.cantidad)
+    })
+        .from(peticiones)
+        .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
+        .innerJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(and(whereCondition, eq(peticiones.estado, 'entregado')))
+        .groupBy(medicamentos.nombreMedicamento)
+        .orderBy(desc(sum(peticiones.cantidad)))
+        .limit(10);
 
-        // 3. Consumption by Age Group
-        db.select({
-            ninos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) <= 12 THEN ${medicamentosPacientes.cantidadEntregada} ELSE 0 END)`,
-            adultos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) BETWEEN 13 AND 59 THEN ${medicamentosPacientes.cantidadEntregada} ELSE 0 END)`,
-            mayores: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) >= 60 THEN ${medicamentosPacientes.cantidadEntregada} ELSE 0 END)`,
-        })
-            .from(medicamentosPacientes)
-            .innerJoin(pacientes, eq(medicamentosPacientes.cedulaPaciente, pacientes.cedulaPaciente))
-            .innerJoin(abordaje, eq(medicamentosPacientes.codigoAbordaje, abordaje.codigoAbordaje))
-            .where(whereCondition)
-    ]);
+    // 2. Low Stock
+    const lowStock = await db.select({
+        codigoMedicamento: medicamentos.codigoMedicamento,
+        nombreMedicamento: medicamentos.nombreMedicamento,
+        presentacion: medicamentos.presentacion,
+        existencia: medicamentos.existencia
+    })
+        .from(medicamentos)
+        .where(lte(medicamentos.existencia, 15))
+        .limit(20);
+
+    // 3. Consumption by Age Group
+    const consumptionResult = await db.select({
+        ninos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) <= 12 THEN ${peticiones.cantidad} ELSE 0 END)`,
+        adultos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) BETWEEN 13 AND 59 THEN ${peticiones.cantidad} ELSE 0 END)`,
+        mayores: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) >= 60 THEN ${peticiones.cantidad} ELSE 0 END)`,
+    })
+        .from(peticiones)
+        .innerJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
+        .innerJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(and(whereCondition, eq(peticiones.estado, 'entregado')));
 
     return {
         topMeds,

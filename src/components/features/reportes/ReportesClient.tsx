@@ -118,28 +118,31 @@ export default function ReportesClient({
     };
 
     const renderChartControls = (tab: string) => (
-        <div className="flex bg-gray-100 rounded-md p-1 items-center mr-2">
+        <div className="flex bg-gray-50/80 rounded-xl p-1 items-center mr-2 border border-gray-100 backdrop-blur-sm shadow-inner">
             <Button
-                variant={chartViews[tab] === 'table' ? 'secondary' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setChartViews(prev => ({ ...prev, [tab]: 'table' }))}
                 title="Ver Tabla"
+                className={`rounded-lg transition-all ${chartViews[tab] === 'table' ? 'bg-white shadow-sm text-[#1e3a8a] hover:text-blue-900' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100/50'}`}
             >
                 <TableIcon className="w-4 h-4" />
             </Button>
             <Button
-                variant={chartViews[tab] === 'bar' ? 'secondary' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setChartViews(prev => ({ ...prev, [tab]: 'bar' }))}
                 title="Gráfico de Barras"
+                className={`rounded-lg transition-all ${chartViews[tab] === 'bar' ? 'bg-white shadow-sm text-[#1e3a8a] hover:text-blue-900' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100/50'}`}
             >
                 <BarChartIcon className="w-4 h-4" />
             </Button>
             <Button
-                variant={chartViews[tab] === 'pie' ? 'secondary' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setChartViews(prev => ({ ...prev, [tab]: 'pie' }))}
                 title="Gráfico Circular"
+                className={`rounded-lg transition-all ${chartViews[tab] === 'pie' ? 'bg-white shadow-sm text-[#1e3a8a] hover:text-blue-900' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100/50'}`}
             >
                 <PieChartIcon className="w-4 h-4" />
             </Button>
@@ -174,10 +177,10 @@ export default function ReportesClient({
     return (
         <div className="space-y-6">
             {/* Filtros Globales */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Filter className="w-5 h-5" />
+            <Card className="rounded-2xl shadow-sm border-gray-100 overflow-visible bg-white/70 backdrop-blur-md">
+                <CardHeader className="bg-transparent border-b border-gray-50 pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg text-gray-800">
+                        <Filter className="w-5 h-5 text-[#1e3a8a]" />
                         Filtros de Reporte
                     </CardTitle>
                 </CardHeader>
@@ -234,7 +237,7 @@ export default function ReportesClient({
                                 </Select>
                             </div>
                             <div className="space-y-2 lg:col-span-2 flex items-end">
-                                <Button onClick={updateFilters} disabled={isPending} className="w-full">
+                                <Button onClick={updateFilters} disabled={isPending} className="w-full rounded-xl bg-[#1e3a8a] hover:bg-blue-900 shadow-sm text-white">
                                     {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                     Aplicar Filtros
                                 </Button>
@@ -288,20 +291,20 @@ export default function ReportesClient({
             </Card>
 
             {/* Tabs de Reportes */}
-            <Tabs defaultValue="abordajes" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="abordajes">Abordajes</TabsTrigger>
-                    <TabsTrigger value="comunidades">Comunidades</TabsTrigger>
-                    <TabsTrigger value="pacientes">Pacientes</TabsTrigger>
-                    <TabsTrigger value="morbilidad">Morbilidad</TabsTrigger>
-                    <TabsTrigger value="medicamentos">Medicamentos</TabsTrigger>
+            <Tabs defaultValue="abordajes" className="w-full space-y-6">
+                <TabsList className="grid w-full grid-cols-5 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 h-auto">
+                    <TabsTrigger value="abordajes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Abordajes</TabsTrigger>
+                    <TabsTrigger value="comunidades" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Comunidades</TabsTrigger>
+                    <TabsTrigger value="pacientes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Pacientes</TabsTrigger>
+                    <TabsTrigger value="morbilidad" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Morbilidad</TabsTrigger>
+                    <TabsTrigger value="medicamentos" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Medicamentos</TabsTrigger>
                 </TabsList>
 
                 {/* Reporte Abordajes */}
-                <TabsContent value="abordajes">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Reporte de Abordajes</CardTitle>
+                <TabsContent value="abordajes" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
+                            <CardTitle className="text-xl text-gray-800">Reporte de Abordajes</CardTitle>
                             <div className="flex gap-2 items-center">
                                 {renderChartControls('abordajes')}
                                 <Button
@@ -397,10 +400,10 @@ export default function ReportesClient({
                 </TabsContent>
 
                 {/* Reporte Comunidades */}
-                <TabsContent value="comunidades">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Reporte de Comunidades</CardTitle>
+                <TabsContent value="comunidades" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
+                            <CardTitle className="text-xl text-gray-800">Reporte de Comunidades</CardTitle>
                             <div className="flex gap-2 items-center">
                                 {renderChartControls('comunidades')}
                                 <Button
@@ -520,10 +523,10 @@ export default function ReportesClient({
                 </TabsContent>
 
                 {/* Reporte Pacientes */}
-                <TabsContent value="pacientes">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Reporte de Pacientes</CardTitle>
+                <TabsContent value="pacientes" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
+                            <CardTitle className="text-xl text-gray-800">Reporte de Pacientes</CardTitle>
                             <div className="flex gap-2 items-center">
                                 {renderChartControls('pacientes')}
                                 <Button
@@ -637,10 +640,10 @@ export default function ReportesClient({
                 </TabsContent>
 
                 {/* Reporte Morbilidad */}
-                <TabsContent value="morbilidad">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Reporte de Morbilidad</CardTitle>
+                <TabsContent value="morbilidad" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
+                            <CardTitle className="text-xl text-gray-800">Reporte de Morbilidad</CardTitle>
                             <div className="flex gap-2 items-center">
                                 {renderChartControls('morbilidad')}
                                 <Button
@@ -767,11 +770,11 @@ export default function ReportesClient({
                     </Card>
                 </TabsContent>
 
-                {/* Reporte Medicamentos Entregados */}
-                <TabsContent value="medicamentos">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Reporte de Medicamentos Entregados</CardTitle>
+                {/* Reporte Medicamentos */}
+                <TabsContent value="medicamentos" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
+                            <CardTitle className="text-xl text-gray-800">Reporte de Medicamentos Entregados</CardTitle>
                             <div className="flex gap-2 items-center">
                                 {renderChartControls('medicamentos')}
                                 <Button

@@ -85,7 +85,7 @@ export function DashboardFilters({ communities }: DashboardFiltersProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                    <Button onClick={applyFilters} className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={applyFilters} className="w-full rounded-xl bg-[#1e3a8a] hover:bg-blue-900 shadow-sm text-white">
                         Aplicar Filtros
                     </Button>
                 </div>

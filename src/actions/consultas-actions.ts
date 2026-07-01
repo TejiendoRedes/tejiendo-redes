@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { requireAuth } from '@/lib/auth';
 import { ConsultaSchema } from '@/schemas/consultas';
+import { antecedentes, type NewAntecedente } from '@/db/schema/antecedentes';
 
 // Eliminado: checkCodeExists (ahora se genera automáticamente)
 
@@ -155,6 +156,102 @@ export async function deleteConsulta(codigo: string) {
         return { success: true, message: 'Consulta eliminada correctamente' };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'la consulta', 'eliminar');
+        return { success: false, error: errorMessage };
+    }
+}
+
+/**
+ * Guardar Consulta desde el Wizard (Incluye Antecedentes)
+ */
+export async function saveConsultaWizard(
+    consultaData: Omit<NewConsulta, 'codigoConsulta' | 'fechaConsulta' | 'horaConsulta'>,
+    enfermedadesIds: string[],
+    antecedentesData: Omit<NewAntecedente, 'codigoAntecedente' | 'cedulaPaciente'>,
+    codigoConsultaExistente?: string
+) {
+    try {
+        await requireAuth();
+
+        const venezuelaTime = new Intl.DateTimeFormat('es-VE', {
+            timeZone: 'America/Caracas',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(new Date());
+
+        await db.transaction(async (tx) => {
+            // 1. Manejar Antecedentes (Upsert logic based on cedulaPaciente)
+            // Primero verificamos si ya tiene antecedentes
+            const existingAntecedente = await tx.query.antecedentes.findFirst({
+                where: eq(antecedentes.cedulaPaciente, consultaData.cedulaPaciente)
+            });
+
+            if (existingAntecedente) {
+                // Actualizar
+                await tx.update(antecedentes)
+                    .set(antecedentesData)
+                    .where(eq(antecedentes.cedulaPaciente, consultaData.cedulaPaciente));
+            } else {
+                // Crear nuevo
+                const newAntCode = await getNextCode(antecedentes, antecedentes.codigoAntecedente, 'ANT-');
+                await tx.insert(antecedentes).values({
+                    ...antecedentesData,
+                    codigoAntecedente: newAntCode,
+                    cedulaPaciente: consultaData.cedulaPaciente
+                });
+            }
+
+            // 2. Manejar Consulta
+            let codigoGuardado = codigoConsultaExistente;
+
+            if (codigoConsultaExistente) {
+                // Update
+                await tx.update(consultas)
+                    .set({
+                        ...consultaData,
+                        tensionArterial: antecedentesData.TA // Sincronizamos
+                    })
+                    .where(eq(consultas.codigoConsulta, codigoConsultaExistente));
+
+                // Sync Enfermedades
+                await tx.delete(consultasEnfermedades)
+                    .where(eq(consultasEnfermedades.codigoConsulta, codigoConsultaExistente));
+
+                if (enfermedadesIds.length > 0) {
+                    const relations: NewConsultaEnfermedad[] = enfermedadesIds.map(id => ({
+                        codigoConsulta: codigoConsultaExistente,
+                        codigoEnfermedad: id
+                    }));
+                    await tx.insert(consultasEnfermedades).values(relations);
+                }
+            } else {
+                // Insert
+                codigoGuardado = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
+                await tx.insert(consultas).values({
+                    ...consultaData,
+                    codigoConsulta: codigoGuardado,
+                    horaConsulta: venezuelaTime,
+                    tensionArterial: antecedentesData.TA
+                });
+
+                if (enfermedadesIds.length > 0) {
+                    const relations: NewConsultaEnfermedad[] = enfermedadesIds.map(id => ({
+                        codigoConsulta: codigoGuardado as string,
+                        codigoEnfermedad: id
+                    }));
+                    await tx.insert(consultasEnfermedades).values(relations);
+                }
+            }
+        });
+
+        revalidatePath('/atencion-medica');
+        if (consultaData.codigoAbordaje) {
+            revalidatePath(`/abordajes/${consultaData.codigoAbordaje}`);
+        }
+        return { success: true, message: 'Consulta registrada exitosamente' };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error, 'el registro paso a paso', 'crear');
         return { success: false, error: errorMessage };
     }
 }

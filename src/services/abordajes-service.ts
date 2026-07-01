@@ -5,7 +5,7 @@ import { comunidades } from '@/db/schema/comunidades';
 import { tejedores } from '@/db/schema/tejedores';
 import { consultas } from '@/db/schema/consultas';
 import { medicamentos } from '@/db/schema/medicamentos';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, lt } from 'drizzle-orm';
 import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
 import { pacientes } from '@/db/schema/pacientes';
 import { medicos } from '@/db/schema/medicos';
@@ -24,14 +24,15 @@ export class AbordajesService {
         this.lastSyncTime = now;
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Convertir la fecha a formato local YYYY-MM-DD para evitar errores en mysql2
+        const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
         try {
             await db.update(abordaje)
                 .set({ estado: 'Finalizado' })
                 .where(and(
                     eq(abordaje.estado, 'Planificado'),
-                    sql`${abordaje.fechaAbordaje} < ${today}`
+                    lt(abordaje.fechaAbordaje, todayStr as unknown as Date) // Casting a Date para satisfacer el tipado estricto de drizzle
                 ));
         } catch (error) {
             console.error('Error syncing abordajes statuses:', error);
