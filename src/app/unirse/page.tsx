@@ -136,17 +136,17 @@ export default function RegisterTejedorPage() {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <Card className="w-full max-w-md p-8 text-center space-y-6">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <Card className="w-full max-w-md p-8 text-center space-y-6 rounded-[24px] shadow-sm border-gray-100 bg-white/70 backdrop-blur-md">
                     <div className="flex justify-center">
                         <CheckCircle2 className="w-16 h-16 text-emerald-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900">¡Postulación Enviada!</h2>
-                    <p className="text-slate-600">
+                    <h2 className="text-2xl font-bold text-gray-900">¡Postulación Enviada!</h2>
+                    <p className="text-gray-600">
                         Tu información ha sido recibida correctamente. El administrador revisará tu postulación para integrarte como Tejedor en la red.
                     </p>
                     <Link href="/login">
-                        <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+                        <Button className="w-full mt-4 bg-[#1e3a8a] hover:bg-blue-900 text-white rounded-xl h-12">
                             Volver al Inicio
                         </Button>
                     </Link>
@@ -156,16 +156,16 @@ export default function RegisterTejedorPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 py-12">
-            <Link href="/login" className="self-start mb-8 ml-4 lg:ml-0 flex items-center text-slate-500 hover:text-slate-900 transition-colors">
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 py-12">
+            <Link href="/login" className="self-start mb-8 ml-4 lg:ml-0 flex items-center text-gray-500 hover:text-gray-900 transition-colors">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver al inicio
             </Link>
 
-            <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl border border-slate-100 p-8 md:p-12">
+            <div className="w-full max-w-3xl rounded-[24px] shadow-sm border border-gray-100 bg-white/70 backdrop-blur-md p-8 md:p-12">
                 <div className="mb-10 text-center md:text-left">
-                    <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Formulario de Postulación</h1>
-                    <p className="text-slate-500 mt-3 text-lg">Únete a nuestra red de salud comunitaria como Tejedor.</p>
+                    <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Formulario de Postulación</h1>
+                    <p className="text-gray-500 mt-3 text-lg">Únete a nuestra red de salud comunitaria como Tejedor.</p>
                 </div>
 
                 {error && (
@@ -194,57 +194,57 @@ export default function RegisterTejedorPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                         {/* Cédula y Profesión */}
                         <div className="space-y-2">
-                            <Label htmlFor="cedulaAspirante" className="text-slate-700 font-semibold">Cédula</Label>
-                            <Input id="cedulaAspirante" {...register('cedulaAspirante')} placeholder="V-12345678" className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="cedulaAspirante" className="text-gray-700 font-medium">Cédula</Label>
+                            <Input id="cedulaAspirante" {...register('cedulaAspirante')} placeholder="V-12345678" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.cedulaAspirante && <p className="text-xs text-red-500">{errors.cedulaAspirante.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="profesionAspirante" className="text-slate-700 font-semibold">Profesión</Label>
-                            <Input id="profesionAspirante" {...register('profesionAspirante')} placeholder="Ej: Médico, Enfermero, etc." className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="profesionAspirante" className="text-gray-700 font-medium">Profesión</Label>
+                            <Input id="profesionAspirante" {...register('profesionAspirante')} placeholder="Ej: Médico, Enfermero, etc." className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.profesionAspirante && <p className="text-xs text-red-500">{errors.profesionAspirante.message}</p>}
                         </div>
 
                         {/* Nombres y Apellidos */}
                         <div className="space-y-2">
-                            <Label htmlFor="nombreAspirante" className="text-slate-700 font-semibold">Nombres</Label>
-                            <Input id="nombreAspirante" {...register('nombreAspirante')} className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="nombreAspirante" className="text-gray-700 font-medium">Nombres</Label>
+                            <Input id="nombreAspirante" {...register('nombreAspirante')} className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.nombreAspirante && <p className="text-xs text-red-500">{errors.nombreAspirante.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="apellidoAspirante" className="text-slate-700 font-semibold">Apellidos</Label>
-                            <Input id="apellidoAspirante" {...register('apellidoAspirante')} className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="apellidoAspirante" className="text-gray-700 font-medium">Apellidos</Label>
+                            <Input id="apellidoAspirante" {...register('apellidoAspirante')} className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.apellidoAspirante && <p className="text-xs text-red-500">{errors.apellidoAspirante.message}</p>}
                         </div>
 
                         {/* Fecha Nacimiento y Correo */}
                         <div className="space-y-2">
-                            <Label htmlFor="fechaNacimiento" className="text-slate-700 font-semibold">Fecha de Nacimiento</Label>
-                            <Input id="fechaNacimiento" type="date" {...register('fechaNacimiento')} className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="fechaNacimiento" className="text-gray-700 font-medium">Fecha de Nacimiento</Label>
+                            <Input id="fechaNacimiento" type="date" {...register('fechaNacimiento')} className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.fechaNacimiento && <p className="text-xs text-red-500">{errors.fechaNacimiento.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="correoAspirante" className="text-slate-700 font-semibold">Correo Electrónico</Label>
-                            <Input id="correoAspirante" type="email" {...register('correoAspirante')} placeholder="ejemplo@correo.com" className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="correoAspirante" className="text-gray-700 font-medium">Correo Electrónico</Label>
+                            <Input id="correoAspirante" type="email" {...register('correoAspirante')} placeholder="ejemplo@correo.com" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.correoAspirante && <p className="text-xs text-red-500">{errors.correoAspirante.message}</p>}
                         </div>
 
                         {/* Teléfono y Estado */}
                         <div className="space-y-2">
-                            <Label htmlFor="telefonoAspirante" className="text-slate-700 font-semibold">Teléfono</Label>
-                            <Input id="telefonoAspirante" {...register('telefonoAspirante')} placeholder="0412-1234567" className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50" />
+                            <Label htmlFor="telefonoAspirante" className="text-gray-700 font-medium">Teléfono</Label>
+                            <Input id="telefonoAspirante" {...register('telefonoAspirante')} placeholder="0412-1234567" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.telefonoAspirante && <p className="text-xs text-red-500">{errors.telefonoAspirante.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="estadoDireccionAspirante" className="text-slate-700 font-semibold">Estado</Label>
+                            <Label htmlFor="estadoDireccionAspirante" className="text-gray-700 font-medium">Estado</Label>
                             <Select
                                 onValueChange={(value) => setValue('estadoDireccionAspirante', value)}
                                 value={watch('estadoDireccionAspirante')}
                             >
-                                <SelectTrigger className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50">
+                                <SelectTrigger className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900">
                                     <SelectValue placeholder="Seleccione un estado" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -260,13 +260,13 @@ export default function RegisterTejedorPage() {
 
                         {/* Municipio y Parroquia */}
                         <div className="space-y-2">
-                            <Label htmlFor="municipioAspirante" className="text-slate-700 font-semibold">Municipio</Label>
+                            <Label htmlFor="municipioAspirante" className="text-gray-700 font-medium">Municipio</Label>
                             <Select
                                 onValueChange={(value) => setValue('municipioAspirante', value)}
                                 value={watch('municipioAspirante')}
                                 disabled={!selectedEstado}
                             >
-                                <SelectTrigger className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50">
+                                <SelectTrigger className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900">
                                     <SelectValue placeholder={selectedEstado ? "Seleccione un municipio" : "Primero seleccione estado"} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -281,13 +281,13 @@ export default function RegisterTejedorPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="parroquiaAspirante" className="text-slate-700 font-semibold">Parroquia</Label>
+                            <Label htmlFor="parroquiaAspirante" className="text-gray-700 font-medium">Parroquia</Label>
                             <Select
                                 onValueChange={(value) => setValue('parroquiaAspirante', value)}
                                 value={watch('parroquiaAspirante')}
                                 disabled={!selectedMunicipio}
                             >
-                                <SelectTrigger className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50">
+                                <SelectTrigger className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900">
                                     <SelectValue placeholder={selectedMunicipio ? "Seleccione una parroquia" : "Primero seleccione municipio"} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -303,12 +303,12 @@ export default function RegisterTejedorPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="direccionAspirante" className="text-slate-700 font-semibold">Dirección de Habitación</Label>
+                        <Label htmlFor="direccionAspirante" className="text-gray-700 font-medium">Dirección de Habitación</Label>
                         <Input
                             id="direccionAspirante"
                             {...register('direccionAspirante')}
                             placeholder="Calle, avenida, sector, punto de referencia..."
-                            className="h-12 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-slate-50/50"
+                            className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900"
                         />
                         {errors.direccionAspirante && <p className="text-xs text-red-500">{errors.direccionAspirante.message}</p>}
                     </div>
@@ -317,7 +317,7 @@ export default function RegisterTejedorPage() {
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-7 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg rounded-2xl transition-all shadow-lg shadow-blue-200 active:scale-[0.99] flex items-center justify-center gap-3"
+                            className="w-full py-7 bg-[#1e3a8a] hover:bg-blue-900 text-white font-semibold text-lg rounded-xl transition-all shadow-sm active:scale-[0.99] flex items-center justify-center gap-3"
                         >
                             {loading ? (
                                 <>

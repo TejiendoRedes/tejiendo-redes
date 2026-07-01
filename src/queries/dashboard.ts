@@ -129,7 +129,7 @@ export async function getEpidemiologicalData(filters: DashboardFilters) {
         // 1. Top 10 Patologías
         db.select({
             enfermedad: enfermedades.nombreEnfermedad,
-            cantidad: count(consultasEnfermedades.codigoEnfermedad),
+            cantidad: sql<number>`count(${consultasEnfermedades.codigoEnfermedad})`.as("cantidad"),
         })
             .from(consultasEnfermedades)
             .innerJoin(consultas, eq(consultasEnfermedades.codigoConsulta, consultas.codigoConsulta))
@@ -137,7 +137,7 @@ export async function getEpidemiologicalData(filters: DashboardFilters) {
             .innerJoin(enfermedades, eq(consultasEnfermedades.codigoEnfermedad, enfermedades.codigoEnfermedad))
             .where(whereCondition)
             .groupBy(enfermedades.nombreEnfermedad)
-            .orderBy(desc(count(consultasEnfermedades.codigoEnfermedad)))
+            .orderBy(desc(sql`cantidad`))
             .limit(10),
 
         // 2. IMC

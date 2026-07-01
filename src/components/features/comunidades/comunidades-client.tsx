@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Home, MapPin } from 'lucide-react';
+import { Edit, Trash2, Home, MapPin, Eye } from 'lucide-react';
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { createComunidad, deleteComunidad, updateComunidad } from '@/actions/comunidades-actions';
@@ -30,6 +30,7 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingComunidad, setEditingComunidad] = React.useState<Comunidad | null>(null);
+    const [viewingComunidad, setViewingComunidad] = React.useState<Comunidad | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
     const handleAdd = () => {
@@ -137,6 +138,15 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                     <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => setViewingComunidad(c)}
+                        title="Ver detalles"
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500 h-8 w-8 p-0"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEdit(c)}
                         title="Editar"
                         className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
@@ -221,6 +231,55 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                             onCancel={() => setIsModalOpen(false)}
                             isLoading={isLoading}
                         />
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal de Ver Detalles */}
+                <Dialog open={!!viewingComunidad} onOpenChange={(open) => !open && setViewingComunidad(null)}>
+                    <DialogContent className="max-w-2xl bg-white/95 backdrop-blur-md rounded-[24px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl flex items-center gap-2 text-gray-900">
+                                <MapPin className="w-6 h-6 text-[#1e3a8a]" />
+                                Detalles de la Comunidad
+                            </DialogTitle>
+                        </DialogHeader>
+                        
+                        {viewingComunidad && (
+                            <div className="space-y-6 mt-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-gray-500 font-medium">Código</p>
+                                        <p className="text-gray-900 font-semibold">{viewingComunidad.codigoComunidad}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-gray-500 font-medium">Nombre</p>
+                                        <p className="text-gray-900 font-semibold">{viewingComunidad.nombreComunidad}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-gray-500 font-medium">Ubicación</p>
+                                        <p className="text-gray-900">{getLocationNames(viewingComunidad)}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-gray-500 font-medium">Tipo</p>
+                                        <p className="text-gray-900">
+                                            {viewingComunidad.tipoComunidad === '1' ? 'Urbana' : 
+                                             viewingComunidad.tipoComunidad === '2' ? 'Rural' : 
+                                             viewingComunidad.tipoComunidad === '3' ? 'Indígena' : 
+                                             viewingComunidad.tipoComunidad === '4' ? 'Base de Misiones' : 
+                                             viewingComunidad.tipoComunidad}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1 col-span-2">
+                                        <p className="text-sm text-gray-500 font-medium">Responsable</p>
+                                        <p className="text-gray-900">
+                                            {responsables.find(r => r.cedulaResponsable === viewingComunidad.cedulaResponsable) 
+                                                ? `${responsables.find(r => r.cedulaResponsable === viewingComunidad.cedulaResponsable)?.nombreResponsable} ${responsables.find(r => r.cedulaResponsable === viewingComunidad.cedulaResponsable)?.apellidoResponsable}`
+                                                : 'No asignado'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </PageShell>

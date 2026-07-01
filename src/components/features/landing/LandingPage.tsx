@@ -132,7 +132,7 @@ const programs = [
   {
     icon: Pill,
     title: "Entrega de Medicamentos",
-    desc: "Nuestra farmacia comunitaria garantiza el acceso a tratamientos y medicinas esenciales sin costo para las familias.",
+    desc: "Nuestra farmacia comunitaria garantiza el acceso a tratamientos y medicinas esenciales para las familias.",
   },
   {
     icon: Activity,
@@ -324,7 +324,7 @@ export function LandingPage() {
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  "Atención médica 100% gratuita",
+                  "Atención médica integral",
                   "Equipos multidisciplinarios de salud",
                   "Presencia en comunidades de difícil acceso",
                 ].map((point) => (
