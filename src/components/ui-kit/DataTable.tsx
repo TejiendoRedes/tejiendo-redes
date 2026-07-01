@@ -21,8 +21,9 @@ export type FilterDef<T> = {
 export type Column<T> = {
   key: string;
   header: string;
-  render: (row: T) => ReactNode;
+  render?: (row: T) => ReactNode;
   className?: string;
+  sortable?: boolean;
 };
 
 export function DataTable<T extends Record<string, unknown>>({
