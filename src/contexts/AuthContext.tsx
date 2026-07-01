@@ -26,7 +26,7 @@ interface AuthContextType {
   refreshCsrf: () => Promise<string>;
 }
 
-const AuthContext = (globalThis as any)._authContext || createContext<AuthContextType | undefined>(undefined);
+const AuthContext = ((globalThis as any)._authContext as React.Context<AuthContextType | undefined>) || createContext<AuthContextType | undefined>(undefined);
 if (process.env.NODE_ENV !== 'production') {
   (globalThis as any)._authContext = AuthContext;
 }
@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth debe usarse dentro de AuthProvider');
