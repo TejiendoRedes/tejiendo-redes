@@ -236,40 +236,51 @@ export function LandingPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a]/95 via-blue-900/85 to-blue-950/90" />
         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 lg:py-36">
-          <div className="max-w-3xl">
-            <Reveal>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold text-sky-100 backdrop-blur">
-                <ShieldCheck className="h-4 w-4" /> Aliados de UNICEF y ACNUR
-              </span>
-            </Reveal>
-            <Reveal delay={100}>
-              <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                La salud es un derecho, <span className="text-sky-300">no un privilegio</span>.
-              </h1>
-            </Reveal>
-            <Reveal delay={200}>
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-blue-100">
-                Juntos tejemos redes de esperanza para quienes más lo necesitan, llevando atención
-                médica gratuita y de calidad a tu comunidad.
-              </p>
-            </Reveal>
-            <Reveal delay={300}>
-              <div className="mt-9 flex flex-wrap gap-4">
-                <a
-                  href="#contacto"
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-4 text-base font-bold text-[#1e3a8a] shadow-xl shadow-blue-950/30 transition-all hover:-translate-y-0.5 hover:shadow-2xl"
-                >
-                  Quiero ser voluntario
-                  <ArrowRight className="h-5 w-5" />
-                </a>
-                <a
-                  href="#programas"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/5 px-7 py-4 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
-                >
-                  Conoce nuestros programas
-                </a>
-              </div>
-            </Reveal>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12">
+            <div className="max-w-3xl lg:max-w-2xl">
+              <Reveal>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold text-sky-100 backdrop-blur">
+                  <ShieldCheck className="h-4 w-4" /> Aliados de UNICEF y ACNUR
+                </span>
+              </Reveal>
+              <Reveal delay={100}>
+                <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                  La salud es un derecho, <span className="text-sky-300">no un privilegio</span>.
+                </h1>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="mt-6 max-w-xl text-lg leading-relaxed text-blue-100">
+                  Juntos tejemos redes de esperanza para quienes más lo necesitan, llevando atención
+                  médica gratuita y de calidad a tu comunidad.
+                </p>
+              </Reveal>
+              <Reveal delay={300}>
+                <div className="mt-9 flex flex-wrap gap-4">
+                  <a
+                    href="#contacto"
+                    className="inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-4 text-base font-bold text-[#1e3a8a] shadow-xl shadow-blue-950/30 transition-all hover:-translate-y-0.5 hover:shadow-2xl"
+                  >
+                    Quiero ser voluntario
+                    <ArrowRight className="h-5 w-5" />
+                  </a>
+                  <a
+                    href="#programas"
+                    className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/5 px-7 py-4 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+                  >
+                    Conoce nuestros programas
+                  </a>
+                </div>
+              </Reveal>
+            </div>
+
+            <div className="hidden lg:flex lg:justify-end">
+              <Reveal delay={200}>
+                <div className="relative">
+                  <div className="absolute -inset-4 rounded-full bg-white/5 blur-3xl" />
+                  <Image src="/logo.png" alt="Fundación Tejiendo Redes" width={280} height={84} className="relative object-contain brightness-0 invert opacity-90 drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
+                </div>
+              </Reveal>
+            </div>
           </div>
         </div>
       </section>
@@ -437,14 +448,19 @@ export function LandingPage() {
                 Venezuela.
               </p>
               <div className="mt-5 flex gap-3">
-                {[Facebook, Instagram, Twitter].map((Icon, i) => (
+                {[
+                  { icon: Facebook, href: "https://www.facebook.com/tejiendoredeslara/?locale=es_LA", label: "Facebook" },
+                  { icon: Instagram, href: "https://www.instagram.com/fundaciontejiendoredes/?hl=es", label: "Instagram" }
+                ].map((social, i) => (
                   <a
                     key={i}
-                    href="#"
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer"
                     className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-slate-300 transition-colors hover:bg-[#1e3a8a] hover:text-white"
-                    aria-label="Red social"
+                    aria-label={social.label}
                   >
-                    <Icon className="h-5 w-5" />
+                    <social.icon className="h-5 w-5" />
                   </a>
                 ))}
               </div>
@@ -471,29 +487,22 @@ export function LandingPage() {
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-white">Contacto</h3>
               <ul className="mt-4 space-y-2.5 text-sm text-slate-400">
+
                 <li className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" /> contacto@tejiendoredes.org
+                  <Phone className="h-4 w-4 shrink-0" /> Whatsapp: 0424-5718876
                 </li>
                 <li className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" /> +58 212 000 0000
+                  <Phone className="h-4 w-4 shrink-0" /> Llamadas: 0251-4463504
                 </li>
                 <li className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" /> Caracas, Venezuela
+                  <MapPin className="h-4 w-4 shrink-0" /> Barquisimeto, Edo. Lara, Venezuela
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-6 text-xs text-slate-500 sm:flex-row">
+          <div className="mt-12 flex flex-col items-center justify-center border-t border-slate-800 pt-6 text-xs text-slate-500">
             <p>Sistema de Registro Tejiendo Redes © 2026</p>
-            <div className="flex gap-6">
-              <a href="#" className="transition-colors hover:text-slate-300">
-                Términos y condiciones
-              </a>
-              <a href="#" className="transition-colors hover:text-slate-300">
-                Política de privacidad
-              </a>
-            </div>
           </div>
         </div>
       </footer>

@@ -1,6 +1,14 @@
 "use client";
 
-import { Menu, Search, Bell, ChevronDown, LogOut } from "lucide-react";
+import { Menu, Search, Bell, ChevronDown, LogOut, User, Settings } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLayout } from "./LayoutContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -43,30 +51,65 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
           />
         </div>
 
-        <button
-          aria-label="Notificaciones"
-          className="relative rounded-full border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label="Notificaciones"
+              className="relative rounded-full border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm outline-none"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80 rounded-2xl p-2">
+            <DropdownMenuLabel className="px-2 py-1.5 font-bold text-gray-900">Notificaciones</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="flex flex-col items-center justify-center py-8 text-center text-sm text-gray-500">
+              <Bell className="mb-3 h-10 w-10 text-gray-200" />
+              <p className="font-medium text-gray-900">Estás al día</p>
+              <p>No tienes notificaciones nuevas</p>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <button className="flex items-center gap-3 rounded-full border border-gray-200 bg-white py-1.5 pl-1.5 pr-3 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1e3a8a] text-sm font-bold text-white uppercase">
-            {user?.nombre ? user.nombre.slice(0, 2) : "U"}
-          </span>
-          <span className="hidden text-left sm:block">
-            <span className="block text-sm font-bold leading-tight text-[#1e293b]">
-              {user?.nombre || "Usuario"} {user?.apellido || ""}
-            </span>
-            <span className="block text-xs font-medium leading-tight text-[#64748b] capitalize">{user?.role || user?.tipodeVoluntario || "Invitado"}</span>
-          </span>
-          <ChevronDown className="hidden h-4 w-4 text-gray-400 sm:block ml-1" />
-        </button>
-
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="rounded-full text-gray-500 hover:text-red-600 hover:bg-red-50">
-           <LogOut className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-3 rounded-full border border-gray-200 bg-white py-1.5 pl-1.5 pr-3 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm outline-none">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1e3a8a] text-sm font-bold text-white uppercase">
+                {user?.nombre ? user.nombre.slice(0, 2) : "U"}
+              </span>
+              <span className="hidden text-left sm:block">
+                <span className="block text-sm font-bold leading-tight text-[#1e293b]">
+                  {user?.nombre || "Usuario"} {user?.apellido || ""}
+                </span>
+                <span className="block text-xs font-medium leading-tight text-[#64748b] capitalize">{user?.role || user?.tipodeVoluntario || "Invitado"}</span>
+              </span>
+              <ChevronDown className="hidden h-4 w-4 text-gray-400 sm:block ml-1" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2">
+            <DropdownMenuLabel className="font-normal px-2 py-2.5">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-bold leading-none text-gray-900">{user?.nombre || "Usuario"} {user?.apellido || ""}</p>
+                <p className="text-xs leading-none text-gray-500 mt-1">{user?.cedula || user?.cedulaPaciente || "ID no disponible"}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2.5" onClick={() => router.push('/dashboard/admin')}>
+              <User className="mr-2 h-4 w-4" />
+              <span className="font-medium">Mi Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2.5">
+              <Settings className="mr-2 h-4 w-4" />
+              <span className="font-medium">Configuración</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span className="font-bold">Cerrar Sesión</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

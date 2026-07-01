@@ -36,11 +36,11 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   if (!user) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-slate-50 gap-4">
-        <p className="text-slate-500 font-medium">No se pudo verificar la sesión.</p>
-        <Button onClick={() => { router.push('/login'); router.refresh(); }} className="bg-blue-600 hover:bg-blue-700">
-          Ir al Login
-        </Button>
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Redirigiendo...</p>
+        </div>
       </div>
     );
   }
