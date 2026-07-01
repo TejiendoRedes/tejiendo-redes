@@ -165,29 +165,6 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
         },
     ];
 
-    const handleExport = (format: 'csv' | 'pdf') => {
-        const types: Record<string, string> = { '1': 'Urbana', '2': 'Rural', '3': 'Indígena', '4': 'Base de Misiones' };
-        const exportData = initialData.map(c => ({
-            codigo: c.codigoComunidad,
-            nombre: c.nombreComunidad,
-            ubicacion: getLocationNames(c),
-            tipo: types[c.tipoComunidad] || c.tipoComunidad,
-        }));
-
-        const headers = ['codigo', 'nombre', 'ubicacion', 'tipo'];
-        const columnsData = [
-            { header: 'Código', dataKey: 'codigo' as const },
-            { header: 'Nombre', dataKey: 'nombre' as const },
-            { header: 'Ubicación', dataKey: 'ubicacion' as const },
-            { header: 'Tipo', dataKey: 'tipo' as const },
-        ];
-
-        if (format === 'csv') {
-            import('@/lib/export-utils').then(m => m.exportToCSV(exportData, columnsData, 'comunidades'));
-        } else {
-            import('@/lib/export-utils').then(m => m.exportToPDF(exportData, columnsData, 'comunidades', 'Reporte de Comunidades'));
-        }
-    };
 
     return (
         <MainLayout>
@@ -203,10 +180,12 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
             >
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
                     <DataTable
+                        title="Listado de comunidades"
+                        description="Busca por nombre o código"
                         data={initialData}
                         columns={columns}
+                        searchKeys={['nombreComunidad', 'codigoComunidad']}
                         searchPlaceholder="Buscar comunidad..."
-                        onExport={handleExport}
                     />
                 </div>
 
