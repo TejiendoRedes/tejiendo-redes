@@ -26,7 +26,7 @@ export type Column<T> = {
   sortable?: boolean;
 };
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends any>({
   title,
   description,
   columns,
