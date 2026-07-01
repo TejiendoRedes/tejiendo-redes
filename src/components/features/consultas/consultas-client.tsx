@@ -6,13 +6,14 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Activity, User, Stethoscope, FileText, ArrowRight, Download, Plus, ClipboardList } from 'lucide-react';
+import { Edit, Trash2, Activity, User, Stethoscope, FileText, ArrowRight, Download, Plus, ClipboardList, Eye } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter
+    DialogFooter,
+    DialogDescription
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
@@ -50,6 +51,7 @@ export default function ConsultasClient({
     const [view, setView] = React.useState<'list' | 'wizard'>('list');
     const [isSetupOpen, setIsSetupOpen] = React.useState(false);
     const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
+    const [viewingConsulta, setViewingConsulta] = React.useState<any | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
     // Setup State (Step 0)
@@ -272,10 +274,20 @@ export default function ConsultasClient({
                     <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => setViewingConsulta(row)}
+                        disabled={isLoading}
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
+                        title="Ver detalles"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEditClick(row)}
                         disabled={isLoading}
                         className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
-                        title="Ver / Editar"
+                        title="Editar"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
@@ -329,6 +341,13 @@ export default function ConsultasClient({
     const selectedAbordajeRecord = abordajes.find(a => {
         const abordajeData = a.abordaje || a;
         return abordajeData.codigoAbordaje === selectedSetup.codigoAbordaje;
+    });
+
+    const uniqueAbordajes = Array.from(new Set(consultasData.map(c => c.codigoAbordaje || c.consulta.codigoAbordaje))).map(code => {
+        return {
+            label: `Abordaje: ${code}`,
+            value: code as string
+        };
     });
 
     return (
@@ -395,6 +414,13 @@ export default function ConsultasClient({
                         columns={columns}
                         searchKeys={['nombrePaciente', 'nombreMedico', 'codigoAbordaje']}
                         searchPlaceholder="Buscar por paciente o médico..."
+                        filters={[
+                            {
+                                key: 'codigoAbordaje',
+                                label: 'Abordaje',
+                                options: uniqueAbordajes
+                            }
+                        ]}
                     />
 
                     <ConfirmDialog
@@ -405,6 +431,73 @@ export default function ConsultasClient({
                         confirmLabel="Eliminar"
                         onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
                     />
+
+                    <Dialog open={!!viewingConsulta} onOpenChange={(open) => !open && setViewingConsulta(null)}>
+                        <DialogContent className="max-w-xl">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl text-[#1e3a8a]">
+                                    Detalle de Historia Clínica
+                                </DialogTitle>
+                                <DialogDescription className="hidden">Ver detalles de la historia</DialogDescription>
+                            </DialogHeader>
+                            {viewingConsulta && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-4">
+                                        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1e3a8a]/10 text-xl font-bold text-[#1e3a8a]">
+                                            <FileText className="w-8 h-8" />
+                                        </span>
+                                        <div>
+                                            <p className="text-lg font-bold text-gray-900">
+                                                {viewingConsulta.nombrePaciente || viewingConsulta.consulta.cedulaPaciente}
+                                            </p>
+                                            <p className="text-sm text-[#1e3a8a] font-medium">
+                                                {viewingConsulta.consulta.codigoConsulta} • Abordaje: {viewingConsulta.codigoAbordaje || viewingConsulta.consulta.codigoAbordaje}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 gap-4 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100 max-h-[60vh] overflow-y-auto">
+                                        <div>
+                                            <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase">Médico Tratante</p>
+                                            <p className="font-medium text-gray-900">{viewingConsulta.nombreMedico || viewingConsulta.consulta.cedulaMedico}</p>
+                                        </div>
+                                        <div className="pt-2 border-t border-gray-200">
+                                            <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase">Motivo de Consulta</p>
+                                            <p className="font-medium text-gray-900">{viewingConsulta.consulta.motivoConsulta || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase">Diagnóstico</p>
+                                            <p className="font-medium text-gray-900 whitespace-pre-wrap">{viewingConsulta.consulta.diagnosticoTexto || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase">Tratamiento</p>
+                                            <p className="font-medium text-gray-900 whitespace-pre-wrap">{viewingConsulta.consulta.tratamiento || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-500 mb-0.5 text-xs font-semibold uppercase">Recomendaciones</p>
+                                            <p className="font-medium text-gray-900 whitespace-pre-wrap">{viewingConsulta.consulta.recomendaciones || 'N/A'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t flex justify-end gap-2">
+                                        <Button 
+                                            variant="outline"
+                                            onClick={() => {
+                                                const row = viewingConsulta;
+                                                setViewingConsulta(null);
+                                                handleEditClick(row);
+                                            }}
+                                        >
+                                            <Edit className="w-4 h-4 mr-2" />
+                                            Editar Completo
+                                        </Button>
+                                        <Button onClick={() => setViewingConsulta(null)} className="bg-[#1e3a8a] text-white hover:bg-blue-800">
+                                            Cerrar
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </DialogContent>
+                    </Dialog>
                 </PageShell>
             ) : (
                 <div className="pt-4">

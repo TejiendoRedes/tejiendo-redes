@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, MapPin, Users, Calendar } from 'lucide-react';
+import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, MapPin, Users, Calendar, Download, Eye, FileText } from 'lucide-react';
 import { createSolicitudAbordaje, deleteSolicitudAbordaje, confirmarSolicitudAbordaje, rechazarSolicitudAbordaje } from '@/actions/solicitudes-abordajes-actions';
 import {
     Dialog,
@@ -20,8 +21,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 interface SolicitudAbordaje {
     id: number;
@@ -228,11 +231,12 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
     const columns: Column<SolicitudAbordaje>[] = [
         {
             key: 'codigoSolicitud',
-            label: 'Código',
+            header: 'Código',
+            render: (row) => <span className="font-medium text-gray-900">{row.codigoSolicitud}</span>
         },
         {
             key: 'comunidad',
-            label: 'Comunidad',
+            header: 'Comunidad',
             render: (row) => (
                 <div>
                     <div className="font-medium">{row.comunidad?.nombreComunidad || 'N/A'}</div>
@@ -242,7 +246,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         },
         {
             key: 'descripcionActividad',
-            label: 'Actividad',
+            header: 'Actividad',
             render: (row) => (
                 <div>
                     <div className="font-medium">{row.descripcionActividad}</div>
@@ -252,7 +256,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         },
         {
             key: 'fechaSugerida',
-            label: 'Fecha/Hora',
+            header: 'Fecha/Hora',
             render: (row) => (
                 <div className="text-sm">
                     <div>{row.fechaSugerida}</div>
@@ -262,7 +266,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         },
         {
             key: 'participantesEstimados',
-            label: 'Participantes',
+            header: 'Participantes',
             render: (row) => (
                 <div className="flex items-center gap-1">
                     <Users className="w-4 h-4 text-gray-500" />
@@ -273,7 +277,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
         {
             key: 'estado',
-            label: 'Estado',
+            header: 'Estado',
             render: (row) => (
                 <div className="flex flex-col gap-2">
                     {getEstadoBadge(row.estado)}
@@ -282,7 +286,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         },
         {
             key: 'logistica',
-            label: 'Validación Logística',
+            header: 'Validación Logística',
             render: (row) => {
                 const est = row.estado.toLowerCase();
                 if (est === 'confirmado') return <span className="text-gray-500 text-xs">Completada</span>;
@@ -336,9 +340,10 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (row) => (
-                <div className="flex gap-2">
+                <div className="flex justify-end gap-1">
                     <Button
                         variant="ghost"
                         size="sm"
@@ -347,26 +352,27 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                             setSelectedSolicitud(row);
                             setIsDetailsModalOpen(true);
                         }}
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
                     >
-                        Ver Detalle / Logística
+                        <Eye className="w-4 h-4" />
                     </Button>
                     {row.estado.toLowerCase() === 'pendiente' && (
-                        <>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                title="Rechazar"
-                                onClick={() => handleRechazar(row.id)}
-                            >
-                                <XCircle className="w-4 h-4 text-red-600" />
-                            </Button>
-                        </>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Rechazar"
+                            onClick={() => handleRechazar(row.id)}
+                            className="hover:bg-red-50 hover:text-red-600 text-gray-500"
+                        >
+                            <XCircle className="w-4 h-4" />
+                        </Button>
                     )}
                     <Button
                         variant="ghost"
                         size="sm"
                         title="Eliminar"
                         onClick={() => handleDelete(row.id)}
+                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
@@ -375,26 +381,105 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         },
     ];
 
+    const stats = {
+        total: solicitudes.length,
+        pendientes: solicitudes.filter(s => s.estado.toLowerCase() === 'pendiente').length,
+        confirmadas: solicitudes.filter(s => s.estado.toLowerCase() === 'confirmado').length
+    };
+
+    const handleExport = (format: 'csv' | 'pdf') => {
+        // Implement export...
+        toast.info("Función de exportación en desarrollo");
+    };
+
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold">Solicitudes de Abordajes</h1>
-                        <p className="text-gray-600 mt-2">
-                            Gestiona las solicitudes de abordajes comunitarios pendientes de confirmación
-                        </p>
+            <PageShell 
+                title="Solicitudes de Abordajes" 
+                subtitle="Gestiona las solicitudes comunitarias pendientes de confirmación"
+                actions={
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExport('pdf')} 
+                            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button 
+                            onClick={handleAdd} 
+                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nueva Solicitud
+                        </Button>
                     </div>
-                    <Button onClick={handleAdd} className="flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        Nueva Solicitud
-                    </Button>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Solicitudes</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {stats.total}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <FileText className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Pendientes</p>
+                                <p className="text-3xl font-bold text-amber-600">
+                                    {stats.pendientes}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+                                <Clock className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Confirmadas</p>
+                                <p className="text-3xl font-bold text-green-600">
+                                    {stats.confirmadas}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600 transition-colors group-hover:bg-green-100">
+                                <CheckCircle className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <DataTable
+                    title="Listado de solicitudes"
+                    description="Busca por código o comunidad"
                     data={solicitudes}
                     columns={columns}
-                    searchPlaceholder="Buscar solicitudes..."
+                    searchKeys={['codigoSolicitud', 'codigoComunidad']}
+                    searchPlaceholder="Buscar por código o comunidad..."
+                    filters={[
+                        {
+                            key: 'estado',
+                            label: 'Estado',
+                            options: [
+                                { label: 'Pendiente', value: 'pendiente' },
+                                { label: 'Confirmado', value: 'confirmado' },
+                                { label: 'Rechazado', value: 'rechazado' },
+                            ]
+                        }
+                    ]}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -404,22 +489,15 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="comunidad">Comunidad</Label>
-                                    <Select value={formData.codigoComunidad} onValueChange={(value) => setFormData(prev => ({ ...prev, codigoComunidad: value }))} required>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar comunidad" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {comunidades.map((comunidad) => (
-                                                <SelectItem key={comunidad.codigoComunidad} value={comunidad.codigoComunidad}>
-                                                    <div className="flex items-center justify-between w-full">
-                                                        <span>{comunidad.nombreComunidad}</span>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="space-y-2 col-span-2">
+                                    <SearchableSelect
+                                        label="Comunidad"
+                                        items={comunidades.map(c => ({ id: c.codigoComunidad, label: c.nombreComunidad, secondaryLabel: c.codigoComunidad }))}
+                                        value={formData.codigoComunidad}
+                                        onValueChange={(value) => setFormData(prev => ({ ...prev, codigoComunidad: value }))}
+                                        placeholder="Busque y seleccione la comunidad"
+                                        searchPlaceholder="Buscar por nombre..."
+                                    />
                                 </div>
                             </div>
 
@@ -655,7 +733,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                         )}
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }
