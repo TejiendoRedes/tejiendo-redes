@@ -76,13 +76,13 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-3 rounded-full border border-gray-200 bg-white py-1.5 pl-1.5 pr-3 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm outline-none">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1e3a8a] text-sm font-bold text-white uppercase">
-                {user?.nombre ? user.nombre.slice(0, 2) : "U"}
+                {user?.nombreTejedor ? user.nombreTejedor.slice(0, 2) : "U"}
               </span>
               <span className="hidden text-left sm:block">
                 <span className="block text-sm font-bold leading-tight text-[#1e293b]">
-                  {user?.nombre || "Usuario"} {user?.apellido || ""}
+                  {user?.nombreTejedor || "Usuario"} {user?.apellidoTejedor || ""}
                 </span>
-                <span className="block text-xs font-medium leading-tight text-[#64748b] capitalize">{user?.role || user?.tipodeVoluntario || "Invitado"}</span>
+                <span className="block text-xs font-medium leading-tight text-[#64748b] capitalize">{(user as any)?.role || user?.tipodeVoluntario || "Invitado"}</span>
               </span>
               <ChevronDown className="hidden h-4 w-4 text-gray-400 sm:block ml-1" />
             </button>
@@ -90,8 +90,8 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
           <DropdownMenuContent align="end" className="w-64 rounded-2xl p-2">
             <DropdownMenuLabel className="font-normal px-2 py-2.5">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-bold leading-none text-gray-900">{user?.nombre || "Usuario"} {user?.apellido || ""}</p>
-                <p className="text-xs leading-none text-gray-500 mt-1">{user?.cedula || user?.cedulaPaciente || "ID no disponible"}</p>
+                <p className="text-sm font-bold leading-none text-gray-900">{user?.nombreTejedor || "Usuario"} {user?.apellidoTejedor || ""}</p>
+                <p className="text-xs leading-none text-gray-500 mt-1">{user?.cedulaTejedor || "ID no disponible"}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
