@@ -103,12 +103,10 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
             key: 'codigoComunidad',
             header: 'Código',
             className: 'w-[1%] whitespace-nowrap',
-            sortable: true,
         },
         {
             key: 'nombreComunidad',
             header: 'Nombre',
-            sortable: true,
         },
         {
             key: 'ubicacion',
