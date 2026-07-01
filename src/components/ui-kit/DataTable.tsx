@@ -37,11 +37,11 @@ export function DataTable<T extends any>({
   primaryAction,
   filters,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   columns: Column<T>[];
   data: T[];
-  searchKeys: (keyof T)[];
+  searchKeys?: (keyof T)[];
   searchPlaceholder?: string;
   pageSize?: number;
   primaryAction?: { label: string; onClick?: () => void };
@@ -66,7 +66,7 @@ export function DataTable<T extends any>({
 
     // Apply search query
     const q = query.trim().toLowerCase();
-    if (q) {
+    if (q && searchKeys && searchKeys.length > 0) {
       result = result.filter((row) =>
         searchKeys.some((k) => String(row[k] ?? "").toLowerCase().includes(q)),
       );
@@ -94,12 +94,14 @@ export function DataTable<T extends any>({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+      {(title || (searchKeys && searchKeys.length > 0) || (filters && filters.length > 0)) && (
       <div className="flex flex-col gap-4 border-b border-border p-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-foreground">{title}</h2>
+          {title && <h2 className="text-lg font-bold text-foreground">{title}</h2>}
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {searchKeys && searchKeys.length > 0 && (
           <div className="relative min-w-0 flex-1 sm:min-w-[18rem]">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -112,6 +114,7 @@ export function DataTable<T extends any>({
               className="h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </div>
+          )}
           {filters && filters.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -156,6 +159,7 @@ export function DataTable<T extends any>({
           )}
         </div>
       </div>
+      )}
 
       <div className="overflow-x-auto overflow-y-auto max-h-[550px] relative rounded-b-xl">
         <table className="w-full border-collapse text-sm">
