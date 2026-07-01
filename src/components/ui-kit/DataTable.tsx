@@ -1,0 +1,169 @@
+import React, { useMemo, useState, type ReactNode } from "react";
+import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+
+export type Column<T> = {
+  key: string;
+  header: string;
+  render: (row: T) => ReactNode;
+  className?: string;
+};
+
+export function DataTable<T extends Record<string, unknown>>({
+  title,
+  description,
+  columns,
+  data,
+  searchKeys,
+  searchPlaceholder = "Buscar...",
+  pageSize = 6,
+  primaryAction,
+}: {
+  title: string;
+  description?: string;
+  columns: Column<T>[];
+  data: T[];
+  searchKeys: (keyof T)[];
+  searchPlaceholder?: string;
+  pageSize?: number;
+  primaryAction?: { label: string; onClick?: () => void };
+}) {
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return data;
+    return data.filter((row) =>
+      searchKeys.some((k) => String(row[k] ?? "").toLowerCase().includes(q)),
+    );
+  }, [data, query, searchKeys]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const current = Math.min(page, pageCount - 1);
+  const rows = filtered.slice(current * pageSize, current * pageSize + pageSize);
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+      <div className="flex flex-col gap-4 border-b border-border p-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-foreground">{title}</h2>
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-0 flex-1 sm:min-w-[18rem]">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(0);
+              }}
+              placeholder={searchPlaceholder}
+              className="h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
+            />
+          </div>
+          <button className="inline-flex h-12 items-center gap-2 rounded-xl border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted">
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden sm:inline">Filtros</span>
+          </button>
+          {primaryAction && (
+            <button
+              onClick={primaryAction.onClick}
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              {primaryAction.label}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              {columns.map((c) => (
+                <th
+                  key={c.key}
+                  className={cn(
+                    "px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+                    c.className,
+                  )}
+                >
+                  {c.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr
+                key={i}
+                className="border-b border-border/70 transition-colors last:border-0 hover:bg-muted/40"
+              >
+                {columns.map((c) => (
+                  <td key={c.key} className={cn("px-5 py-4 align-middle text-foreground", c.className)}>
+                    {c.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-5 py-12 text-center text-sm text-muted-foreground"
+                >
+                  No se encontraron resultados para “{query}”.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-col items-center justify-between gap-3 border-t border-border p-4 sm:flex-row">
+        <p className="text-sm text-muted-foreground">
+          Mostrando{" "}
+          <span className="font-semibold text-foreground">
+            {filtered.length === 0 ? 0 : current * pageSize + 1}–
+            {Math.min(filtered.length, (current + 1) * pageSize)}
+          </span>{" "}
+          de <span className="font-semibold text-foreground">{filtered.length}</span> registros
+        </p>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={current === 0}
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" /> Anterior
+          </button>
+          {Array.from({ length: pageCount }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={cn(
+                "h-9 w-9 rounded-lg text-sm font-semibold transition-colors",
+                i === current
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-input bg-background text-foreground hover:bg-muted",
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            disabled={current >= pageCount - 1}
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+          >
+            Siguiente <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}

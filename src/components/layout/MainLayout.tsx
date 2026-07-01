@@ -47,7 +47,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <LayoutProvider>
-      <div className="relative flex min-h-screen w-full bg-slate-50">
+      <div className="relative flex min-h-screen w-full bg-background">
         <AppSidebar />
         <MainWrapper>
           <GlobalEditManager />

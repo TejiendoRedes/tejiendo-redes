@@ -1,56 +1,89 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
+import { HeartHandshake } from 'lucide-react';
 import LoginForm from '@/components/forms/LoginForm';
 
 export default function LoginPage() {
-    return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-[440px] flex flex-col items-center">
-                {/* Logo y título */}
-                <div className="text-center mb-10 transition-all duration-700 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="inline-flex items-center justify-center mb-6">
-                        <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            width={180}
-                            height={180}
-                            className="object-contain drop-shadow-sm"
-                            priority
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                            Sistema de Abordajes
-                        </h1>
-                        <p className="text-slate-500 font-medium">
-                            Gestión de salud comunitaria
-                        </p>
-                    </div>
-                </div>
-
-                {/* Formulario de login */}
-                <div className="w-full bg-white rounded-3xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] border border-slate-100 p-10 transition-all duration-700 animate-in fade-in zoom-in-95 delay-200">
-                    <LoginForm />
-
-                    <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                        <p className="text-slate-500 text-sm mb-3">¿Eres nuevo?</p>
-                        <a
-                            href="/unirse"
-                            className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-all active:scale-95 text-sm"
-                        >
-                            Unirse como tejedor
-                        </a>
-                    </div>
-                </div>
-
-                <div className="mt-8 text-center animate-in fade-in slide-in-from-top-4 delay-500">
-                    <p className="text-slate-400 text-sm">
-                        &copy; {new Date().getFullYear()} Tejiendo Redes. Todos los derechos reservados.
-                    </p>
-                </div>
+  return (
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Left panel - hidden on mobile */}
+      <div className="relative hidden overflow-hidden lg:block">
+        <img
+          src="/login-bg.jpg"
+          alt="Voluntarios brindando atención médica en la comunidad"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-blue-900/70 to-blue-950/90" />
+        <div className="relative flex h-full flex-col justify-between p-12 text-white">
+          <div className="flex items-center gap-3">
+             <Image
+                 src="/logo.png"
+                 alt="Logo"
+                 width={120}
+                 height={120}
+                 className="object-contain brightness-0 invert"
+                 priority
+             />
+          </div>
+          <div className="space-y-6">
+            <blockquote className="max-w-md text-2xl font-light leading-relaxed">
+              "La salud es un derecho, no un privilegio. Juntos tejemos redes de esperanza para quienes más lo necesitan."
+            </blockquote>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                <HeartHandshake className="h-5 w-5 text-white" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold">Fundación Tejiendo Redes</p>
+                <p className="text-xs text-blue-200">Aliados con UNICEF y ACNUR</p>
+              </div>
             </div>
+          </div>
         </div>
-    );
+      </div>
+
+      {/* Right panel - login form */}
+      <div className="flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700 rounded-3xl border border-white/60 bg-white/80 shadow-2xl backdrop-blur-xl">
+          <div className="space-y-3 pb-2 pt-8 text-center">
+            <div className="mx-auto flex justify-center lg:hidden">
+              <Image
+                 src="/logo.png"
+                 alt="Logo"
+                 width={100}
+                 height={100}
+                 className="object-contain drop-shadow-sm"
+                 priority
+             />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                Bienvenido de nuevo
+              </h1>
+              <p className="text-sm text-slate-500">
+                Ingresa tus credenciales para acceder al sistema de Tejiendo Redes
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-5 px-8 pb-8 mt-4">
+            <LoginForm />
+
+            <p className="text-center text-xs text-slate-500 mt-6">
+              ¿Quieres ser voluntario?{" "}
+              <Link
+                href="/unirse"
+                className="font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+              >
+                Únete aquí
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

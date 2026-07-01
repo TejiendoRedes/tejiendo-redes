@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export default function LoginForm() {
     const { login } = useAuth();
@@ -15,6 +16,7 @@ export default function LoginForm() {
     const [usuario, setUsuario] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Security states
     const [honeypot, setHoneypot] = useState('');
@@ -45,7 +47,7 @@ export default function LoginForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
             {/* Honeypot Field (Invisible to users, but visible to bots) */}
             <div className="hidden" aria-hidden="true">
                 <input
@@ -59,60 +61,77 @@ export default function LoginForm() {
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="usuario" className="text-slate-700 font-semibold ml-1">
+                <Label htmlFor="usuario" className="text-sm font-medium text-slate-700">
                     Usuario
                 </Label>
-                <div className="relative group">
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 group-focus-within:text-blue-600">
-                        <User className="w-5 h-5 text-slate-400" />
-                    </div>
+                <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <Input
                         id="usuario"
                         type="text"
+                        placeholder="nombre.apellido"
                         value={usuario}
-                        onChange={e => setUsuario(e.target.value)}
-                        className="pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all rounded-xl"
-                        placeholder="Ingrese su usuario"
+                        onChange={(e) => setUsuario(e.target.value)}
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
+                        autoComplete="username"
                         required
                         disabled={loading}
-                        autoComplete="username"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-700 font-semibold ml-1">
-                    Contraseña
-                </Label>
-                <div className="relative group">
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 group-focus-within:text-blue-600">
-                        <Lock className="w-5 h-5 text-slate-400" />
-                    </div>
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                        Contraseña
+                    </Label>
+                    <Link
+                        href="/"
+                        className="text-xs text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </Link>
+                </div>
+                <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <Input
                         id="password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        className="pl-11 h-12 bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all rounded-xl"
-                        placeholder="Ingrese su contraseña"
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-12 rounded-xl border-slate-200 bg-white pl-10 pr-10 text-slate-900 placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
+                        autoComplete="current-password"
                         required
                         disabled={loading}
-                        autoComplete="current-password"
                     />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                 </div>
             </div>
 
             <Button
                 type="submit"
-                className="w-full h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 transition-all rounded-xl shadow-lg shadow-blue-100 mt-2"
+                className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-700/25 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 disabled={loading}
             >
                 {loading ? (
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center justify-center gap-2">
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Iniciando sesión...
                     </span>
-                ) : 'Iniciar Sesión'}
+                ) : (
+                    <>
+                        Ingresar
+                        <ArrowRight size={18} className="ml-2" />
+                    </>
+                )}
             </Button>
         </form>
     );

@@ -11,7 +11,8 @@ import {
   Clock,
   Check,
   X,
-  Loader2
+  Loader2,
+  PieChart
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -27,13 +28,9 @@ import {
 import { PageShell } from '@/components/layout/PageShell';
 import { MetricCard } from '@/components/ui/MetricCard'; 
 import { StatusBadge } from '@/components/ui/StatusBadge'; 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui-kit/form';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { MainLayout } from '@/components/layout/MainLayout';
-
-// Move prototype components to ui-kit later or update imports:
-// For now I'll import from prototype but in the cleanup I'll move them.
 
 const monthly = [
   { m: "Ene", pacientes: 240, consultas: 180 },
@@ -62,12 +59,10 @@ export default function AdminDashboard() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch pending aspirantes
                 const pendingRes = await fetch('/api/admin/pending-aspirantes');
                 const pendingData = await pendingRes.json();
                 setPendingAspirantes(pendingData.aspirantes || []);
 
-                // Fetch dashboard stats
                 const statsRes = await fetch('/api/admin/stats');
                 const statsData = await statsRes.json();
                 if (statsData.stats) setStats(statsData.stats);
@@ -101,166 +96,119 @@ export default function AdminDashboard() {
     return (
         <MainLayout>
             <PageShell
-                title="Panel de Administración"
-                subtitle="Gestión operativa de aspirantes y coordinación de abordajes."
+                title="Resumen General"
+                subtitle="Indicadores de impacto · Fundación Tejiendo Redes"
             >
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <MetricCard 
-                        label="Aspirantes Pendientes" 
-                        value={stats.pendingAspirantes.toString()} 
-                        icon={Users} 
-                        tone="yellow" 
-                        delta={0} 
-                        hint="Por revisar" 
-                    />
-                    <MetricCard 
-                        label="Abordajes Activos" 
-                        value={stats.activeAbordajes.toString()} 
-                        icon={CalendarHeart} 
-                        tone="sky" 
-                        delta={2} 
-                        hint="En curso o planificados" 
-                    />
-                    <MetricCard 
-                        label="Reportes Históricos" 
-                        value={stats.totalConsultas.toString()} 
-                        icon={Stethoscope} 
-                        tone="success" 
-                        delta={5} 
-                        hint="Total de consultas" 
-                    />
-                    <MetricCard 
-                        label="Medicamentos Entregados" 
-                        value="6.320" 
-                        icon={Pill} 
-                        tone="yellow" 
-                        delta={-3} 
-                        hint="Unidades (demo)" 
-                    />
-                </div>
+                {loading ? (
+                    <div className="flex min-h-[40vh] items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <MetricCard label="Aspirantes Pendientes" value={stats.pendingAspirantes.toString()} icon={Users} tone="blue" delta={0} hint="Por revisar" />
+                            <MetricCard label="Abordajes Activos" value={stats.activeAbordajes.toString()} icon={CalendarHeart} tone="sky" delta={0} hint="En curso o planificados" />
+                            <MetricCard label="Consultas Históricas" value={stats.totalConsultas.toString()} icon={Stethoscope} tone="success" delta={5} hint="Total de consultas registradas" />
+                            <MetricCard label="Medicamentos Entregados" value="6.320" icon={Pill} tone="yellow" delta={-3} hint="Unidades dispensadas" />
+                        </div>
 
-                <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <Card className="lg:col-span-2 rounded-3xl shadow-sm border-slate-100">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5 text-blue-600" />
-                                <div>
-                                    <CardTitle>Atención mensual</CardTitle>
-                                    <CardDescription>Pacientes y consultas registradas</CardDescription>
+                        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                            <Card
+                                title="Atención mensual"
+                                description="Pacientes y consultas registradas"
+                                icon={<TrendingUp className="h-5 w-5" />}
+                                className="lg:col-span-2"
+                            >
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={monthly} margin={{ left: -16, right: 8, top: 8 }}>
+                                            <defs>
+                                                <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="var(--color-brand-blue)" stopOpacity={0.35} />
+                                                    <stop offset="100%" stopColor="var(--color-brand-blue)" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="var(--color-brand-sky)" stopOpacity={0.35} />
+                                                    <stop offset="100%" stopColor="var(--color-brand-sky)" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                                            <XAxis dataKey="m" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    borderRadius: 12,
+                                                    border: "1px solid var(--color-border)",
+                                                    background: "var(--color-card)",
+                                                    fontSize: 13,
+                                                }}
+                                            />
+                                            <Area type="monotone" dataKey="pacientes" stroke="var(--color-brand-blue)" strokeWidth={2.5} fill="url(#gp)" />
+                                            <Area type="monotone" dataKey="consultas" stroke="var(--color-brand-sky)" strokeWidth={2.5} fill="url(#gc)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-72 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={monthly} margin={{ left: -16, right: 8, top: 8 }}>
-                                        <defs>
-                                            <linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.35} />
-                                                <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.35} />
-                                                <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                                        <XAxis dataKey="m" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                        <Tooltip
-                                            contentStyle={{
-                                                borderRadius: 12,
-                                                border: "1px solid #e2e8f0",
-                                                background: "#ffffff",
-                                                fontSize: 13,
-                                            }}
-                                        />
-                                        <Area type="monotone" dataKey="pacientes" stroke="#2563eb" strokeWidth={2.5} fill="url(#gp)" />
-                                        <Area type="monotone" dataKey="consultas" stroke="#0ea5e9" strokeWidth={2.5} fill="url(#gc)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </Card>
 
-                    <Card className="rounded-3xl shadow-sm border-slate-100">
-                        <CardHeader>
-                            <CardTitle>Nuevas Solicitudes (Aspirantes)</CardTitle>
-                            <CardDescription>Revisar aspirantes pendientes</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {loading ? (
-                                <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
-                            ) : pendingAspirantes.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-8">No hay solicitudes pendientes.</p>
-                            ) : (
-                                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                                    {pendingAspirantes.map(asp => (
-                                        <div key={asp.cedulaAspirante} className="flex flex-col p-4 bg-slate-50 rounded-xl border border-slate-100 gap-3">
-                                            <div>
-                                                <p className="font-bold text-slate-800 text-sm">{asp.nombreAspirante} {asp.apellidoAspirante}</p>
-                                                <p className="text-xs text-slate-500">C.I: {asp.cedulaAspirante}</p>
-                                                <p className="text-xs text-slate-500 line-clamp-1">{asp.profesionAspirante}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 h-8 flex-1" onClick={() => handleApproval(asp.cedulaAspirante, true)}>
-                                                    <Check className="w-4 h-4 mr-1" /> Aprobar
-                                                </Button>
-                                                <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50 h-8 flex-1" onClick={() => handleApproval(asp.cedulaAspirante, false)}>
-                                                    <X className="w-4 h-4 mr-1" /> Rechazar
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                            <Card title="Consultas por área" description="Distribución por especialidad">
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={byArea} layout="vertical" margin={{ left: 8, right: 16 }}>
+                                            <XAxis type="number" hide />
+                                            <YAxis type="category" dataKey="area" width={92} stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
+                                            <Tooltip
+                                                cursor={{ fill: "var(--color-muted)" }}
+                                                contentStyle={{
+                                                    borderRadius: 12,
+                                                    border: "1px solid var(--color-border)",
+                                                    background: "var(--color-card)",
+                                                    fontSize: 13,
+                                                }}
+                                            />
+                                            <Bar dataKey="n" fill="var(--color-brand-blue)" radius={[0, 8, 8, 0]} barSize={18} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
+                            </Card>
+                        </div>
 
-                <div className="mt-6">
-                    <Card className="rounded-3xl shadow-sm border-slate-100">
-                        <CardHeader>
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-5 w-5 text-blue-600" />
-                                <div>
-                                    <CardTitle>Abordajes recientes</CardTitle>
-                                    <CardDescription>Jornadas comunitarias activas y programadas</CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="divide-y divide-slate-100">
-                                {recentAbordajes.length === 0 ? (
-                                    <p className="text-sm text-slate-500 text-center py-4">No hay abordajes registrados.</p>
-                                ) : (
-                                    recentAbordajes.map((a) => (
-                                        <li key={a.codigo || a.comunidad} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
-                                            <div className="flex items-center gap-3">
-                                                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                                    <MapPin className="h-5 w-5" />
-                                                </span>
-                                                <div>
-                                                    <p className="font-semibold text-slate-900">{a.comunidad}</p>
-                                                    <p className="flex items-center gap-1.5 text-sm text-slate-500">
-                                                        <Clock className="h-3.5 w-3.5" /> {new Date(a.fecha).toLocaleDateString()}
-                                                    </p>
+                        <div className="mt-6">
+                            <Card title="Abordajes recientes" description="Jornadas comunitarias activas y programadas" icon={<MapPin className="h-5 w-5" />}>
+                                <ul className="divide-y divide-border">
+                                    {recentAbordajes.length === 0 ? (
+                                        <li className="py-4 text-center text-sm text-muted-foreground">No hay abordajes registrados.</li>
+                                    ) : (
+                                        recentAbordajes.map((a) => (
+                                            <li key={a.codigo || a.comunidad} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-primary">
+                                                        <MapPin className="h-5 w-5" />
+                                                    </span>
+                                                    <div>
+                                                        <p className="font-semibold text-foreground">{a.comunidad || a.lugar}</p>
+                                                        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                                            <Clock className="h-3.5 w-3.5" /> {new Date(a.fechaPlanificada || a.fecha).toLocaleDateString('es-VE')}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <StatusBadge
-                                                    tone={a.estado === "Completado" || a.estado === "completado" ? "success" : a.estado === "planificado" ? "warning" : "blue"}
-                                                >
-                                                    {a.estado}
-                                                </StatusBadge>
-                                            </div>
-                                        </li>
-                                    ))
-                                )}
-                            </ul>
-                        </CardContent>
-                    </Card>
-                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-sm text-muted-foreground">
+                                                        <span className="font-semibold text-foreground">{a.pacientes || 0}</span> pacientes
+                                                    </span>
+                                                    <StatusBadge
+                                                        tone={a.estado === "Completado" || a.estado === "completado" ? "success" : a.estado === "En progreso" || a.estado === "planificado" ? "warning" : "blue"}
+                                                    >
+                                                        {a.estado}
+                                                    </StatusBadge>
+                                                </div>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
+                            </Card>
+                        </div>
+                    </>
+                )}
             </PageShell>
         </MainLayout>
     );

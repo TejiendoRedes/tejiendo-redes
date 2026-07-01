@@ -3,10 +3,10 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Heart, MapPin } from 'lucide-react';
+import { Edit, Trash2, Heart, MapPin, Phone, Eye } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { PacienteForm } from '@/components/forms/PacienteForm';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 interface PacienteWithComunidad extends Paciente {
     comunidad: Comunidad | null;
@@ -96,7 +97,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         }
     };
 
-    // Función para obtener nombres de ubicación
     const getLocationNames = (paciente: PacienteWithComunidad) => {
         const estado = (paciente as any).estado;
         const municipio = (paciente as any).municipio;
@@ -116,77 +116,73 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
     const columns: Column<PacienteWithComunidad>[] = [
         {
-            key: 'cedulaPaciente',
-            label: 'Cédula',
-            sortable: true,
-        },
-        {
             key: 'nombrePaciente',
-            label: 'Nombre completo',
-            render: (p) => `${p.nombrePaciente} ${p.apellidoPaciente}`,
-            sortable: true,
+            header: 'Paciente',
+            render: (p) => (
+                <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-sm font-bold text-primary">
+                        {p.nombrePaciente[0]}{p.apellidoPaciente[0]}
+                    </span>
+                    <div>
+                        <p className="font-semibold text-foreground">{p.nombrePaciente} {p.apellidoPaciente}</p>
+                        <p className="text-xs text-muted-foreground">{p.cedulaPaciente}</p>
+                    </div>
+                </div>
+            ),
         },
         {
             key: 'fechaNacimiento',
-            label: 'Edad',
+            header: 'Edad',
             render: (p) => `${calcularEdad(p.fechaNacimiento)} años`,
-            sortable: true,
         },
         {
             key: 'sexo',
-            label: 'Sexo',
+            header: 'Sexo',
+            render: (p) => (p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : 'N/A'),
+        },
+        {
+            key: 'telefonoPaciente',
+            header: 'Teléfono',
             render: (p) => (
-                <Badge variant="outline">
-                    {p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : 'N/A'}
-                </Badge>
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5" /> {p.telefonoPaciente || '-'}
+                </span>
             ),
-            sortable: true,
         },
         {
             key: 'comunidad',
-            label: 'Comunidad',
+            header: 'Comunidad / Último abordaje',
             render: (p) => p.comunidad?.nombreComunidad || p.codigoComunidad || '-',
-            sortable: true,
         },
         {
             key: 'ubicacion',
-            label: 'Ubicación',
+            header: 'Ubicación',
             render: (p) => (
                 <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-sm">{getLocationNames(p)}</span>
                 </div>
             ),
         },
         {
-            key: 'telefonoPaciente',
-            label: 'Teléfono',
-        },
-        {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (p) => {
                 return (
-                    <div className="flex gap-2">
-
-                        <Button
-                            variant="ghost"
-                            size="sm"
+                    <div className="flex justify-end gap-2">
+                        <button
                             onClick={() => handleEdit(p)}
-                            title="Editar"
-                            aria-label="Editar paciente"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
                         >
-                            <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
+                            <Edit className="h-3.5 w-3.5" /> Editar
+                        </button>
+                        <button
                             onClick={() => setDeleteTarget(p.cedulaPaciente)}
-                            title="Eliminar"
-                            aria-label="Eliminar paciente"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/20 hover:border-destructive/40"
                         >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
+                            <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                        </button>
                     </div>
                 );
             },
@@ -204,7 +200,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             telefono: p.telefonoPaciente || '-',
         }));
 
-        const headers = ['cedula', 'nombre', 'edad', 'sexo', 'comunidad', 'ubicacion', 'telefono'];
         const columnsData = [
             { header: 'Cédula', dataKey: 'cedula' as const },
             { header: 'Nombre', dataKey: 'nombre' as const },
@@ -224,21 +219,15 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Pacientes</h1>
-                    <p className="text-muted-foreground">
-                        Gestión del registro de pacientes del sistema
-                    </p>
-                </div>
-
+            <PageShell title="Pacientes" subtitle="Registro de personas atendidas en jornadas comunitarias">
                 <DataTable
+                    title="Listado de pacientes"
+                    description="Busca por nombre, cédula o teléfono"
                     data={initialData}
                     columns={columns}
+                    searchKeys={['nombrePaciente', 'apellidoPaciente', 'cedulaPaciente', 'telefonoPaciente']}
                     searchPlaceholder="Buscar por cédula, nombre, teléfono..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Paciente"
-                    onExport={handleExport}
+                    primaryAction={{ label: 'Nuevo Paciente', onClick: handleAdd }}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -271,7 +260,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                     confirmLabel="Eliminar"
                     onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
                 />
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

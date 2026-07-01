@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeft, X } from "lucide-react";
-import { BrandLogo } from "./BrandLogo";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { navGroups } from "./nav-config";
 import { useLayout } from "./LayoutContext";
 import { cn } from "@/lib/utils";
 
 function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   return (
     <nav className="flex flex-col gap-5 px-3 py-4">
       {navGroups.map((group) => (
         <div key={group.title}>
           {!collapsed && (
-            <p className="px-3 pb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-slate-500">
+            <p className="px-3 pb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground">
               {group.title}
             </p>
           )}
           <ul className="flex flex-col gap-1">
             {group.items.map((item) => {
-              const active = pathname === item.to || pathname.startsWith(item.to + "/");
+              const active = item.to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.to);
               return (
                 <li key={item.to}>
                   <Link
@@ -33,14 +33,14 @@ function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: 
                       "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                       collapsed && "justify-center px-0",
                       active
-                        ? "bg-blue-50 text-blue-700 shadow-sm"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-blue-600",
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-soft"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                     )}
                   >
                     <item.icon
                       className={cn(
                         "h-5 w-5 shrink-0",
-                        active ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500",
+                        active ? "text-primary" : "text-muted-foreground group-hover:text-primary",
                       )}
                     />
                     {!collapsed && <span className="truncate">{item.label}</span>}
@@ -63,13 +63,13 @@ export function AppSidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-200 bg-white transition-[width] duration-200 lg:flex",
+          "fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 lg:flex",
           collapsed ? "w-[5.25rem]" : "w-72",
         )}
       >
         <div
           className={cn(
-            "flex h-20 items-center border-b border-slate-200 px-4",
+            "flex h-20 items-center border-b border-sidebar-border px-4",
             collapsed ? "justify-center" : "justify-between",
           )}
         >
@@ -78,7 +78,7 @@ export function AppSidebar() {
             <button
               onClick={toggle}
               aria-label="Colapsar menú"
-              className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
             >
               <PanelLeftClose className="h-5 w-5" />
             </button>
@@ -88,7 +88,7 @@ export function AppSidebar() {
           <button
             onClick={toggle}
             aria-label="Expandir menú"
-            className="mx-auto mt-3 rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            className="mx-auto mt-3 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
           >
             <PanelLeft className="h-5 w-5" />
           </button>
@@ -97,10 +97,10 @@ export function AppSidebar() {
           <NavLinks collapsed={collapsed} />
         </div>
         {!collapsed && (
-          <div className="border-t border-slate-200 p-4">
-            <p className="text-xs text-slate-500">
-              Aliados de <span className="font-semibold text-slate-900">UNICEF</span> y{" "}
-              <span className="font-semibold text-slate-900">ACNUR</span>
+          <div className="border-t border-sidebar-border p-4">
+            <p className="text-xs text-muted-foreground">
+              Aliados de <span className="font-semibold text-foreground">UNICEF</span> y{" "}
+              <span className="font-semibold text-foreground">ACNUR</span>
             </p>
           </div>
         )}
@@ -110,16 +110,16 @@ export function AppSidebar() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-white shadow-xl">
-            <div className="flex h-20 items-center justify-between border-b border-slate-200 px-4">
+          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-sidebar shadow-card">
+            <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-4">
               <BrandLogo />
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Cerrar menú"
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-muted cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>

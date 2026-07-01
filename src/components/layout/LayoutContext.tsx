@@ -1,33 +1,35 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
-interface LayoutContextType {
+type SidebarState = {
   collapsed: boolean;
   toggle: () => void;
   mobileOpen: boolean;
-  setMobileOpen: (open: boolean) => void;
-}
+  setMobileOpen: (v: boolean) => void;
+};
 
-const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
+const Ctx = createContext<SidebarState | null>(null);
 
-export function LayoutProvider({ children }: { children: React.ReactNode }) {
+export function LayoutProvider({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const toggle = () => setCollapsed((prev) => !prev);
-
   return (
-    <LayoutContext.Provider value={{ collapsed, toggle, mobileOpen, setMobileOpen }}>
+    <Ctx.Provider
+      value={{
+        collapsed,
+        toggle: () => setCollapsed((c) => !c),
+        mobileOpen,
+        setMobileOpen,
+      }}
+    >
       {children}
-    </LayoutContext.Provider>
+    </Ctx.Provider>
   );
 }
 
 export function useLayout() {
-  const context = useContext(LayoutContext);
-  if (!context) {
-    throw new Error("useLayout must be used within a LayoutProvider");
-  }
-  return context;
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useLayout must be used within LayoutProvider");
+  return ctx;
 }
