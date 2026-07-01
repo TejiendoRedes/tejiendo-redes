@@ -82,7 +82,7 @@ export function SearchableSelect({
 
     return (
         <div className={cn("w-full", className)}>
-            {label && <label htmlFor={id} className="text-sm font-medium mb-1 block text-gray-700">{label}</label>}
+            {label && <label htmlFor={id} className="text-sm font-medium mb-1 block text-gray-700 cursor-pointer">{label}</label>}
             <Button
                 id={id}
                 type="button"
@@ -90,7 +90,7 @@ export function SearchableSelect({
                 role="combobox"
                 aria-expanded={open}
                 aria-label={label || placeholder}
-                className="w-full justify-between bg-white font-normal text-left h-10 px-3 border-gray-300 hover:bg-gray-50 transition-colors"
+                className="w-full justify-between bg-white font-normal text-left h-10 px-3 border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
                 onClick={() => !disabled && setOpen(true)}
                 disabled={disabled}
             >
@@ -128,7 +128,7 @@ export function SearchableSelect({
                                     type="button"
                                     onClick={() => setSearchTerm('')}
                                     aria-label="Borrar búsqueda"
-                                    className="absolute right-3 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="absolute right-3 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -144,7 +144,7 @@ export function SearchableSelect({
                                             type="button"
                                             onClick={() => handleSelect(item.id)}
                                             className={cn(
-                                                "flex flex-col w-full text-left px-4 py-3 rounded-xl transition-all duration-200",
+                                                "flex flex-col w-full text-left px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer",
                                                 value === item.id
                                                     ? "bg-blue-50 text-blue-700 border border-blue-100 shadow-sm"
                                                     : "hover:bg-gray-50 text-gray-700 border border-transparent hover:border-gray-100"

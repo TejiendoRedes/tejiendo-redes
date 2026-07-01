@@ -8,13 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Activity, ArrowRight, Stethoscope } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { toast } from 'sonner';
 
 import { getAntecedentesByPaciente } from '@/queries/consultas';
@@ -161,64 +155,51 @@ export default function UnifiedMedicalAttention({
 
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <Label className="text-gray-700 font-semibold">1. Seleccione el Abordaje</Label>
-                                    <Select
+                                    <SearchableSelect
+                                        label="1. Seleccione el Abordaje"
+                                        items={abordajes.map((ab: any) => {
+                                            const abordajeData = ab.abordaje || ab;
+                                            return {
+                                                id: abordajeData.codigoAbordaje,
+                                                label: `${abordajeData.codigoAbordaje} - ${new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}`
+                                            };
+                                        })}
                                         value={selectedSetup.codigoAbordaje}
                                         onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, codigoAbordaje: val }))}
-                                    >
-                                        <SelectTrigger className="h-12 bg-gray-50/50">
-                                            <SelectValue placeholder="Busque y seleccione el abordaje activo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {abordajes?.map((ab: any, i: number) => {
-                                                const abordajeData = ab.abordaje || ab; // Manejar tanto estructura anidada como plana
-                                                return (
-                                                    <SelectItem key={`${abordajeData.codigoAbordaje}-${i}`} value={abordajeData.codigoAbordaje}>
-                                                        {abordajeData.codigoAbordaje} - {new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}
-                                                    </SelectItem>
-                                                );
-                                            })}
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="Busque y seleccione el abordaje activo"
+                                        searchPlaceholder="Buscar por código..."
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-gray-700 font-semibold">2. Seleccione el Paciente</Label>
-                                    <Select
+                                    <SearchableSelect
+                                        label="2. Seleccione el Paciente"
+                                        items={pacientes.map((p: any) => ({
+                                            id: p.cedulaPaciente,
+                                            label: `${p.nombrePaciente || p.nombre} ${p.apellidoPaciente || p.apellido}`,
+                                            secondaryLabel: `V-${p.cedulaPaciente}`
+                                        }))}
                                         value={selectedSetup.cedulaPaciente}
                                         onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaPaciente: val }))}
+                                        placeholder="Busque por nombre o cédula"
+                                        searchPlaceholder="Buscar paciente..."
                                         disabled={!pacientes || pacientes.length === 0}
-                                    >
-                                        <SelectTrigger className="h-12 bg-gray-50/50">
-                                            <SelectValue placeholder="Busque por nombre o cédula" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {pacientes?.map((p: any, i: number) => (
-                                                <SelectItem key={`${p.cedulaPaciente}-${i}`} value={p.cedulaPaciente}>
-                                                    {p.nombrePaciente || p.nombre} {p.apellidoPaciente || p.apellido} (V-{p.cedulaPaciente})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-gray-700 font-semibold">3. Médico Tratante</Label>
-                                    <Select
+                                    <SearchableSelect
+                                        label="3. Médico Tratante"
+                                        items={medicos.map((m: any) => ({
+                                            id: m.cedulaTejedor,
+                                            label: `Dr(a). ${m.tejedor?.nombreTejedor || m.tejedor?.nombre1} ${m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}`,
+                                            secondaryLabel: m.especialidad?.nombreEspecialidad || m.codigoEspecialidad
+                                        }))}
                                         value={selectedSetup.cedulaMedico}
                                         onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaMedico: val }))}
-                                    >
-                                        <SelectTrigger className="h-12 bg-gray-50/50">
-                                            <SelectValue placeholder="Seleccione el médico a cargo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {medicos?.map((m: any, i: number) => (
-                                                <SelectItem key={`${m.cedulaTejedor}-${i}`} value={m.cedulaTejedor}>
-                                                    Dr(a). {m.tejedor?.nombreTejedor || m.tejedor?.nombre1} {m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="Seleccione el médico a cargo"
+                                        searchPlaceholder="Buscar médico..."
+                                    />
                                 </div>
 
                                 <Button 

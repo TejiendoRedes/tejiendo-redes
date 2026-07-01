@@ -104,34 +104,34 @@ export function ConsultaWizard({ paciente, medico, abordaje, enfermedadesDisponi
     };
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto pb-10 fade-in">
+        <div className="space-y-4 max-w-5xl mx-auto pb-10 fade-in">
             {/* Header: Patient Info */}
-            <Card className="p-6 flex items-center justify-between border-blue-100 bg-white shadow-sm rounded-2xl">
+            <div className="flex items-center justify-between bg-white border border-gray-200 shadow-sm rounded-[2rem] p-4 px-6">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold">
-                        {paciente?.nombrePaciente?.[0] || 'U'}
+                    <div className="w-14 h-14 bg-[#f3f4f6] text-[#1e3a8a] rounded-full flex items-center justify-center">
+                        <User className="w-7 h-7" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-gray-900">{paciente?.nombrePaciente} {paciente?.apellidoPaciente}</h2>
-                        <p className="text-sm text-gray-500">
-                            CI V-{paciente?.cedulaPaciente} • {calcularEdad(paciente?.fechaNacimiento)} años • {paciente?.sexo === 'F' ? 'Femenino' : paciente?.sexo === 'M' ? 'Masculino' : 'N/A'}
+                        <h2 className="text-[1.35rem] font-bold text-[#1e3a8a] tracking-tight">{paciente?.nombrePaciente} {paciente?.apellidoPaciente}</h2>
+                        <p className="text-sm text-gray-500 font-medium mt-0.5">
+                            CI V-{paciente?.cedulaPaciente} · {calcularEdad(paciente?.fechaNacimiento)} años · {paciente?.sexo === 'F' ? 'Femenino' : paciente?.sexo === 'M' ? 'Masculino' : 'N/A'}
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     {abordaje && (
-                        <div className="bg-gray-100 px-3 py-1.5 rounded-full text-xs font-semibold text-gray-700">
+                        <div className="bg-[#f0f4ff] text-[#4f649b] px-4 py-1.5 rounded-full text-xs font-bold">
                             Abordaje: {abordaje.codigoAbordaje}
                         </div>
                     )}
-                    <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-100">
-                        Dr. {medico?.tejedor?.nombre1 || ''} {medico?.tejedor?.apellido1 || ''}
+                    <div className="bg-[#f3f4f6] text-[#6b7280] px-4 py-1.5 rounded-full text-xs font-bold">
+                        N° HC {paciente?.idPaciente || '0000'}
                     </div>
                 </div>
-            </Card>
+            </div>
 
             {/* Stepper */}
-            <div className="flex items-center justify-between px-2 md:px-10">
+            <div className="flex items-center justify-between bg-white border border-gray-200 shadow-sm rounded-[2.5rem] p-4 px-6">
                 {STEPS.map((step, index) => {
                     const isActive = currentStep === step.id;
                     const isCompleted = currentStep > step.id;
@@ -140,16 +140,16 @@ export function ConsultaWizard({ paciente, medico, abordaje, enfermedadesDisponi
                     return (
                         <React.Fragment key={step.id}>
                             <div className="flex items-center gap-3 relative z-10">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${isActive ? 'bg-[#1e3a8a] text-white shadow-md' : isCompleted ? 'bg-blue-100 text-[#1e3a8a]' : 'bg-gray-100 text-gray-400'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isActive ? 'bg-[#293d6e] text-white shadow-md' : 'bg-[#f3f4f6] text-gray-400'}`}>
                                     <Icon className="w-5 h-5" />
                                 </div>
                                 <div className="hidden sm:block">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Paso {step.id}</p>
-                                    <p className={`text-sm font-semibold ${isActive || isCompleted ? 'text-gray-900' : 'text-gray-400'}`}>{step.title}</p>
+                                    <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider mb-0.5">Paso {step.id}</p>
+                                    <p className={`text-[15px] font-bold ${isActive ? 'text-[#111827]' : 'text-[#6b7280]'}`}>{step.title}</p>
                                 </div>
                             </div>
                             {index < STEPS.length - 1 && (
-                                <div className={`flex-1 h-[2px] mx-4 transition-colors ${isCompleted ? 'bg-[#1e3a8a]' : 'bg-gray-200'}`} />
+                                <div className={`flex-1 h-[2px] mx-4 transition-colors ${isCompleted ? 'bg-[#e5e7eb]' : 'bg-[#f3f4f6]'}`} />
                             )}
                         </React.Fragment>
                     );

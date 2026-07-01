@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Activity, User, Stethoscope, FileText, ArrowRight } from 'lucide-react';
+import { Edit, Trash2, Activity, User, Stethoscope, FileText, ArrowRight, Download, Plus, ClipboardList } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -15,13 +15,7 @@ import {
     DialogFooter
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { toast } from 'sonner';
 
 import type { Enfermedad } from '@/db/schema/enfermedades';
@@ -274,21 +268,27 @@ export default function ConsultasClient({
             header: '',
             className: 'text-right',
             render: (row) => (
-                <div className="flex justify-end gap-2">
-                    <button
+                <div className="flex justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEditClick(row)}
                         disabled={isLoading}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
+                        title="Ver / Editar"
                     >
-                        <Edit className="h-3.5 w-3.5" /> Editar
-                    </button>
-                    <button
+                        <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setDeleteTarget(row.consulta.codigoConsulta)}
                         disabled={isLoading}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/20 hover:border-destructive/40 disabled:opacity-50"
+                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
+                        title="Eliminar"
                     >
-                        <Trash2 className="h-3.5 w-3.5" /> Eliminar
-                    </button>
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
                 </div>
             ),
         },
@@ -334,16 +334,67 @@ export default function ConsultasClient({
     return (
         <MainLayout>
             {view === 'list' ? (
-                <PageShell title="Consultas Médicas" subtitle="Registro y gestión de consultas médicas asociadas a abordajes">
+                <PageShell 
+                    title="Historias Clínicas" 
+                    subtitle="Registro y gestión de consultas médicas asociadas a abordajes"
+                    actions={
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => handleExport('pdf')} 
+                                className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Exportar
+                            </Button>
+                            <Button 
+                                onClick={handleAddClick} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nueva Consulta
+                            </Button>
+                        </div>
+                    }
+                >
+                    {/* Métricas Resumen */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Consultas</p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {consultasData.length}
+                                    </p>
+                                </div>
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                    <ClipboardList className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                            <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Pacientes Atendidos</p>
+                                    <p className="text-3xl font-bold text-gray-900">
+                                        {new Set(consultasData.map(c => c.consulta.cedulaPaciente)).size}
+                                    </p>
+                                </div>
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600 transition-colors group-hover:bg-green-100">
+                                    <User className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <DataTable
-                        title="Listado de consultas"
+                        title="Listado de historias"
                         description="Busca por paciente, médico o código"
                         data={consultasData}
                         columns={columns}
                         searchKeys={['nombrePaciente', 'nombreMedico', 'codigoAbordaje']}
                         searchPlaceholder="Buscar por paciente o médico..."
-                        primaryAction={{ label: 'Nueva Consulta', onClick: handleAddClick }}
-                        onExport={handleExport}
                     />
 
                     <ConfirmDialog
@@ -379,67 +430,48 @@ export default function ConsultasClient({
                             Configurar Nueva Consulta
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Abordaje</Label>
-                            <Select
+                        <div className="space-y-4">
+                            <SearchableSelect
+                                label="Abordaje"
+                                items={abordajes.map((ab: any) => {
+                                    const abordajeData = ab.abordaje || ab;
+                                    return {
+                                        id: abordajeData.codigoAbordaje,
+                                        label: `${abordajeData.codigoAbordaje} - ${new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}`
+                                    };
+                                })}
                                 value={selectedSetup.codigoAbordaje}
                                 onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, codigoAbordaje: val }))}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccione el abordaje" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {abordajes.map((ab: any) => {
-                                        const abordajeData = ab.abordaje || ab;
-                                        return (
-                                            <SelectItem key={abordajeData.codigoAbordaje} value={abordajeData.codigoAbordaje}>
-                                                {abordajeData.codigoAbordaje} - {new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}
-                                            </SelectItem>
-                                        );
-                                    })}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                placeholder="Seleccione el abordaje"
+                                searchPlaceholder="Buscar por código..."
+                            />
 
-                        <div className="space-y-2">
-                            <Label>Paciente</Label>
-                            <Select
+                            <SearchableSelect
+                                label="Paciente"
+                                items={pacientes.map((p: any) => ({
+                                    id: p.cedulaPaciente,
+                                    label: `${p.nombrePaciente || p.nombre} ${p.apellidoPaciente || p.apellido}`,
+                                    secondaryLabel: `V-${p.cedulaPaciente}`
+                                }))}
                                 value={selectedSetup.cedulaPaciente}
                                 onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaPaciente: val }))}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Busque y seleccione el paciente" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {pacientes.map((p: any) => (
-                                        <SelectItem key={p.cedulaPaciente} value={p.cedulaPaciente}>
-                                            {p.nombrePaciente || p.nombre} {p.apellidoPaciente || p.apellido} ({p.cedulaPaciente})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                placeholder="Busque y seleccione el paciente"
+                                searchPlaceholder="Buscar paciente..."
+                            />
 
-                        <div className="space-y-2">
-                            <Label>Médico Tratante</Label>
-                            <Select
+                            <SearchableSelect
+                                label="Médico Tratante"
+                                items={medicos.map((m: any) => ({
+                                    id: m.cedulaTejedor,
+                                    label: `Dr(a). ${m.tejedor?.nombreTejedor || m.tejedor?.nombre1} ${m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}`,
+                                    secondaryLabel: m.especialidad?.nombreEspecialidad || m.codigoEspecialidad
+                                }))}
                                 value={selectedSetup.cedulaMedico}
                                 onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, cedulaMedico: val }))}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccione el médico" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {medicos.map((m: any) => (
-                                        <SelectItem key={m.cedulaTejedor} value={m.cedulaTejedor}>
-                                            Dr(a). {m.tejedor?.nombreTejedor || m.tejedor?.nombre1} {m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Seleccione el médico"
+                                searchPlaceholder="Buscar médico..."
+                            />
                         </div>
-                    </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsSetupOpen(false)}>Cancelar</Button>
                         <Button onClick={handleSetupNext} disabled={isLoading} className="gap-2">
