@@ -63,7 +63,7 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
                 {user ? `${user.nombreTejedor} ${user.apellidoTejedor}` : "Usuario"}
               </span>
               <span className="block text-xs leading-tight text-slate-500 capitalize">
-                {user?.rol || "Invitado"}
+                {(user as any)?.rol || user?.tipodeVoluntario || "Invitado"}
               </span>
             </span>
             <ChevronDown className="hidden h-4 w-4 text-slate-500 sm:block" />
