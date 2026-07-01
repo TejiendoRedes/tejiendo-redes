@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, AlertCircle, Plus, Package, Pill } from 'lucide-react';
@@ -106,25 +106,24 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
     const columns: Column<Medicamento>[] = [
         {
             key: 'codigoMedicamento',
-            label: 'Código',
-            sortable: true,
+            header: 'Código',
+            render: (med) => <span className="font-medium text-gray-900">{med.codigoMedicamento}</span>
         },
         {
             key: 'nombreMedicamento',
-            label: 'Nombre',
-            sortable: true,
+            header: 'Nombre',
             render: (med) => (
                 <div className="font-medium text-gray-900">{med.nombreMedicamento}</div>
             )
         },
         {
             key: 'presentacion',
-            label: 'Presentación',
-            sortable: true,
+            header: 'Presentación',
+            render: (med) => med.presentacion
         },
         {
             key: 'descripcion',
-            label: 'Descripción',
+            header: 'Descripción',
             render: (med) => (
                 <p className="max-w-xs truncate text-gray-500" title={med.descripcion}>
                     {med.descripcion || '-'}
@@ -133,7 +132,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
         },
         {
             key: 'existencia',
-            label: 'Existencia',
+            header: 'Existencia',
             render: (med) => (
                 <div className="flex items-center gap-2">
                     <span className="font-semibold tabular-nums">
@@ -141,24 +140,24 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     </span>
                     {med.existencia < 20 && <AlertCircle className="w-4 h-4 text-red-500" />}
                 </div>
-            ),
-            sortable: true,
+            )
         },
         {
             key: 'estado_existencia', // Clave virtual
-            label: 'Estado',
+            header: 'Estado',
             render: (med) => getExistenciaBadge(med.existencia),
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (med) => (
                 <div className="flex gap-1 justify-end">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(med)}
-                        className="hover:bg-blue-50 hover:text-blue-600"
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
                         title="Editar"
                     >
                         <Edit className="w-4 h-4" />
@@ -167,7 +166,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(med.codigoMedicamento)}
-                        className="hover:bg-red-50 hover:text-red-600"
+                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
                         title="Eliminar"
                     >
                         <Trash2 className="w-4 h-4" />
@@ -282,12 +281,16 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                 </div>
 
                 <DataTable
+                    title="Listado de medicamentos"
+                    description="Busca por código, nombre o presentación"
                     data={initialData}
                     columns={columns}
+                    searchKeys={['codigoMedicamento', 'nombreMedicamento', 'presentacion']}
                     searchPlaceholder="Buscar por código, nombre o presentación..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Medicamento"
-                    onExport={handleExport}
+                    primaryAction={{
+                        label: 'Agregar Medicamento',
+                        onClick: handleAdd
+                    }}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

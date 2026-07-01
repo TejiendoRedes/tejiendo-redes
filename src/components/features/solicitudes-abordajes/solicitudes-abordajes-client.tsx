@@ -230,17 +230,16 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
     const columns: Column<SolicitudAbordaje>[] = [
         {
-            key: 'codigoSolicitud',
-            header: 'Código',
-            render: (row) => <span className="font-medium text-gray-900">{row.codigoSolicitud}</span>
-        },
-        {
             key: 'comunidad',
             header: 'Comunidad',
             render: (row) => (
                 <div>
-                    <div className="font-medium">{row.comunidad?.nombreComunidad || 'N/A'}</div>
-                    <span className="ml-1">({row.comunidad?.codigoComunidad || 'N/A'})</span>
+                    <div className="font-medium text-gray-900">{row.comunidad?.nombreComunidad || 'N/A'}</div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span>{row.comunidad?.codigoComunidad || 'N/A'}</span>
+                        <span className="text-gray-300">|</span>
+                        <span>Sol. #{row.codigoSolicitud}</span>
+                    </div>
                 </div>
             ),
         },
@@ -284,60 +283,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                 </div>
             ),
         },
-        {
-            key: 'logistica',
-            header: 'Validación Logística',
-            render: (row) => {
-                const est = row.estado.toLowerCase();
-                if (est === 'confirmado') return <span className="text-gray-500 text-xs">Completada</span>;
-                if (est === 'rechazado') return <span className="text-gray-400 text-xs">-</span>;
 
-                return (
-                    <div className="grid grid-cols-2 gap-2 w-max">
-                        <div className="flex items-center space-x-1" title="Lugar Disponible">
-                            <Checkbox
-                                id={`lugar-${row.id}`}
-                                checked={row.logisticaLugar}
-                                onCheckedChange={() => handleToggleCheck(row.id, 'logisticaLugar', row.logisticaLugar)}
-                                disabled={isLoading}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor={`lugar-${row.id}`} className="text-[11px] cursor-pointer font-normal">Lugar</Label>
-                        </div>
-                        <div className="flex items-center space-x-1" title="Personal Asignado">
-                            <Checkbox
-                                id={`personal-${row.id}`}
-                                checked={row.logisticaPersonal}
-                                onCheckedChange={() => handleToggleCheck(row.id, 'logisticaPersonal', row.logisticaPersonal)}
-                                disabled={isLoading}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor={`personal-${row.id}`} className="text-[11px] cursor-pointer font-normal">Personal</Label>
-                        </div>
-                        <div className="flex items-center space-x-1" title="Refrigerios Listos">
-                            <Checkbox
-                                id={`refri-${row.id}`}
-                                checked={row.logisticaRefrigerios}
-                                onCheckedChange={() => handleToggleCheck(row.id, 'logisticaRefrigerios', row.logisticaRefrigerios)}
-                                disabled={isLoading}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor={`refri-${row.id}`} className="text-[11px] cursor-pointer font-normal">Refrigerios</Label>
-                        </div>
-                        <div className="flex items-center space-x-1" title="Transporte Confirmado">
-                            <Checkbox
-                                id={`trans-${row.id}`}
-                                checked={row.logisticaTransporte}
-                                onCheckedChange={() => handleToggleCheck(row.id, 'logisticaTransporte', row.logisticaTransporte)}
-                                disabled={isLoading}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor={`trans-${row.id}`} className="text-[11px] cursor-pointer font-normal">Transporte</Label>
-                        </div>
-                    </div>
-                );
-            }
-        },
         {
             key: 'acciones',
             header: '',
@@ -347,26 +293,16 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                     <Button
                         variant="ghost"
                         size="sm"
-                        title="Ver Detalles y Logística"
+                        title="Revisar Solicitud"
                         onClick={() => {
                             setSelectedSolicitud(row);
                             setIsDetailsModalOpen(true);
                         }}
-                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
+                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 font-medium"
                     >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-4 h-4 mr-1" />
+                        Revisar
                     </Button>
-                    {row.estado.toLowerCase() === 'pendiente' && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            title="Rechazar"
-                            onClick={() => handleRechazar(row.id)}
-                            className="hover:bg-red-50 hover:text-red-600 text-gray-500"
-                        >
-                            <XCircle className="w-4 h-4" />
-                        </Button>
-                    )}
                     <Button
                         variant="ghost"
                         size="sm"
@@ -597,7 +533,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
                 {/* Modal de Detalles y Logística */}
                 <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-                    <DialogContent className="sm:max-w-[700px] scroll-y">
+                    <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <DialogHeader>
                             <DialogTitle>Detalle y Logística de Solicitud</DialogTitle>
                             <DialogDescription>
@@ -630,60 +566,77 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                     </div>
                                 </div>
 
+
                                 {selectedSolicitud.estado.toLowerCase() === 'pendiente' && (
                                     <div className="border border-gray-200 rounded-lg p-4">
-                                        <h3 className="text-lg font-semibold mb-4">Validación Logística</h3>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            Al marcar todas las validaciones como listas, la solicitud se confirmará automáticamente y pasará a ser un Abordaje planificado.
+                                        <h3 className="text-lg font-semibold mb-2">Validación Logística</h3>
+                                        <p className="text-sm text-gray-500 mb-3">
+                                            Al marcar todas las validaciones como listas, la solicitud se confirmará automáticamente.
                                         </p>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px]">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <label 
+                                                htmlFor={`log-lugar-${selectedSolicitud.id}`}
+                                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px] cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
                                                 <Checkbox
-                                                    checked={selectedSolicitud.logisticaLugar}
-                                                    onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaLugar', selectedSolicitud.logisticaLugar)}
-                                                    disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
-                                                />
-                                                <div className="space-y-1 leading-none">
-                                                    <Label>Lugar Disponible</Label>
-                                                    <p className="text-xs text-muted-foreground">Confirmar espacio físico.</p>
-                                                </div>
-                                            </div>
+                                                        id={`log-lugar-${selectedSolicitud.id}`}
+                                                        checked={selectedSolicitud.logisticaLugar}
+                                                        onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaLugar', selectedSolicitud.logisticaLugar)}
+                                                        disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <span className="text-sm font-medium leading-none">Lugar Disponible</span>
+                                                        <p className="text-xs text-muted-foreground">Confirmar espacio.</p>
+                                                    </div>
+                                            </label>
 
-                                            <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px]">
-                                                <Checkbox
-                                                    checked={selectedSolicitud.logisticaPersonal}
-                                                    onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaPersonal', selectedSolicitud.logisticaPersonal)}
-                                                    disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
-                                                />
-                                                <div className="space-y-1 leading-none">
-                                                    <Label>Personal Asignado</Label>
-                                                    <p className="text-xs text-muted-foreground">Personal confirmado para asistir.</p>
-                                                </div>
-                                            </div>
+                                            <label 
+                                                htmlFor={`log-personal-${selectedSolicitud.id}`}
+                                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px] cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
+                                                    <Checkbox
+                                                        id={`log-personal-${selectedSolicitud.id}`}
+                                                        checked={selectedSolicitud.logisticaPersonal}
+                                                        onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaPersonal', selectedSolicitud.logisticaPersonal)}
+                                                        disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <span className="text-sm font-medium leading-none">Personal Asignado</span>
+                                                        <p className="text-xs text-muted-foreground">Personal confirmado.</p>
+                                                    </div>
+                                            </label>
 
-                                            <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px]">
-                                                <Checkbox
-                                                    checked={selectedSolicitud.logisticaRefrigerios}
-                                                    onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaRefrigerios', selectedSolicitud.logisticaRefrigerios)}
-                                                    disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
-                                                />
-                                                <div className="space-y-1 leading-none">
-                                                    <Label>Refrigerios Listos</Label>
-                                                    <p className="text-xs text-muted-foreground">Insumos y comida preparada.</p>
-                                                </div>
-                                            </div>
+                                            <label 
+                                                htmlFor={`log-refri-${selectedSolicitud.id}`}
+                                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px] cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
+                                                    <Checkbox
+                                                        id={`log-refri-${selectedSolicitud.id}`}
+                                                        checked={selectedSolicitud.logisticaRefrigerios}
+                                                        onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaRefrigerios', selectedSolicitud.logisticaRefrigerios)}
+                                                        disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <span className="text-sm font-medium leading-none">Refrigerios</span>
+                                                        <p className="text-xs text-muted-foreground">Comida preparada.</p>
+                                                    </div>
+                                            </label>
 
-                                            <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px]">
-                                                <Checkbox
-                                                    checked={selectedSolicitud.logisticaTransporte}
-                                                    onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaTransporte', selectedSolicitud.logisticaTransporte)}
-                                                    disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
-                                                />
-                                                <div className="space-y-1 leading-none">
-                                                    <Label>Transporte Confirmado</Label>
-                                                    <p className="text-xs text-muted-foreground">Camioneta/buses asegurados.</p>
-                                                </div>
-                                            </div>
+                                            <label 
+                                                htmlFor={`log-trans-${selectedSolicitud.id}`}
+                                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm h-[80px] cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
+                                                    <Checkbox
+                                                        id={`log-trans-${selectedSolicitud.id}`}
+                                                        checked={selectedSolicitud.logisticaTransporte}
+                                                        onCheckedChange={() => handleToggleCheck(selectedSolicitud.id, 'logisticaTransporte', selectedSolicitud.logisticaTransporte)}
+                                                        disabled={isLoading || selectedSolicitud.estado.toLowerCase() !== 'pendiente'}
+                                                    />
+                                                    <div className="space-y-1 leading-none">
+                                                        <span className="text-sm font-medium leading-none">Transporte</span>
+                                                        <p className="text-xs text-muted-foreground">Buses asegurados.</p>
+                                                    </div>
+                                            </label>
                                         </div>
                                     </div>
                                 )}
@@ -718,15 +671,28 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                         Cerrar
                                     </Button>
                                     {selectedSolicitud.estado.toLowerCase() === 'pendiente' && (
-                                        <Button
-                                            variant="destructive"
-                                            onClick={() => {
-                                                setIsDetailsModalOpen(false);
-                                                handleRechazar(selectedSolicitud.id);
-                                            }}
-                                        >
-                                            Rechazar Solicitud
-                                        </Button>
+                                        <>
+                                            <Button
+                                                className="bg-green-600 hover:bg-green-700 text-white"
+                                                onClick={() => {
+                                                    setIsDetailsModalOpen(false);
+                                                    handleConfirmar(selectedSolicitud.id);
+                                                }}
+                                            >
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                Aprobar Solicitud
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                onClick={() => {
+                                                    setIsDetailsModalOpen(false);
+                                                    handleRechazar(selectedSolicitud.id);
+                                                }}
+                                            >
+                                                <XCircle className="w-4 h-4 mr-2" />
+                                                Rechazar
+                                            </Button>
+                                        </>
                                     )}
                                 </div>
                             </div>

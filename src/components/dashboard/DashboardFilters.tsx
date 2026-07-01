@@ -42,10 +42,10 @@ export function DashboardFilters({ communities }: DashboardFiltersProps) {
     };
 
     return (
-        <Card className="mb-6">
-            <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                    <Filter className="w-5 h-5" />
+        <Card className="mb-6 rounded-2xl shadow-sm border-gray-100 overflow-visible bg-white/70 backdrop-blur-md">
+            <CardHeader className="bg-transparent border-b border-gray-50 pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg text-gray-800">
+                    <Filter className="w-5 h-5 text-[#1e3a8a]" />
                     Filtros Globales
                 </CardTitle>
             </CardHeader>

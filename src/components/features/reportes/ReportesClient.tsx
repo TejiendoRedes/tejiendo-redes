@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Download, FileText, Filter, Loader2, BarChart as BarChartIcon, PieChart as PieChartIcon, Table as TableIcon } from 'lucide-react';
-import { DataTable } from '@/components/shared/DataTable';
+import { DataTable } from '@/components/ui-kit/DataTable';
 import { toast } from 'sonner';
 import { exportToCSV, exportToPDF, ExportColumn } from '@/lib/export-utils';
 import { getEstadoNombre, getMunicipioNombre, VENEZUELA_DATA, Estado, Municipio, Parroquia } from '@/data/venezuela-location';
@@ -342,18 +342,18 @@ export default function ReportesClient({
                                 <DataTable
                                     data={reporteAbordajes}
                                     columns={[
-                                        { key: 'codigo_abordaje', label: 'Código', sortable: true },
+                                        { key: 'codigo_abordaje', header: 'Código', sortable: true },
                                         {
                                             key: 'fecha_abordaje',
-                                            label: 'Fecha',
+                                            header: 'Fecha',
                                             sortable: true,
                                             render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                         },
-                                        { key: 'descripcion', label: 'Descripción' },
-                                        { key: 'comunidades', label: 'Comunidades', sortable: true },
-                                        { key: 'pacientes_atendidos', label: 'Pacientes Atendidos', sortable: true },
-                                        { key: 'hora_inicio', label: 'Hora Inicio', sortable: true },
-                                        { key: 'hora_fin', label: 'Hora Fin', sortable: true },
+                                        { key: 'descripcion', header: 'Descripción' },
+                                        { key: 'comunidades', header: 'Comunidades', sortable: true },
+                                        { key: 'pacientes_atendidos', header: 'Pacientes Atendidos', sortable: true },
+                                        { key: 'hora_inicio', header: 'Hora Inicio', sortable: true },
+                                        { key: 'hora_fin', header: 'Hora Fin', sortable: true },
                                     ]}
                                     searchPlaceholder="Buscar abordaje..."
                                 />
@@ -447,34 +447,34 @@ export default function ReportesClient({
                                 <DataTable
                                     data={reporteComunidades}
                                     columns={[
-                                        { key: 'codigo_comunidad', label: 'Código', sortable: true },
-                                        { key: 'nombre_comunidad', label: 'Nombre Comunidad', sortable: true },
+                                        { key: 'codigo_comunidad', header: 'Código', sortable: true },
+                                        { key: 'nombre_comunidad', header: 'Nombre Comunidad', sortable: true },
                                         {
                                             key: 'estado',
-                                            label: 'Estado',
+                                            header: 'Estado',
                                             sortable: true,
                                             render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado)
                                         },
                                         {
                                             key: 'municipio',
-                                            label: 'Municipio',
+                                            header: 'Municipio',
                                             sortable: true,
                                             render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio)
                                         },
-                                        { key: 'parroquia', label: 'Parroquia', sortable: true },
-                                        { key: 'cantidad_habitantes', label: 'Habitantes', sortable: true },
-                                        { key: 'cantidad_familias', label: 'Familias', sortable: true },
+                                        { key: 'parroquia', header: 'Parroquia', sortable: true },
+                                        { key: 'cantidad_habitantes', header: 'Habitantes', sortable: true },
+                                        { key: 'cantidad_familias', header: 'Familias', sortable: true },
                                         {
                                             key: 'pacientes_tratados',
-                                            label: 'Pacientes Tratados',
+                                            header: 'Pacientes Tratados',
                                             sortable: true,
                                         },
                                         {
                                             key: 'abordajes_realizados',
-                                            label: 'Abordajes Realizados',
+                                            header: 'Abordajes Realizados',
                                             sortable: true,
                                         },
-                                        { key: 'total_consultas', label: 'Consultas Realizadas', sortable: true },
+                                        { key: 'total_consultas', header: 'Consultas Realizadas', sortable: true },
                                     ]}
                                     searchPlaceholder="Buscar comunidad..."
                                 />
@@ -567,32 +567,32 @@ export default function ReportesClient({
                                 <DataTable
                                     data={reportePacientes}
                                     columns={[
-                                        { key: 'cedula_paciente', label: 'Cédula', sortable: true },
-                                        { key: 'nombre_comunidad', label: 'Comunidad', sortable: true },
+                                        { key: 'cedula_paciente', header: 'Cédula', sortable: true },
+                                        { key: 'nombre_comunidad', header: 'Comunidad', sortable: true },
                                         {
                                             key: 'estado',
-                                            label: 'Estado',
+                                            header: 'Estado',
                                             sortable: true,
                                             render: (item: ReportePacienteItem) => getEstadoNombre(item.estado || '')
                                         },
                                         {
                                             key: 'municipio',
-                                            label: 'Municipio',
+                                            header: 'Municipio',
                                             sortable: true,
                                             render: (item: ReportePacienteItem) => getMunicipioNombre(item.estado || '', item.municipio || '')
                                         },
-                                        { key: 'nombre_paciente', label: 'Nombre', sortable: true },
-                                        { key: 'apellido_paciente', label: 'Apellido', sortable: true },
+                                        { key: 'nombre_paciente', header: 'Nombre', sortable: true },
+                                        { key: 'apellido_paciente', header: 'Apellido', sortable: true },
                                         {
                                             key: 'fecha_nacimiento',
-                                            label: 'Fecha de Nac.',
+                                            header: 'Fecha de Nac.',
                                             render: (p: ReportePacienteItem) =>
                                                 p.fecha_nacimiento
                                                     ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE', { timeZone: 'UTC' })
                                                     : '-',
                                             sortable: true,
                                         },
-                                        { key: 'telefono_paciente', label: 'Teléfono' },
+                                        { key: 'telefono_paciente', header: 'Teléfono' },
                                     ]}
                                     searchPlaceholder="Buscar paciente..."
                                 />
@@ -681,20 +681,20 @@ export default function ReportesClient({
                                 <DataTable
                                     data={dataMorbilidad}
                                     columns={[
-                                        { key: 'codigo_enfermedad', label: 'Código Enfermedad', sortable: true },
-                                        { key: 'nombre_enfermedad', label: 'Nombre Enfermedad', sortable: true },
-                                        { key: 'tipo_patologia', label: 'Tipo Patología', sortable: true },
-                                        { key: 'total_casos', label: 'Total Casos', sortable: true },
-                                        { key: 'pacientes_afectados', label: 'Pacientes Afectados', sortable: true },
+                                        { key: 'codigo_enfermedad', header: 'Código Enfermedad', sortable: true },
+                                        { key: 'nombre_enfermedad', header: 'Nombre Enfermedad', sortable: true },
+                                        { key: 'tipo_patologia', header: 'Tipo Patología', sortable: true },
+                                        { key: 'total_casos', header: 'Total Casos', sortable: true },
+                                        { key: 'pacientes_afectados', header: 'Pacientes Afectados', sortable: true },
                                         {
                                             key: 'porcentaje',
-                                            label: '% del Total',
+                                            header: '% del Total',
                                             render: (d: ReporteMorbilidadItem) => `${d.porcentaje}%`,
                                             sortable: true,
                                         },
                                         {
                                             key: 'ultima_consulta',
-                                            label: 'Última Consulta',
+                                            header: 'Última Consulta',
                                             render: (d: ReporteMorbilidadItem) =>
                                                 d.ultima_consulta
                                                     ? new Date(d.ultima_consulta).toLocaleDateString('es-VE', { timeZone: 'UTC' })
@@ -810,10 +810,10 @@ export default function ReportesClient({
                                 <DataTable
                                     data={reporteMedicamentos}
                                     columns={[
-                                        { key: 'codigo_medicamento', label: 'Código', sortable: true },
-                                        { key: 'nombre_medicamento', label: 'Nombre Medicamento', sortable: true },
-                                        { key: 'presentacion', label: 'Presentación', sortable: true },
-                                        { key: 'total_entregado', label: 'Total Entregado', sortable: true },
+                                        { key: 'codigo_medicamento', header: 'Código', sortable: true },
+                                        { key: 'nombre_medicamento', header: 'Nombre Medicamento', sortable: true },
+                                        { key: 'presentacion', header: 'Presentación', sortable: true },
+                                        { key: 'total_entregado', header: 'Total Entregado', sortable: true },
                                     ]}
                                     searchPlaceholder="Buscar medicamento..."
                                 />

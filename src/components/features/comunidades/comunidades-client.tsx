@@ -3,7 +3,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Home, MapPin } from 'lucide-react';
 import { Comunidad } from '@/db/schema/comunidades';
@@ -99,17 +100,18 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
     const columns: Column<Comunidad>[] = [
         {
             key: 'codigoComunidad',
-            label: 'Código',
+            header: 'Código',
+            className: 'w-[1%] whitespace-nowrap',
             sortable: true,
         },
         {
             key: 'nombreComunidad',
-            label: 'Nombre',
+            header: 'Nombre',
             sortable: true,
         },
         {
             key: 'ubicacion',
-            label: 'Ubicación',
+            header: 'Ubicación',
             render: (c) => (
                 <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4 text-gray-500" />
@@ -119,7 +121,8 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
         },
         {
             key: 'tipoComunidad',
-            label: 'Tipo',
+            header: 'Tipo',
+            className: 'w-[1%] whitespace-nowrap',
             render: (c) => {
                 const types: Record<string, string> = { '1': 'Urbana', '2': 'Rural', '3': 'Indígena', '4': 'Base de Misiones' };
                 return types[c.tipoComunidad] || c.tipoComunidad;
@@ -127,14 +130,16 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'w-[1%] whitespace-nowrap text-right pr-6',
             render: (c) => (
-                <div className="flex gap-2">
+                <div className="flex items-center justify-end gap-1">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(c)}
                         title="Editar"
+                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
@@ -143,8 +148,9 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                         size="sm"
                         onClick={() => handleDelete(c.codigoComunidad)}
                         title="Eliminar"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                     >
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-4 h-4" />
                     </Button>
                 </div>
             ),
@@ -177,22 +183,24 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Comunidades</h1>
-                    <p className="text-gray-600">
-                        Gestión de las comunidades atendidas
-                    </p>
+            <PageShell 
+                title="Comunidades" 
+                subtitle="Gestión de las comunidades atendidas"
+                actions={
+                    <Button onClick={handleAdd} className="gap-2 bg-[#1e3a8a] text-white hover:bg-blue-800 rounded-xl shadow-sm">
+                        <Home className="w-4 h-4" />
+                        Agregar Comunidad
+                    </Button>
+                }
+            >
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <DataTable
+                        data={initialData}
+                        columns={columns}
+                        searchPlaceholder="Buscar comunidad..."
+                        onExport={handleExport}
+                    />
                 </div>
-
-                <DataTable
-                    data={initialData}
-                    columns={columns}
-                    searchPlaceholder="Buscar comunidad..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Comunidad"
-                    onExport={handleExport}
-                />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -215,7 +223,7 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                         />
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

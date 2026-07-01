@@ -111,7 +111,7 @@ export function DataTable<T extends Record<string, unknown>>({
               className="h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
             />
           </div>
-          {filters && filters.length > 0 ? (
+          {filters && filters.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="inline-flex h-12 items-center gap-2 rounded-xl border border-[#1e3a8a]/30 bg-[#1e3a8a]/5 px-4 text-sm font-medium text-[#1e3a8a] transition-colors hover:bg-[#1e3a8a]/10 cursor-pointer">
@@ -143,11 +143,6 @@ export function DataTable<T extends Record<string, unknown>>({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            <button disabled className="inline-flex h-12 items-center gap-2 rounded-xl border border-input bg-muted/50 px-4 text-sm font-medium text-muted-foreground cursor-not-allowed">
-              <SlidersHorizontal className="h-4 w-4 opacity-50" />
-              <span className="hidden sm:inline opacity-50">Filtros</span>
-            </button>
           )}
           {primaryAction && (
             <button
@@ -161,15 +156,15 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-auto max-h-[550px] relative rounded-b-xl">
         <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/50">
+          <thead className="sticky top-0 z-10">
+            <tr className="border-b border-border bg-muted/95 backdrop-blur-sm shadow-sm">
               {columns.map((c) => (
                 <th
                   key={c.key}
                   className={cn(
-                    "px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+                    "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground",
                     c.className,
                   )}
                 >
@@ -182,11 +177,11 @@ export function DataTable<T extends Record<string, unknown>>({
             {rows.map((row, i) => (
               <tr
                 key={i}
-                className="border-b border-border/70 transition-colors last:border-0 hover:bg-muted/40"
+                className="border-b border-border/70 transition-colors last:border-0 hover:bg-muted/40 group"
               >
                 {columns.map((c) => (
-                  <td key={c.key} className={cn("px-5 py-4 align-middle text-foreground", c.className)}>
-                    {c.render(row)}
+                  <td key={c.key} className={cn("px-4 py-3 align-middle text-foreground", c.className)}>
+                    {c.render ? c.render(row) : (row as any)[c.key]}
                   </td>
                 ))}
               </tr>
@@ -195,7 +190,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-5 py-12 text-center text-sm text-muted-foreground"
+                  className="px-4 py-12 text-center text-sm text-muted-foreground"
                 >
                   No se encontraron resultados para “{query}”.
                 </td>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageShell } from '@/components/layout/PageShell';
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ExecutiveTab } from '@/components/dashboard/ExecutiveTab';
@@ -38,22 +39,18 @@ export default async function EstadisticasPage(props: PageProps) {
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Estadísticas y Reportes</h1>
-                    <p className="text-gray-500 mt-1">
-                        Análisis detallado de indicadores estratégicos y operativos.
-                    </p>
-                </div>
-
+            <PageShell
+                title="Indicadores y Estadísticas"
+                subtitle="Análisis detallado de indicadores estratégicos y operativos."
+            >
                 <DashboardFilters communities={communities} />
 
-                <Tabs defaultValue="executive" className="space-y-6">
-                    <TabsList className="bg-white p-1 border rounded-lg h-auto grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <TabsTrigger value="executive" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Resumen Ejecutivo</TabsTrigger>
-                        <TabsTrigger value="epidemiology" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Perfil Epidemiológico</TabsTrigger>
-                        <TabsTrigger value="pharmacy" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Farmacia e Insumos</TabsTrigger>
-                        <TabsTrigger value="operations" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 py-2">Operatividad</TabsTrigger>
+                <Tabs defaultValue="executive" className="space-y-6 mt-6">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 h-auto gap-1">
+                        <TabsTrigger value="executive" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Resumen Ejecutivo</TabsTrigger>
+                        <TabsTrigger value="epidemiology" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Perfil Epidemiológico</TabsTrigger>
+                        <TabsTrigger value="pharmacy" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Farmacia e Insumos</TabsTrigger>
+                        <TabsTrigger value="operations" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Operatividad</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="executive">
@@ -72,7 +69,7 @@ export default async function EstadisticasPage(props: PageProps) {
                         <OperationsTab data={operationsData} />
                     </TabsContent>
                 </Tabs>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

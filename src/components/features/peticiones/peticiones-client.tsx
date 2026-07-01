@@ -3,10 +3,10 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList } from 'lucide-react';
+import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList, Eye } from 'lucide-react';
 import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado } from '@/actions/peticiones-actions';
 import { getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/queries/peticiones';;
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +15,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,6 +70,8 @@ interface PeticionesClientProps {
 export default function PeticionesClient({ initialData }: PeticionesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
+    const [selectedPeticion, setSelectedPeticion] = React.useState<Peticion | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [peticiones, setPeticiones] = React.useState<Peticion[]>(initialData);
 
@@ -141,6 +144,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
             const res = await deletePeticion(id);
             if (res.success) {
                 toast.success(res.message);
+                setIsDetailsModalOpen(false);
                 router.refresh();
                 // Actualizar la lista local
                 setPeticiones(prev => prev.filter(p => p.codigoPeticion !== codigo));
@@ -156,6 +160,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         const res = await updatePeticionEstado(id, 'entregado');
         if (res.success) {
             toast.success(res.message);
+            setIsDetailsModalOpen(false);
             router.refresh();
             // Actualizar la lista local con estado, fecha y hora de entrega
             const ahora = new Date();
@@ -179,6 +184,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
             const res = await updatePeticionEstado(id, 'cancelado');
             if (res.success) {
                 toast.success(res.message);
+                setIsDetailsModalOpen(false);
                 router.refresh();
                 // Actualizar la lista local limpiando fecha y hora de entrega
                 setPeticiones(prev =>
@@ -285,16 +291,19 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
     const columns: Column<Peticion>[] = [
         {
             key: 'codigoPeticion',
-            label: 'Código',
+            header: 'Código',
+            className: 'w-[1%] whitespace-nowrap',
+            render: (row: Peticion) => <span className="font-medium text-gray-900">{row.codigoPeticion}</span>
         },
         {
             key: 'paciente',
-            label: 'Paciente',
+            header: 'Paciente',
+            className: 'min-w-[150px]',
             render: (row: Peticion) => (
                 <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-500" />
                     <div>
-                        <div className="font-medium">{row.nombrePaciente} {row.apellidoPaciente}</div>
+                        <div className="font-medium text-gray-900">{row.nombrePaciente} {row.apellidoPaciente}</div>
                         <div className="text-sm text-gray-500">{row.codigoPaciente}</div>
                     </div>
                 </div>
@@ -302,12 +311,13 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         },
         {
             key: 'medicamento',
-            label: 'Medicamento',
+            header: 'Medicamento',
+            className: 'min-w-[150px]',
             render: (row: Peticion) => (
                 <div className="flex items-center gap-2">
                     <Pill className="w-4 h-4 text-gray-500" />
                     <div>
-                        <div className="font-medium">{row.nombreMedicamento}</div>
+                        <div className="font-medium text-gray-900">{row.nombreMedicamento}</div>
                         <div className="text-sm text-gray-500">{row.presentacion}</div>
                     </div>
                 </div>
@@ -315,17 +325,20 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         },
         {
             key: 'cantidad',
-            label: 'Cantidad',
+            header: 'Cantidad',
+            className: 'w-[1%] whitespace-nowrap text-center',
             render: (row: Peticion) => row.cantidad,
         },
         {
             key: 'fechaPeticion',
-            label: 'Fecha Solicitud',
+            header: 'Fecha Solicitud',
+            className: 'w-[1%] whitespace-nowrap',
             render: (row: Peticion) => new Date(row.fechaPeticion).toLocaleDateString(),
         },
         {
             key: 'fechaEntrega',
-            label: 'Fecha y Hora Entrega',
+            header: 'Fecha y Hora Entrega',
+            className: 'w-[1%] whitespace-nowrap',
             render: (row: Peticion) => (
                 row.fechaEntrega && row.horaEntrega ? (
                     <div className="flex flex-col gap-1">
@@ -353,7 +366,8 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         },
         {
             key: 'abordaje',
-            label: 'Abordaje',
+            header: 'Abordaje',
+            className: 'w-[1%] whitespace-nowrap',
             render: (row: Peticion) => (
                 row.codigoAbordaje ? (
                     <div className="flex items-center gap-2">
@@ -370,45 +384,36 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
         },
         {
             key: 'estado',
-            label: 'Estado',
+            header: 'Estado',
+            className: 'w-[1%] whitespace-nowrap',
             render: (row: Peticion) => getEstadoBadge(row.estado),
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'w-[1%] whitespace-nowrap text-right pr-6',
             render: (row: Peticion) => (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            setSelectedPeticion(row);
+                            setIsDetailsModalOpen(true);
+                        }}
+                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-600 font-medium px-2 py-1 h-8"
+                    >
+                        <Eye className="w-4 h-4 mr-1.5" /> Revisar
+                    </Button>
                     {row.estado === 'pendiente' && (
-                        <>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleMarcarEntregada(row.codigoPeticion)}
-                                className="text-green-600 hover:text-green-700"
-                                title="Marcar como entregado"
-                            >
-                                <CheckCircle className="w-4 h-4" />
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDelete(row.codigoPeticion)}
-                                className="text-red-600 hover:text-red-700"
-                                title="Eliminar petición"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
-                        </>
-                    )}
-                    {row.estado === 'entregado' && (
                         <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleCancelarEntrega(row.codigoPeticion)}
-                            className="text-orange-600 hover:text-orange-700"
-                            title="Cancelar entrega y devolver medicamentos"
+                            variant="ghost"
+                            onClick={() => handleDelete(row.codigoPeticion)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Eliminar petición"
                         >
-                            <XCircle className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                         </Button>
                     )}
                 </div>
@@ -429,9 +434,23 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                 }
             >
                 <DataTable
+                    title="Listado de entregas"
+                    description="Busca por código de petición, paciente o medicamento"
                     data={peticiones}
                     columns={columns}
+                    searchKeys={['codigoPeticion', 'nombrePaciente', 'apellidoPaciente', 'codigoPaciente', 'nombreMedicamento']}
                     searchPlaceholder="Buscar peticiones..."
+                    filters={[
+                        {
+                            key: 'estado',
+                            label: 'Estado',
+                            options: [
+                                { label: 'Pendiente', value: 'pendiente' },
+                                { label: 'Entregado', value: 'entregado' },
+                                { label: 'Cancelado', value: 'cancelado' }
+                            ]
+                        }
+                    ]}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -539,6 +558,90 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                                 </Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Modal de Detalles */}
+                <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+                    <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                            <DialogTitle>Detalles de la Petición</DialogTitle>
+                            <DialogDescription>
+                                Revise los datos de la entrega y gestione su estado.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {selectedPeticion && (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-500">Paciente</h4>
+                                        <p className="font-medium text-gray-900">{selectedPeticion.nombrePaciente} {selectedPeticion.apellidoPaciente}</p>
+                                        <p className="text-xs text-gray-500">CI: {selectedPeticion.codigoPaciente}</p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-500">Estado</h4>
+                                        <div className="mt-1">{getEstadoBadge(selectedPeticion.estado)}</div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <h4 className="text-sm font-medium text-gray-500">Medicamento</h4>
+                                        <div className="flex items-center gap-2">
+                                            <Pill className="w-4 h-4 text-blue-500" />
+                                            <p className="font-medium text-gray-900">{selectedPeticion.nombreMedicamento} ({selectedPeticion.presentacion})</p>
+                                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">x{selectedPeticion.cantidad}</Badge>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-500">Fecha de Solicitud</h4>
+                                        <p>{new Date(selectedPeticion.fechaPeticion).toLocaleDateString()}</p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-500">Abordaje (Opcional)</h4>
+                                        {selectedPeticion.codigoAbordaje ? (
+                                            <p className="text-sm">{selectedPeticion.descripcionAbordaje} <span className="text-gray-400">({selectedPeticion.codigoAbordaje})</span></p>
+                                        ) : (
+                                            <p className="text-gray-400">-</p>
+                                        )}
+                                    </div>
+                                    {selectedPeticion.notas && (
+                                        <div className="col-span-2">
+                                            <h4 className="text-sm font-medium text-gray-500">Notas Adicionales</h4>
+                                            <p className="text-sm italic text-gray-600 bg-white p-2 rounded border border-gray-100">{selectedPeticion.notas}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsDetailsModalOpen(false)}
+                                    >
+                                        Cerrar
+                                    </Button>
+
+                                    {selectedPeticion.estado === 'pendiente' && (
+                                        <Button
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => handleMarcarEntregada(selectedPeticion.codigoPeticion)}
+                                        >
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Marcar como Entregado
+                                        </Button>
+                                    )}
+
+                                    {selectedPeticion.estado === 'entregado' && (
+                                        <Button
+                                            variant="destructive"
+                                            onClick={() => handleCancelarEntrega(selectedPeticion.codigoPeticion)}
+                                        >
+                                            <XCircle className="w-4 h-4 mr-2" />
+                                            Cancelar Entrega
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </DialogContent>
                 </Dialog>
             </PageShell>

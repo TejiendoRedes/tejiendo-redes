@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Boxes,
   Activity,
+  MapPin,
   type LucideIcon,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ export const navGroups: NavGroup[] = [
       { label: "Pacientes", to: "/datos-basicos/pacientes", icon: Users },
       { label: "Tejedores", to: "/datos-basicos/tejedores", icon: HeartHandshake },
       { label: "Personal de Salud", to: "/datos-basicos/medicos", icon: UserRound },
+      { label: "Comunidades", to: "/datos-basicos/comunidades", icon: MapPin },
     ],
   },
   {
