@@ -47,10 +47,10 @@ export default async function EstadisticasPage(props: PageProps) {
 
                 <Tabs defaultValue="executive" className="space-y-6 mt-6">
                     <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 h-auto gap-1">
-                        <TabsTrigger value="executive" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Resumen Ejecutivo</TabsTrigger>
-                        <TabsTrigger value="epidemiology" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Perfil Epidemiológico</TabsTrigger>
-                        <TabsTrigger value="pharmacy" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Farmacia e Insumos</TabsTrigger>
-                        <TabsTrigger value="operations" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Operatividad</TabsTrigger>
+                        <TabsTrigger value="executive" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Resumen Ejecutivo</TabsTrigger>
+                        <TabsTrigger value="epidemiology" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Perfil Epidemiológico</TabsTrigger>
+                        <TabsTrigger value="pharmacy" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Farmacia e Insumos</TabsTrigger>
+                        <TabsTrigger value="operations" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Operatividad</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="executive">

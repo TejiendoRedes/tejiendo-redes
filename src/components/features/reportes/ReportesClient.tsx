@@ -293,11 +293,11 @@ export default function ReportesClient({
             {/* Tabs de Reportes */}
             <Tabs defaultValue="abordajes" className="w-full space-y-6">
                 <TabsList className="grid w-full grid-cols-5 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 h-auto">
-                    <TabsTrigger value="abordajes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Abordajes</TabsTrigger>
-                    <TabsTrigger value="comunidades" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Comunidades</TabsTrigger>
-                    <TabsTrigger value="pacientes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Pacientes</TabsTrigger>
-                    <TabsTrigger value="morbilidad" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Morbilidad</TabsTrigger>
-                    <TabsTrigger value="medicamentos" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all">Medicamentos</TabsTrigger>
+                    <TabsTrigger value="abordajes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Abordajes</TabsTrigger>
+                    <TabsTrigger value="comunidades" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Comunidades</TabsTrigger>
+                    <TabsTrigger value="pacientes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Pacientes</TabsTrigger>
+                    <TabsTrigger value="morbilidad" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Morbilidad</TabsTrigger>
+                    <TabsTrigger value="medicamentos" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Medicamentos</TabsTrigger>
                 </TabsList>
 
                 {/* Reporte Abordajes */}
@@ -310,6 +310,7 @@ export default function ReportesClient({
                                 <Button
                                     variant="outline"
                                     size="sm"
+                                    className="cursor-pointer"
                                     onClick={() => handleExport('csv', 'Abordajes', reporteAbordajes, [
                                         { key: 'codigo_abordaje', label: 'Código' },
                                         { key: 'fecha_abordaje', label: 'Fecha', render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' }) },
