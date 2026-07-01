@@ -371,8 +371,8 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                         <p className="font-medium">{calcularEdad(viewingPaciente.fechaNacimiento)} años</p>
                                     </div>
                                     <div>
-                                        <p className="text-gray-500 mb-0.5">Sexo / Etnia</p>
-                                        <p className="font-medium">{viewingPaciente.sexo === 'M' ? 'Masculino' : 'Femenino'} / {viewingPaciente.etniaPaciente}</p>
+                                        <p className="text-gray-500 mb-0.5">Sexo</p>
+                                        <p className="font-medium">{viewingPaciente.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>
                                     </div>
                                     <div>
                                         <p className="text-gray-500 mb-0.5">Teléfono</p>
