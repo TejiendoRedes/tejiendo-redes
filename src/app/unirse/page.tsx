@@ -31,6 +31,7 @@ const registrationSchema = z.object({
     telefonoAspirante: z.string().min(10, 'Teléfono debe tener al menos 10 dígitos').max(15),
     correoAspirante: z.string().email('Correo electrónico inválido').max(100),
     profesionAspirante: z.string().min(2, 'Profesión es requerida').max(50),
+    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
 });
 
 type RegistrationData = z.infer<typeof registrationSchema>;
@@ -51,6 +52,7 @@ export default function RegisterTejedorPage() {
             estadoDireccionAspirante: '',
             municipioAspirante: '',
             parroquiaAspirante: '',
+            password: '',
         }
     });
 
@@ -299,6 +301,13 @@ export default function RegisterTejedorPage() {
                                 </SelectContent>
                             </Select>
                             {errors.parroquiaAspirante && <p className="text-xs text-red-500">{errors.parroquiaAspirante.message}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-gray-700 font-medium">Contraseña de Acceso</Label>
+                            <Input id="password" type="password" {...register('password')} placeholder="Mínimo 8 caracteres" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
+                            {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+                            <p className="text-xs text-gray-500">Tu usuario será tu número de cédula.</p>
                         </div>
                     </div>
 

@@ -55,7 +55,7 @@ export function ConfirmDialog({
                     </div>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isLoading}>
+                    <AlertDialogCancel disabled={isLoading} onClick={() => onOpenChange(false)}>
                         {cancelLabel}
                     </AlertDialogCancel>
                     <AlertDialogAction
