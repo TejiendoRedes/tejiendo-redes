@@ -300,19 +300,6 @@ export default function RegisterTejedorPage() {
                             </Select>
                             {errors.parroquiaAspirante && <p className="text-xs text-red-500">{errors.parroquiaAspirante.message}</p>}
                         </div>
-
-                        {/* Usuario y Contraseña */}
-                        <div className="space-y-2">
-                            <Label htmlFor="usuario" className="text-gray-700 font-medium">Nombre de Usuario</Label>
-                            <Input id="usuario" {...register('usuario')} placeholder="ej: juanperez123" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
-                            {errors.usuario && <p className="text-xs text-red-500">{errors.usuario.message}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="password" className="text-gray-700 font-medium">Contraseña</Label>
-                            <Input id="password" type="password" {...register('password')} className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
-                            {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-                        </div>
                     </div>
 
                     <div className="space-y-2">
