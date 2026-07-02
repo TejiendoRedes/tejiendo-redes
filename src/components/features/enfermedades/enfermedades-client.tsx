@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Activity, Stethoscope } from 'lucide-react'; // Stethoscope for diseases
+import { Edit, Trash2, Activity, Stethoscope, Download, HeartPulse } from 'lucide-react'; // Stethoscope for diseases
 
-import type { Enfermedad, NewEnfermedad } from '@/db/schema/enfermedades';
+import type { Enfermedad } from '@/db/schema/enfermedades';
 import {
     Dialog,
     DialogContent,
@@ -25,11 +26,6 @@ interface EnfermedadesClientProps {
 
 export default function EnfermedadesClient({ initialData }: EnfermedadesClientProps) {
     const router = useRouter();
-    // We can rely on initialData and router.refresh() or keep local state.
-    // Given the pattern in other clients, we'll try to rely on router.refresh for simplicity, 
-    // but the previous code used local state 'enfermedades'. 
-    // To match other refactors (e.g. Medicamentos), we usually use initialData prop directly in DataTable 
-    // and rely on router.refresh() to update it.
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingEnfermedad, setEditingEnfermedad] = React.useState<Enfermedad | null>(null);
@@ -86,43 +82,50 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
     const columns: Column<Enfermedad>[] = [
         {
             key: 'codigoEnfermedad',
-            label: 'Código',
-            sortable: true,
+            header: 'Código',
+            className: 'w-[1%] whitespace-nowrap font-mono text-[#1e3a8a] font-medium',
         },
         {
             key: 'nombreEnfermedad',
-            label: 'Nombre',
-            sortable: true,
+            header: 'Nombre',
+            className: 'font-semibold text-gray-900',
         },
         {
             key: 'tipoPatologia',
-            label: 'Tipo Patología',
-            sortable: true,
+            header: 'Tipo Patología',
         },
         {
             key: 'descripcion',
-            label: 'Descripción',
+            header: 'Descripción',
+            render: (e) => (
+                <p className="max-w-md truncate text-gray-500 text-sm" title={e.descripcion || ''}>
+                    {e.descripcion || '-'}
+                </p>
+            )
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'w-[1%] whitespace-nowrap text-right pr-6',
             render: (enfermedad) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(enfermedad)}
                         title="Editar"
+                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
                     >
-                        <Edit className="w-4 h-4 text-blue-600" />
+                        <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(enfermedad.codigoEnfermedad)}
                         title="Eliminar"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                     >
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-4 h-4" />
                     </Button>
                 </div>
             ),
@@ -137,7 +140,6 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
             descripcion: e.descripcion || '-',
         }));
 
-        const headers = ['codigo', 'nombre', 'tipo', 'descripcion'];
         const columnsData = [
             { header: 'Código', dataKey: 'codigo' as const },
             { header: 'Nombre', dataKey: 'nombre' as const },
@@ -152,37 +154,77 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
         }
     };
 
+    // Extract unique pathology types for filtering
+    const uniqueTypes = Array.from(new Set(initialData.map(e => e.tipoPatologia).filter(Boolean)));
+    const filterOptions = uniqueTypes.map(t => ({ label: t as string, value: t as string }));
+
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2 flex items-center gap-2">
-                        <Stethoscope className="w-8 h-8 text-blue-600" />
-                        Enfermedades
-                    </h1>
-                    <p className="text-gray-600">
-                        Catálogo de enfermedades para estandarizar diagnósticos
-                    </p>
+            <PageShell
+                title="Enfermedades"
+                subtitle="Catálogo maestro de enfermedades y patologías"
+                actions={
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExport('pdf')} 
+                            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button 
+                            onClick={handleAdd} 
+                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                        >
+                            <Stethoscope className="w-4 h-4 mr-2" />
+                            Agregar Enfermedad
+                        </Button>
+                    </div>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Enfermedades</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <HeartPulse className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <DataTable
+                    title="Listado de enfermedades"
+                    description="Busca por nombre o código y usa el filtro por tipo de patología"
                     data={initialData}
                     columns={columns}
-                    searchPlaceholder="Buscar por código, nombre o tipo..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Enfermedad"
-                    onExport={handleExport}
+                    searchKeys={['nombreEnfermedad', 'codigoEnfermedad', 'tipoPatologia']}
+                    searchPlaceholder="Buscar enfermedad..."
+                    filters={filterOptions.length > 0 ? [
+                        {
+                            key: 'tipoPatologia',
+                            label: 'Tipo de Patología',
+                            options: filterOptions
+                        }
+                    ] : undefined}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Stethoscope className="w-6 h-6 text-blue-600" />
+                                <Stethoscope className="w-6 h-6 text-[#1e3a8a]" />
                                 {editingEnfermedad ? 'Editar Enfermedad' : 'Nueva Enfermedad'}
                             </DialogTitle>
                             <DialogDescription>
-                                Ingrese los detalles de la enfermedad.
+                                Ingrese los detalles de la enfermedad para el catálogo.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -194,7 +236,7 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
                         />
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

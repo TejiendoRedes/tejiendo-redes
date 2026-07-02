@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { aspirantes, auditLogs } from '@/db/schema';
+import { aspirantes, auditLogs, users } from '@/db/schema';
 import { eq, or } from 'drizzle-orm';
 import { registerSchema } from '@/schemas/auth';
 import { sanitizeObject } from '@/lib/security/sanitize';
+import { hashPassword } from '@/lib/auth';
 
 export async function POST(request: Request) {
     const startTime = Date.now();
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
             telefonoAspirante: data.telefonoAspirante,
             correoAspirante: data.correoAspirante,
             profesionAspirante: data.profesionAspirante,
+            usuario: data.usuario,
         });
 
         // 5. Check if aspirante already exists
@@ -65,6 +67,23 @@ export async function POST(request: Request) {
                 { status: 400 }
             );
         }
+
+        // Check if username already exists in users table
+        const [existingUser] = await db.select()
+            .from(users)
+            .where(eq(users.username, sanitized.usuario))
+            .limit(1);
+
+        if (existingUser) {
+            await preventTimingAttack(startTime);
+            return NextResponse.json(
+                { error: 'El nombre de usuario ya está en uso' },
+                { status: 400 }
+            );
+        }
+
+        // Hash the password
+        const hashedPassword = await hashPassword(data.password);
 
         // 6. Database Operation
         await db.transaction(async (tx) => {
@@ -85,6 +104,15 @@ export async function POST(request: Request) {
                 estadoAspirante: 'Pendiente',
             });
 
+            // Insert into users
+            await tx.insert(users).values({
+                username: sanitized.usuario,
+                password: hashedPassword,
+                role: 'tejedor', // Se asigna el rol tejedor
+                approved: false, // Permanecerá inactivo hasta la aprobación
+                // cedulaTejedor remains null until approved
+            });
+
             // Log the postulation
             const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
             const userAgent = request.headers.get('user-agent') || 'unknown';
@@ -94,7 +122,7 @@ export async function POST(request: Request) {
                 action: 'NEW_ASPIRANTE_POSTULATION',
                 entity: 'ASPIRANTES',
                 entityId: sanitized.cedulaAspirante,
-                details: `Nueva postulación de aspirante: ${sanitized.correoAspirante}`,
+                details: `Nueva postulación de aspirante y creación de usuario: ${sanitized.usuario}`,
                 ipAddress: ip,
                 userAgent: userAgent
             });

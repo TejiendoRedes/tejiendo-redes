@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Building2, MapPin, Phone, Mail, Info, User } from 'lucide-react';
+import { Edit, Trash2, Building2, Mail, Download, UserCheck } from 'lucide-react';
 import { Organismo } from '@/db/schema/organismos';
 import { Tejedor } from '@/db/schema/tejedores';
 import { createOrganismo, deleteOrganismo, updateOrganismo } from '@/actions/organismos-actions';
@@ -15,26 +16,10 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { SearchableSelect } from '@/components/shared/SearchableSelect';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+import { OrganismoForm } from '@/components/forms/OrganismoForm';
+import { getEstadoNombre, getMunicipioNombre } from '@/data/venezuela-location';
 
 interface OrganismoWithTejedor extends Organismo {
     tejedor: Tejedor | null;
@@ -48,95 +33,17 @@ interface OrganismosClientProps {
 export default function OrganismosClient({ initialData, tejedores }: OrganismosClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [isEditing, setIsEditing] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState('basico');
+    const [editingOrganismo, setEditingOrganismo] = React.useState<OrganismoWithTejedor | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const [formData, setFormData] = React.useState({
-        codigoOrganismo: '',
-        cedulaTejedor: '',
-        nombreOrganismo: '',
-        tipoInstitucion: '',
-        paisOrganismo: 'Venezuela',
-        estadoOrganismo: '',
-        municipioOrganismo: '',
-        parroquiaOrganismo: '',
-        direccionOrganismo: '',
-        ubicacionFisica: '',
-        correoOrganismo: '',
-        telefonoOrganismo: '',
-    });
-
-    const [estados] = React.useState(getEstados());
-    const [municipios, setMunicipios] = React.useState<any[]>([]);
-    const [parroquias, setParroquias] = React.useState<any[]>([]);
-
-    const generarCodigo = (prefix: string, length: number) => {
-        return `${prefix}-${(length + 1).toString().padStart(3, '0')}`;
-    };
-
     const handleAdd = () => {
-        setFormData({
-            codigoOrganismo: '',
-            cedulaTejedor: '',
-            nombreOrganismo: '',
-            tipoInstitucion: '',
-            paisOrganismo: 'Venezuela',
-            estadoOrganismo: '',
-            municipioOrganismo: '',
-            parroquiaOrganismo: '',
-            direccionOrganismo: '',
-            ubicacionFisica: '',
-            correoOrganismo: '',
-            telefonoOrganismo: '',
-        });
-        setMunicipios([]);
-        setParroquias([]);
-        setIsEditing(false);
-        setActiveTab('basico');
+        setEditingOrganismo(null);
         setIsModalOpen(true);
     };
 
     const handleEdit = (organismo: OrganismoWithTejedor) => {
-        setFormData({
-            codigoOrganismo: organismo.codigoOrganismo,
-            cedulaTejedor: organismo.cedulaTejedor,
-            nombreOrganismo: organismo.nombreOrganismo,
-            tipoInstitucion: organismo.tipoInstitucion || '',
-            paisOrganismo: organismo.paisOrganismo,
-            estadoOrganismo: organismo.estadoOrganismo,
-            municipioOrganismo: organismo.municipioOrganismo,
-            parroquiaOrganismo: (organismo as any).parroquiaOrganismo || '',
-            direccionOrganismo: organismo.direccionOrganismo,
-            ubicacionFisica: organismo.ubicacionFisica,
-            correoOrganismo: organismo.correoOrganismo,
-            telefonoOrganismo: organismo.telefonoOrganismo,
-        });
-        // Cargar municipios y parroquias para el estado y municipio seleccionados
-        if (organismo.estadoOrganismo) {
-            setMunicipios(getMunicipiosByEstado(organismo.estadoOrganismo));
-            if (organismo.municipioOrganismo) {
-                setParroquias(getParroquiasByMunicipio(organismo.estadoOrganismo, organismo.municipioOrganismo));
-            }
-        }
-        setIsEditing(true);
-        setActiveTab('basico');
+        setEditingOrganismo(organismo);
         setIsModalOpen(true);
-    };
-
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData({ ...formData, estadoOrganismo: estadoId, municipioOrganismo: '', parroquiaOrganismo: '' });
-        setMunicipios(getMunicipiosByEstado(estadoId));
-        setParroquias([]);
-    };
-
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData({ ...formData, municipioOrganismo: municipioId, parroquiaOrganismo: '' });
-        setParroquias(getParroquiasByMunicipio(formData.estadoOrganismo, municipioId));
-    };
-
-    const handleParroquiaChange = (parroquiaId: string) => {
-        setFormData({ ...formData, parroquiaOrganismo: parroquiaId });
     };
 
     const handleDelete = async (codigo: string) => {
@@ -151,9 +58,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async (formData: any) => {
         if (!formData.nombreOrganismo || !formData.cedulaTejedor || !formData.estadoOrganismo || !formData.correoOrganismo) {
             toast.error('Por favor complete los campos obligatorios');
             return;
@@ -162,7 +67,7 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         setIsLoading(true);
         try {
             let res;
-            if (isEditing) {
+            if (editingOrganismo) {
                 res = await updateOrganismo(formData.codigoOrganismo, formData);
             } else {
                 res = await createOrganismo(formData);
@@ -186,79 +91,83 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
     const columns: Column<OrganismoWithTejedor>[] = [
         {
             key: 'codigoOrganismo',
-            label: 'Código',
-            sortable: true
+            header: 'Código',
+            className: 'w-[1%] whitespace-nowrap font-mono text-[#1e3a8a] font-medium',
         },
         {
             key: 'nombreOrganismo',
-            label: 'Nombre Institución',
-            sortable: true,
+            header: 'Nombre Institución',
+            className: 'font-semibold text-gray-900',
         },
         {
             key: 'tipoInstitucion',
-            label: 'Tipo',
+            header: 'Tipo',
             render: (o) => (
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-full text-xs font-medium">
                     {o.tipoInstitucion || 'No especificado'}
                 </span>
             ),
         },
         {
             key: 'tejedor',
-            label: 'Tejedor Enlace',
-            render: (o) => o.tejedor ? `${o.tejedor.nombreTejedor} ${o.tejedor.apellidoTejedor}` : o.cedulaTejedor,
-            sortable: true,
+            header: 'Tejedor Enlace',
+            render: (o) => o.tejedor ? (
+                <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold text-xs">
+                        {o.tejedor.nombreTejedor.charAt(0)}{o.tejedor.apellidoTejedor.charAt(0)}
+                    </div>
+                    <span className="text-sm font-medium">{o.tejedor.nombreTejedor} {o.tejedor.apellidoTejedor}</span>
+                </div>
+            ) : <span className="text-sm text-gray-500">{o.cedulaTejedor}</span>,
         },
         {
             key: 'correoOrganismo',
-            label: 'Correo',
+            header: 'Contacto',
             render: (o) => (
-                <div className="flex items-center gap-1">
-                    <Mail className="w-3 h-3 text-gray-400" />
-                    <span className="text-sm">{o.correoOrganismo}</span>
+                <div className="flex flex-col gap-1 text-xs">
+                    <div className="flex items-center gap-1.5 text-gray-600">
+                        <Mail className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{o.correoOrganismo}</span>
+                    </div>
                 </div>
             )
         },
         {
-            key: 'telefonoOrganismo',
-            label: 'Teléfono',
-            render: (o) => o.telefonoOrganismo || '-'
-        },
-        {
             key: 'ubicacion',
-            label: 'Ubicación',
+            header: 'Ubicación',
             render: (o) => {
                 const estadoNombre = getEstadoNombre(o.estadoOrganismo);
                 const municipioNombre = getMunicipioNombre(o.estadoOrganismo, o.municipioOrganismo);
 
                 return (
-                    <div className="text-sm">
-                        <div className="font-medium">{estadoNombre || '-'}</div>
+                    <div className="text-xs">
+                        <div className="font-medium text-gray-900">{estadoNombre || '-'}</div>
                         <div className="text-gray-500">{municipioNombre || '-'}</div>
-                        <div className="text-gray-400">{o.paisOrganismo || '-'}</div>
                     </div>
                 );
             },
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'w-[1%] whitespace-nowrap text-right pr-6',
             render: (o) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                     <Button
                         variant="ghost"
                         size="sm"
                         title="Editar"
                         onClick={() => handleEdit(o)}
+                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:text-red-700"
                         title="Eliminar"
                         onClick={() => handleDelete(o.codigoOrganismo)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
@@ -283,7 +192,6 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
             };
         });
 
-        const headers = ['codigo', 'nombre', 'tipo', 'tejedor', 'correo', 'telefono', 'ubicacion'];
         const columnsData = [
             { header: 'Código', dataKey: 'codigo' as const },
             { header: 'Nombre', dataKey: 'nombre' as const },
@@ -301,283 +209,102 @@ export default function OrganismosClient({ initialData, tejedores }: OrganismosC
         }
     };
 
+    const uniqueTypes = Array.from(new Set(initialData.map(o => o.tipoInstitucion).filter(Boolean)));
+    const filterOptions = uniqueTypes.map(t => ({ label: t as string, value: t as string }));
+
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Instituciones</h1>
-                        <p className="text-gray-600">
-                            Gestión de instituciones y entes asociados con la organización
-                        </p>
+            <PageShell
+                title="Instituciones"
+                subtitle="Gestión de instituciones y entes asociados con la organización"
+                actions={
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExport('pdf')} 
+                            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button 
+                            onClick={handleAdd} 
+                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                        >
+                            <Building2 className="w-4 h-4 mr-2" />
+                            Agregar Institución
+                        </Button>
+                    </div>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Instituciones</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <Building2 className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Tipos Activos</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {uniqueTypes.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+                                <UserCheck className="w-5 h-5" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <DataTable
+                    title="Listado de Instituciones"
+                    description="Busca por nombre, código o usa el filtro por tipo de institución"
                     data={initialData}
                     columns={columns}
+                    searchKeys={['nombreOrganismo', 'codigoOrganismo']}
                     searchPlaceholder="Buscar institución..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Institución"
-                    onExport={handleExport}
+                    filters={filterOptions.length > 0 ? [
+                        {
+                            key: 'tipoInstitucion',
+                            label: 'Tipo de Institución',
+                            options: filterOptions
+                        }
+                    ] : undefined}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Building2 className="w-6 h-6 text-blue-600" />
-                                {isEditing ? 'Editar Institución' : 'Registrar Nueva Institución'}
+                                <Building2 className="w-6 h-6 text-[#1e3a8a]" />
+                                {editingOrganismo ? 'Editar Institución' : 'Registrar Nueva Institución'}
                             </DialogTitle>
                             <DialogDescription>
                                 Complete la información institucional y de contacto de la institución.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit}>
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="grid w-full grid-cols-3 mb-6">
-                                    <TabsTrigger value="basico" className="flex items-center gap-2">
-                                        <Info className="w-4 h-4" />
-                                        Institucional
-                                    </TabsTrigger>
-                                    <TabsTrigger value="ubicacion" className="flex items-center gap-2">
-                                        <MapPin className="w-4 h-4" />
-                                        Ubicación
-                                    </TabsTrigger>
-                                    <TabsTrigger value="contacto" className="flex items-center gap-2">
-                                        <Mail className="w-4 h-4" />
-                                        Contacto
-                                    </TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="basico" className="space-y-4 py-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="codigo">Código</Label>
-                                            <Input
-                                                id="codigo"
-                                                placeholder={isEditing ? "" : "Automático (ORG-XXX)"}
-                                                value={formData.codigoOrganismo}
-                                                disabled
-                                                className="bg-gray-50 border-gray-200"
-                                            />
-                                            {!isEditing && (
-                                                <p className="text-[10px] text-blue-600 font-medium font-sans">
-                                                    El sistema generará el código automáticamente.
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="nombre">Nombre de la Institución *</Label>
-                                            <Input
-                                                id="nombre"
-                                                placeholder="Ej. Ministerio de Salud"
-                                                value={formData.nombreOrganismo}
-                                                onChange={(e) => setFormData({ ...formData, nombreOrganismo: e.target.value })}
-                                                required
-                                                maxLength={100}
-                                                className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="tipo">Tipo de Institución *</Label>
-                                        <Select
-                                            value={formData.tipoInstitucion}
-                                            onValueChange={(val) => setFormData({ ...formData, tipoInstitucion: val })}
-                                        >
-                                            <SelectTrigger id="tipo" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                <SelectValue placeholder="Seleccione un tipo" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Pública">Pública</SelectItem>
-                                                <SelectItem value="Gubernamental">Gubernamental</SelectItem>
-                                                <SelectItem value="Privada">Privada</SelectItem>
-                                                <SelectItem value="ONG">ONG</SelectItem>
-                                                <SelectItem value="Educacional">Educacional</SelectItem>
-                                                <SelectItem value="Salud">Salud</SelectItem>
-                                                <SelectItem value="Comunitaria">Comunitaria</SelectItem>
-                                                <SelectItem value="Religiosa">Religiosa</SelectItem>
-                                                <SelectItem value="Otra">Otra</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <SearchableSelect
-                                            label="Tejedor de Enlace (Responsable Interno) *"
-                                            items={tejedores}
-                                            value={formData.cedulaTejedor}
-                                            onValueChange={(val) => setFormData({ ...formData, cedulaTejedor: val })}
-                                            placeholder="Seleccione un tejedor"
-                                            searchPlaceholder="Buscar por nombre o cédula..."
-                                            idField="cedulaTejedor"
-                                            labelField="nombreTejedor"
-                                            secondaryLabelField="apellidoTejedor"
-                                        />
-                                    </div>
-                                    <div className="flex justify-end pt-4">
-                                        <Button type="button" onClick={() => setActiveTab('ubicacion')} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
-                                            Siguiente: Ubicación
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-
-                                <TabsContent value="ubicacion" className="space-y-4 py-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="pais">País</Label>
-                                            <Input
-                                                id="pais"
-                                                value={formData.paisOrganismo}
-                                                onChange={(e) => setFormData({ ...formData, paisOrganismo: e.target.value })}
-                                                maxLength={50}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="estado">Estado *</Label>
-                                            <Select
-                                                value={formData.estadoOrganismo}
-                                                onValueChange={handleEstadoChange}
-                                            >
-                                                <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                    <SelectValue placeholder="Seleccione un estado" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {estados.map(estado => (
-                                                        <SelectItem key={estado.id} value={estado.id}>
-                                                            {estado.nombre}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="municipio">Municipio *</Label>
-                                            <Select
-                                                value={formData.municipioOrganismo}
-                                                onValueChange={handleMunicipioChange}
-                                                disabled={!formData.estadoOrganismo}
-                                            >
-                                                <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                    <SelectValue placeholder={formData.estadoOrganismo ? "Seleccione un municipio" : "Seleccione primero el estado"} />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {municipios.map(municipio => (
-                                                        <SelectItem key={municipio.id} value={municipio.id}>
-                                                            {municipio.nombre}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="parroquia">Parroquia *</Label>
-                                            <Select
-                                                value={formData.parroquiaOrganismo}
-                                                onValueChange={handleParroquiaChange}
-                                                disabled={!formData.municipioOrganismo}
-                                            >
-                                                <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                                    <SelectValue placeholder={formData.municipioOrganismo ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {parroquias.map(parroquia => (
-                                                        <SelectItem key={parroquia.id} value={parroquia.id}>
-                                                            {parroquia.nombre}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="direccion">Dirección Fiscal / Sede</Label>
-                                        <Input
-                                            id="direccion"
-                                            placeholder="Av. Principal, Edificio..."
-                                            value={formData.direccionOrganismo}
-                                            onChange={(e) => setFormData({ ...formData, direccionOrganismo: e.target.value })}
-                                            maxLength={150}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fisica">Ubicación Física (Piso/Oficina)</Label>
-                                        <Textarea
-                                            id="fisica"
-                                            placeholder="Ej. Piso 5, Oficina 502..."
-                                            value={formData.ubicacionFisica}
-                                            onChange={(e) => setFormData({ ...formData, ubicacionFisica: e.target.value })}
-                                            className="min-h-[80px]"
-                                        />
-                                    </div>
-                                    <div className="flex justify-between pt-4">
-                                        <Button type="button" variant="outline" onClick={() => setActiveTab('basico')}>
-                                            Atrás
-                                        </Button>
-                                        <Button type="button" onClick={() => setActiveTab('contacto')} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all active:scale-95">
-                                            Siguiente: Contacto
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-
-                                <TabsContent value="contacto" className="space-y-4 py-2">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="correo">Correo Electrónico *</Label>
-                                            <div className="flex gap-2">
-                                                <Mail className="w-4 h-4 mt-3 text-gray-400" />
-                                                <Input
-                                                    id="correo"
-                                                    type="email"
-                                                    placeholder="contacto@organismo.gob.ve"
-                                                    value={formData.correoOrganismo}
-                                                    onChange={(e) => setFormData({ ...formData, correoOrganismo: e.target.value })}
-                                                    required
-                                                    maxLength={100}
-                                                    className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="telefono">Teléfono</Label>
-                                            <div className="flex gap-2">
-                                                <Phone className="w-4 h-4 mt-3 text-gray-400" />
-                                                <Input
-                                                    id="telefono"
-                                                    placeholder="0212-0000000"
-                                                    value={formData.telefonoOrganismo}
-                                                    onChange={(e) => setFormData({ ...formData, telefonoOrganismo: e.target.value })}
-                                                    maxLength={15}
-                                                    className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="bg-blue-50 p-4 rounded-lg flex gap-3 items-start mt-6">
-                                        <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                                        <p className="text-sm text-blue-800">
-                                            Asegúrese de que el tejedor de enlace seleccionado tenga sus datos de contacto actualizados, ya que será el punto de conexión principal con este organismo.
-                                        </p>
-                                    </div>
-                                    <div className="flex justify-between pt-8">
-                                        <Button type="button" variant="outline" onClick={() => setActiveTab('ubicacion')}>
-                                            Atrás
-                                        </Button>
-                                        <Button
-                                            type="submit"
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-8 shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                            disabled={isLoading}
-                                        >
-                                            {isLoading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Registrar Institución')}
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-                            </Tabs>
-                        </form>
+                        <OrganismoForm
+                            initialData={editingOrganismo || undefined}
+                            tejedores={tejedores}
+                            onSubmit={handleSubmit}
+                            onCancel={() => setIsModalOpen(false)}
+                            isLoading={isLoading}
+                        />
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

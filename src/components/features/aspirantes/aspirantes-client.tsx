@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Phone, Clipboard, Loader2, UserPlus } from 'lucide-react';
+import { Edit, Trash2, Phone, Clipboard, Loader2, UserPlus, Download, Plus, Users, Clock, CheckCircle2 } from 'lucide-react';
 import { Aspirante } from '@/db/schema/aspirantes';
-import { createAspirante, deleteAspirante, updateAspirante } from '@/actions/aspirantes-actions';
-import { promoteAspiranteToTejedor } from '@/actions/promote-aspirante';
+import { createAspirante, deleteAspirante, updateAspirante, promoverATejedor } from '@/actions/aspirantes-actions';
 import {
     Dialog,
     DialogContent,
@@ -15,7 +16,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { Badge } from '@/components/ui/badge';
 import { AspiranteForm } from '@/components/forms/AspiranteForm';
@@ -35,7 +35,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
         if (!confirm(`¿Deseas promover a ${aspirante.nombreAspirante} ${aspirante.apellidoAspirante} a Tejedor Oficial?`)) return;
         setIsPromoting(aspirante.cedulaAspirante);
         try {
-            const res = await promoteAspiranteToTejedor(aspirante.cedulaAspirante);
+            const res = await promoverATejedor(aspirante);
             if (res.success) {
                 toast.success(res.message);
                 router.refresh();
@@ -101,26 +101,34 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
     };
 
     const columns: Column<Aspirante>[] = [
-        { key: 'cedulaAspirante', label: 'Cédula', sortable: true },
         {
             key: 'nombreAspirante',
-            label: 'Aspirante',
-            render: (asp) => `${asp.nombreAspirante} ${asp.apellidoAspirante}`,
-            sortable: true
+            header: 'Aspirante',
+            render: (asp) => (
+                <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-sm font-bold text-[#1e3a8a]">
+                        {asp.nombreAspirante[0]}{asp.apellidoAspirante[0]}
+                    </span>
+                    <div>
+                        <p className="font-semibold text-foreground">{asp.nombreAspirante} {asp.apellidoAspirante}</p>
+                        <p className="text-xs text-muted-foreground">{asp.cedulaAspirante}</p>
+                    </div>
+                </div>
+            ),
         },
-        { key: 'profesionAspirante', label: 'Profesión', sortable: true },
+        { key: 'profesionAspirante', header: 'Profesión' },
         {
             key: 'direccionCompleta',
-            label: 'Dirección',
+            header: 'Dirección',
             render: (asp) => {
                 const estadoNombre = getEstadoNombre(asp.estadoDireccionAspirante);
                 const municipioNombre = getMunicipioNombre(asp.estadoDireccionAspirante, asp.municipioAspirante);
                 const parroquiaNombre = getParroquiaNombre(asp.estadoDireccionAspirante, asp.municipioAspirante, asp.parroquiaAspirante);
 
                 return (
-                    <div className="text-sm">
+                    <div className="text-sm text-muted-foreground">
                         <div>{asp.direccionAspirante}</div>
-                        <div className="text-gray-600">
+                        <div className="text-xs opacity-75">
                             {parroquiaNombre}, {municipioNombre}, {estadoNombre}
                         </div>
                     </div>
@@ -129,28 +137,31 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
         },
         {
             key: 'telefonoAspirante',
-            label: 'Teléfono',
+            header: 'Teléfono',
             render: (asp) => (
-                <div className="flex items-center gap-1">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">{asp.telefonoAspirante}</span>
-                </div>
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5" /> {asp.telefonoAspirante || '-'}
+                </span>
             ),
         },
         {
             key: 'estadoAspirante',
-            label: 'Estado',
-            render: (asp) => (
-                <Badge variant={asp.estadoAspirante === 'Pendiente' ? 'outline' : 'default'}>
-                    {asp.estadoAspirante}
-                </Badge>
-            )
+            header: 'Estado',
+            render: (asp) => {
+                const isPending = asp.estadoAspirante === 'Pendiente';
+                return (
+                    <Badge variant={isPending ? 'outline' : 'default'} className={isPending ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}>
+                        {asp.estadoAspirante}
+                    </Badge>
+                );
+            }
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (asp) => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end">
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(asp)} disabled={!!isPromoting}>
                         <Edit className="w-4 h-4" />
                     </Button>
@@ -158,12 +169,14 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
                     <Button
-                        variant="ghost" size="sm"
+                        variant="outline" size="sm"
+                        className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200 transition-colors"
                         title="Aprobar como Tejedor"
                         onClick={() => handlePromote(asp)}
-                        disabled={isPromoting === asp.cedulaAspirante}
+                        disabled={isPromoting === asp.cedulaAspirante || asp.estadoAspirante === 'Aprobado'}
                     >
-                        {isPromoting === asp.cedulaAspirante ? <Loader2 className="w-4 h-4 animate-spin text-green-600" /> : <UserPlus className="w-4 h-4 text-green-600" />}
+                        {isPromoting === asp.cedulaAspirante ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <UserPlus className="w-4 h-4 mr-1" />}
+                        Promover
                     </Button>
                 </div>
             ),
@@ -186,7 +199,6 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
             };
         });
 
-        const headers = ['cedula', 'nombre', 'profesion', 'direccion', 'telefono', 'estado'];
         const columnsData = [
             { header: 'Cédula', dataKey: 'cedula' as const },
             { header: 'Nombre', dataKey: 'nombre' as const },
@@ -205,31 +217,104 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Aspirantes</h1>
-                    <p className="text-gray-600">Lista de espera y postulaciones para nuevos tejedores</p>
+            <PageShell
+                title="Aspirantes"
+                subtitle="Lista de espera y postulaciones para nuevos tejedores"
+                actions={
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => handleExport('pdf')}
+                            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button
+                            onClick={handleAdd}
+                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nueva Postulación
+                        </Button>
+                    </div>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Postulaciones</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <Users className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Pendientes</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.filter(a => a.estadoAspirante === 'Pendiente').length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+                                <Clock className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Aprobados / Revisados</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.filter(a => a.estadoAspirante !== 'Pendiente').length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600 transition-colors group-hover:bg-green-100">
+                                <CheckCircle2 className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <DataTable
+                    title="Listado de aspirantes"
+                    description="Busca por nombre, cédula o profesión"
                     data={initialData}
                     columns={columns}
-                    searchPlaceholder="Buscar por cédula o nombre..."
-                    onAdd={handleAdd}
-                    addLabel="Nueva Postulación"
-                    onExport={handleExport}
+                    searchKeys={['nombreAspirante', 'apellidoAspirante', 'cedulaAspirante', 'profesionAspirante']}
+                    searchPlaceholder="Buscar por cédula, nombre, profesión..."
+                    filters={[
+                        {
+                            key: 'estadoAspirante',
+                            label: 'Estado',
+                            options: [
+                                { label: 'Pendiente', value: 'Pendiente' },
+                                { label: 'Aprobado', value: 'Aprobado' },
+                                { label: 'Rechazado', value: 'Rechazado' }
+                            ]
+                        }
+                    ]}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Clipboard className="w-6 h-6 text-blue-600" />
-                                {editingAspirante ? 'Editar Aspirante' : 'Registrar Aspirante'}
+                            <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-[#1e3a8a]">
+                                <UserPlus className="w-6 h-6" />
+                                {editingAspirante ? 'Editar Postulación' : 'Nueva Postulación'}
                             </DialogTitle>
                         </DialogHeader>
 
-                        <div className="pt-6">
+                        <div className="pt-4">
                             <AspiranteForm
                                 initialData={editingAspirante || undefined}
                                 onSubmit={handleSubmit}
@@ -239,7 +324,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                         </div>
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

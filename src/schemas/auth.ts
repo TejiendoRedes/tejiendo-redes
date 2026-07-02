@@ -8,7 +8,7 @@ export const loginSchema = z.object({
         .min(2, 'El usuario debe tener al menos 2 caracteres')
         .max(50, 'El usuario no puede exceder los 50 caracteres')
         .trim()
-        .regex(/^[a-zA-Z0-0._-]+$/, 'El usuario solo puede contener letras, números, puntos, guiones y guiones bajos'),
+        .regex(/^[a-zA-Z0-9._-]+$/, 'El usuario solo puede contener letras, números, puntos, guiones y guiones bajos'),
     password: z.string()
         .min(8, 'La contraseña debe tener al menos 8 caracteres')
         .max(128, 'La contraseña es demasiado larga'),
@@ -33,6 +33,14 @@ export const registerSchema = z.object({
     telefonoAspirante: z.string().min(10, 'Teléfono debe tener al menos 10 dígitos').max(15),
     correoAspirante: z.string().email('Correo electrónico inválido').max(100),
     profesionAspirante: z.string().min(2, 'Profesión es requerida').max(50),
+    usuario: z.string()
+        .min(2, 'El usuario debe tener al menos 2 caracteres')
+        .max(50, 'El usuario no puede exceder los 50 caracteres')
+        .trim()
+        .regex(/^[a-zA-Z0-9._-]+$/, 'El usuario solo puede contener letras, números, puntos, guiones y guiones bajos'),
+    password: z.string()
+        .min(8, 'La contraseña debe tener al menos 8 caracteres')
+        .max(128, 'La contraseña es demasiado larga'),
     // Campos de seguridad adicionales
     honeypot: z.string().max(0, 'Bot detected').optional(),
     csrfToken: z.string().optional(),

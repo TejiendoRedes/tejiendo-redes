@@ -11,6 +11,9 @@ import {
   Boxes,
   Activity,
   MapPin,
+  GraduationCap,
+  UserCheck,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,15 +34,6 @@ export const navGroups: NavGroup[] = [
     items: [{ label: "Resumen General", to: "/dashboard/admin", icon: LayoutDashboard }],
   },
   {
-    title: "Datos Básicos",
-    items: [
-      { label: "Pacientes", to: "/datos-basicos/pacientes", icon: Users },
-      { label: "Tejedores", to: "/datos-basicos/tejedores", icon: HeartHandshake },
-      { label: "Personal de Salud", to: "/datos-basicos/medicos", icon: UserRound },
-      { label: "Comunidades", to: "/datos-basicos/comunidades", icon: MapPin },
-    ],
-  },
-  {
     title: "Atención Médica",
     items: [
       { label: "Consultas", to: "/atencion-medica", icon: Stethoscope },
@@ -55,10 +49,29 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    title: "Gestión Principal",
+    items: [
+      { label: "Pacientes", to: "/datos-basicos/pacientes", icon: Users },
+      { label: "Tejedores", to: "/datos-basicos/tejedores", icon: HeartHandshake },
+      { label: "Aspirantes", to: "/datos-basicos/aspirantes", icon: UserRound },
+      { label: "Personal Médico", to: "/datos-basicos/medicos", icon: Stethoscope },
+    ],
+  },
+  {
     title: "Análisis",
     items: [
       { label: "Reportes", to: "/reportes", icon: FileBarChart },
       { label: "Indicadores", to: "/estadisticas", icon: Activity },
+    ],
+  },
+  {
+    title: "Catálogos",
+    items: [
+      { label: "Comunidades", to: "/datos-basicos/comunidades", icon: MapPin },
+      { label: "Especialidades", to: "/datos-basicos/especialidades", icon: GraduationCap },
+      { label: "Enfermedades", to: "/datos-basicos/enfermedades", icon: Activity },
+      { label: "Instituciones", to: "/datos-basicos/organismos", icon: Building2 },
+      { label: "Responsables", to: "/datos-basicos/responsables", icon: UserCheck },
     ],
   },
 ];

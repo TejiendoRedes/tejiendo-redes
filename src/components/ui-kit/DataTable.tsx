@@ -36,6 +36,7 @@ export function DataTable<T extends any>({
   pageSize = 6,
   primaryAction,
   filters,
+  onFilterChange,
 }: {
   title?: string;
   description?: string;
@@ -46,6 +47,7 @@ export function DataTable<T extends any>({
   pageSize?: number;
   primaryAction?: { label: string; onClick?: () => void };
   filters?: FilterDef<T>[];
+  onFilterChange?: (filters: Record<string, string[]>) => void;
 }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -78,10 +80,14 @@ export function DataTable<T extends any>({
   const toggleFilter = (key: string, value: string) => {
     setActiveFilters((prev) => {
       const current = prev[key] || [];
+      let nextState;
       if (current.includes(value)) {
-        return { ...prev, [key]: current.filter((v) => v !== value) };
+        nextState = { ...prev, [key]: current.filter((v) => v !== value) };
+      } else {
+        nextState = { ...prev, [key]: [...current, value] };
       }
-      return { ...prev, [key]: [...current, value] };
+      onFilterChange?.(nextState);
+      return nextState;
     });
     setPage(0);
   };
@@ -128,7 +134,7 @@ export function DataTable<T extends any>({
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64 max-h-[300px] overflow-y-auto">
                 {filters.map((f, i) => (
                   <React.Fragment key={f.key as string}>
                     {i > 0 && <DropdownMenuSeparator />}
@@ -151,7 +157,7 @@ export function DataTable<T extends any>({
           {primaryAction && (
             <button
               onClick={primaryAction.onClick}
-              className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
+              className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 cursor-pointer"
             >
               <Plus className="h-4 w-4" />
               {primaryAction.label}

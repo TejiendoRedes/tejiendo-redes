@@ -114,6 +114,7 @@ export function AspiranteForm({
                         required
                         disabled={!!initialData}
                         maxLength={12}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
                 <div className="space-y-2">
@@ -124,6 +125,7 @@ export function AspiranteForm({
                         onChange={(e) => setFormData({ ...formData, nombreAspirante: e.target.value })}
                         required
                         maxLength={50}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
                 <div className="space-y-2">
@@ -134,6 +136,7 @@ export function AspiranteForm({
                         onChange={(e) => setFormData({ ...formData, apellidoAspirante: e.target.value })}
                         required
                         maxLength={50}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
@@ -146,6 +149,7 @@ export function AspiranteForm({
                         value={formData.fechaNacimiento}
                         onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
                         required
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
                 <div className="space-y-2">
@@ -156,6 +160,7 @@ export function AspiranteForm({
                         value={formData.fechaPostulacion}
                         onChange={(e) => setFormData({ ...formData, fechaPostulacion: e.target.value })}
                         required
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
                 <div className="space-y-2">
@@ -166,6 +171,7 @@ export function AspiranteForm({
                         onChange={(e) => setFormData({ ...formData, profesionAspirante: e.target.value })}
                         required
                         maxLength={50}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
@@ -178,6 +184,7 @@ export function AspiranteForm({
                         onChange={(e) => setFormData({ ...formData, telefonoAspirante: e.target.value })}
                         required
                         maxLength={15}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -188,6 +195,7 @@ export function AspiranteForm({
                         value={formData.correoAspirante}
                         onChange={(e) => setFormData({ ...formData, correoAspirante: e.target.value })}
                         maxLength={100}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
@@ -199,6 +207,7 @@ export function AspiranteForm({
                         value={formData.direccionAspirante}
                         onChange={(e) => setFormData({ ...formData, direccionAspirante: e.target.value })}
                         maxLength={150}
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 

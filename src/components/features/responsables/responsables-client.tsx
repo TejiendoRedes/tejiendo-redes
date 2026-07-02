@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, UserCheck, MapPin } from 'lucide-react';
+import { Edit, Trash2, UserCheck, MapPin, Download, Briefcase } from 'lucide-react';
 import { Responsable } from '@/db/schema/responsable';
 import { createResponsable, deleteResponsable, updateResponsable } from '@/actions/responsables-actions';
 import {
@@ -97,58 +98,71 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
     const columns: Column<Responsable>[] = [
         {
             key: 'cedulaResponsable',
-            label: 'Cédula',
-            sortable: true,
-            render: (r) => <span className="font-medium text-gray-700">{r.cedulaResponsable}</span>
+            header: 'Cédula',
+            className: 'w-[1%] whitespace-nowrap font-mono text-[#1e3a8a] font-medium',
         },
         {
-            key: 'nombreResponsable', // Virtual key sort requires implementation in DataTable but key is required
-            label: 'Nombre Completo',
+            key: 'nombreResponsable',
+            header: 'Nombre Completo',
             render: (r) => (
-                <div className="flex flex-col">
-                    <span className="font-semibold text-gray-900">{r.nombreResponsable} {r.apellidoResponsable}</span>
-                    <span className="text-xs text-gray-500">{r.correoResponsable}</span>
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-bold text-xs shrink-0">
+                        {r.nombreResponsable.charAt(0)}{r.apellidoResponsable.charAt(0)}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-gray-900">{r.nombreResponsable} {r.apellidoResponsable}</span>
+                        <span className="text-xs text-gray-500">{r.correoResponsable}</span>
+                    </div>
                 </div>
             ),
-            sortable: true,
         },
         {
             key: 'cargo',
-            label: 'Cargo',
-            sortable: true,
+            header: 'Cargo',
             render: (r) => (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
                     {r.cargo}
                 </span>
             )
         },
         {
             key: 'ubicacion',
-            label: 'Ubicación',
+            header: 'Ubicación',
             render: (r) => (
-                <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 truncate max-w-[150px]" title={getLocationNames(r)}>
-                        {getLocationNames(r)}
-                    </span>
+                <div className="flex items-center gap-1.5 text-xs text-gray-600 max-w-[200px]" title={getLocationNames(r)}>
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <span className="truncate">{getLocationNames(r)}</span>
                 </div>
             ),
         },
         {
             key: 'telefonoResponsable',
-            label: 'Teléfono',
-            render: (r) => <span className="text-gray-600">{r.telefonoResponsable}</span>
+            header: 'Teléfono',
+            className: 'text-gray-600 text-sm whitespace-nowrap'
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'w-[1%] whitespace-nowrap text-right pr-6',
             render: (r) => (
-                <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(r)}>
-                        <Edit className="w-4 h-4 text-gray-400 hover:text-blue-600 transition-colors" />
+                <div className="flex gap-2 justify-end">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Editar"
+                        onClick={() => handleEdit(r)}
+                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
+                    >
+                        <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(r.cedulaResponsable)}>
-                        <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600 transition-colors" />
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Eliminar"
+                        onClick={() => handleDelete(r.cedulaResponsable)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                    >
+                        <Trash2 className="w-4 h-4" />
                     </Button>
                 </div>
             ),
@@ -165,7 +179,6 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
             correo: r.correoResponsable,
         }));
 
-        const headers = ['cedula', 'nombre', 'cargo', 'ubicacion', 'telefono', 'correo'];
         const columnsData = [
             { header: 'Cédula', dataKey: 'cedula' as const },
             { header: 'Nombre', dataKey: 'nombre' as const },
@@ -182,32 +195,86 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
         }
     };
 
+    const uniqueCargos = Array.from(new Set(initialData.map(r => r.cargo).filter(Boolean)));
+    const filterOptions = uniqueCargos.map(c => ({ label: c as string, value: c as string }));
+
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl text-gray-900 mb-2 font-bold tracking-tight">Responsables Comunitario</h1>
-                        <p className="text-gray-600 font-medium">Gestión de líderes y responsables de comunidades.</p>
+            <PageShell
+                title="Responsables"
+                subtitle="Gestión de líderes y responsables de comunidades."
+                actions={
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => handleExport('pdf')} 
+                            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200 shadow-sm"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar
+                        </Button>
+                        <Button 
+                            onClick={handleAdd} 
+                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                        >
+                            <UserCheck className="w-4 h-4 mr-2" />
+                            Agregar Responsable
+                        </Button>
+                    </div>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Responsables</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <UserCheck className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Cargos Distintos</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {uniqueCargos.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+                                <Briefcase className="w-5 h-5" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <DataTable
+                    title="Listado de Responsables"
+                    description="Busca por nombre, cédula o usa el filtro por cargo"
                     data={initialData}
                     columns={columns}
-                    searchPlaceholder="Buscar por nombre, cédula o cargo..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Responsable"
-                    onExport={handleExport}
+                    searchKeys={['nombreResponsable', 'apellidoResponsable', 'cedulaResponsable']}
+                    searchPlaceholder="Buscar por nombre o cédula..."
+                    filters={filterOptions.length > 0 ? [
+                        {
+                            key: 'cargo',
+                            label: 'Filtrar por Cargo',
+                            options: filterOptions
+                        }
+                    ] : undefined}
                 />
 
-                {/* Modal Formulario */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[600px] border-none shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="sm:max-w-[700px] border-none shadow-2xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader className="pb-4 border-b border-gray-100">
-                            <DialogTitle className="text-2xl flex items-center gap-3 text-gray-900">
-                                <div className="p-2 bg-blue-100 rounded-lg">
-                                    <UserCheck className="w-6 h-6 text-blue-600" />
+                            <DialogTitle className="text-2xl flex items-center gap-3 text-[#1e3a8a]">
+                                <div className="p-2 bg-blue-50 rounded-xl">
+                                    <UserCheck className="w-6 h-6 text-[#1e3a8a]" />
                                 </div>
                                 {editingResponsable ? 'Editar Responsable' : 'Nuevo Responsable'}
                             </DialogTitle>
@@ -226,7 +293,7 @@ export default function ResponsablesClient({ initialData }: ResponsablesClientPr
                         </div>
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

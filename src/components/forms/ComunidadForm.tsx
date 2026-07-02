@@ -16,7 +16,7 @@ import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/d
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
-import { getResponsables } from '@/queries/responsables';;
+import { getResponsables } from '@/queries/responsables';
 
 export interface ComunidadFormProps {
     initialData?: Comunidad;
@@ -88,6 +88,8 @@ export function ComunidadForm({
         await onSubmit(formData);
     };
 
+    const inputClassName = "h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500";
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,7 +105,7 @@ export function ComunidadForm({
                         value={formData.codigoComunidad}
                         disabled={true}
                         placeholder="Generado automáticamente"
-                        className="bg-gray-100"
+                        className={`${inputClassName} bg-gray-50`}
                     />
                 </div>
 
@@ -115,6 +117,7 @@ export function ComunidadForm({
                         onChange={(e) => setFormData({ ...formData, nombreComunidad: e.target.value })}
                         required
                         maxLength={150}
+                        className={inputClassName}
                     />
                 </div>
 
@@ -125,7 +128,7 @@ export function ComunidadForm({
                         onValueChange={(value) => setFormData({ ...formData, tipoComunidad: value })}
                         required
                     >
-                        <SelectTrigger id="tipo">
+                        <SelectTrigger id="tipo" className={inputClassName}>
                             <SelectValue placeholder="Seleccione tipo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -165,6 +168,7 @@ export function ComunidadForm({
                         onChange={(e) => setFormData({ ...formData, telefonoComunidad: e.target.value })}
                         required
                         maxLength={15}
+                        className={inputClassName}
                     />
                 </div>
 
@@ -176,7 +180,7 @@ export function ComunidadForm({
                 <div className="space-y-2">
                     <Label htmlFor="estado">Estado *</Label>
                     <Select value={formData.estado} onValueChange={handleEstadoChange} required>
-                        <SelectTrigger id="estado"><SelectValue placeholder="Seleccione estado" /></SelectTrigger>
+                        <SelectTrigger id="estado" className={inputClassName}><SelectValue placeholder="Seleccione estado" /></SelectTrigger>
                         <SelectContent>
                             {estados.map(e => <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>)}
                         </SelectContent>
@@ -186,7 +190,7 @@ export function ComunidadForm({
                 <div className="space-y-2">
                     <Label htmlFor="municipio">Municipio *</Label>
                     <Select value={formData.municipio} onValueChange={handleMunicipioChange} disabled={!formData.estado} required>
-                        <SelectTrigger id="municipio"><SelectValue placeholder="Seleccione municipio" /></SelectTrigger>
+                        <SelectTrigger id="municipio" className={inputClassName}><SelectValue placeholder="Seleccione municipio" /></SelectTrigger>
                         <SelectContent>
                             {municipios.map(m => <SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>)}
                         </SelectContent>
@@ -196,7 +200,7 @@ export function ComunidadForm({
                 <div className="space-y-2">
                     <Label htmlFor="parroquia">Parroquia *</Label>
                     <Select value={formData.parroquia} onValueChange={handleParroquiaChange} disabled={!formData.municipio} required>
-                        <SelectTrigger id="parroquia"><SelectValue placeholder="Seleccione parroquia" /></SelectTrigger>
+                        <SelectTrigger id="parroquia" className={inputClassName}><SelectValue placeholder="Seleccione parroquia" /></SelectTrigger>
                         <SelectContent>
                             {parroquias.map(p => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}
                         </SelectContent>
@@ -211,6 +215,7 @@ export function ComunidadForm({
                         onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
                         required
                         maxLength={150}
+                        className={inputClassName}
                     />
                 </div>
 
@@ -221,7 +226,7 @@ export function ComunidadForm({
                         value={formData.ubicacionFisica}
                         onChange={(e) => setFormData({ ...formData, ubicacionFisica: e.target.value })}
                         required
-                        className="min-h-[80px]"
+                        className="min-h-[80px] border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
@@ -232,27 +237,27 @@ export function ComunidadForm({
 
                 <div className="space-y-2">
                     <Label htmlFor="habitantes">Total Habitantes *</Label>
-                    <Input type="number" id="habitantes" value={formData.cantidadHabitantes} onChange={(e) => setFormData({ ...formData, cantidadHabitantes: parseInt(e.target.value) || 0 })} required min={0} />
+                    <Input type="number" id="habitantes" value={formData.cantidadHabitantes} onChange={(e) => setFormData({ ...formData, cantidadHabitantes: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="familias">Total Familias *</Label>
-                    <Input type="number" id="familias" value={formData.cantidadFamilias} onChange={(e) => setFormData({ ...formData, cantidadFamilias: parseInt(e.target.value) || 0 })} required min={0} />
+                    <Input type="number" id="familias" value={formData.cantidadFamilias} onChange={(e) => setFormData({ ...formData, cantidadFamilias: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="ninos">Niños *</Label>
-                    <Input type="number" id="ninos" value={formData.cantidadNinos} onChange={(e) => setFormData({ ...formData, cantidadNinos: parseInt(e.target.value) || 0 })} required min={0} />
+                    <Input type="number" id="ninos" value={formData.cantidadNinos} onChange={(e) => setFormData({ ...formData, cantidadNinos: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="adolescentes">Adolescentes *</Label>
-                    <Input type="number" id="adolescentes" value={formData.cantidadAdolescentes} onChange={(e) => setFormData({ ...formData, cantidadAdolescentes: parseInt(e.target.value) || 0 })} required min={0} />
+                    <Input type="number" id="adolescentes" value={formData.cantidadAdolescentes} onChange={(e) => setFormData({ ...formData, cantidadAdolescentes: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="mayores">Adultos Mayores *</Label>
-                    <Input type="number" id="mayores" value={formData.cantidadMayores} onChange={(e) => setFormData({ ...formData, cantidadMayores: parseInt(e.target.value) || 0 })} required min={0} />
+                    <Input type="number" id="mayores" value={formData.cantidadMayores} onChange={(e) => setFormData({ ...formData, cantidadMayores: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="mayores60">Mayores de 60 *</Label>
-                    <Input type="number" id="mayores60" value={formData.cantidadMayores60} onChange={(e) => setFormData({ ...formData, cantidadMayores60: parseInt(e.target.value) || 0 })} required min={0} />
+                    <Input type="number" id="mayores60" value={formData.cantidadMayores60} onChange={(e) => setFormData({ ...formData, cantidadMayores60: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
                 </div>
             </div>
 

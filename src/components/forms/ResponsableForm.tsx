@@ -274,7 +274,7 @@ export function ResponsableForm({
                 </Button>
                 <Button
                     type="submit"
-                    className="px-8 font-semibold rounded-lg shadow-lg shadow-blue-900/20 transition-all active:scale-95"
+                    className="px-8 font-semibold rounded-lg bg-[#1e3a8a] text-white hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all active:scale-95"
                     disabled={isLoading}
                 >
                     {isLoading ? (
