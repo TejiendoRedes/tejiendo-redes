@@ -31,6 +31,11 @@ const registrationSchema = z.object({
     telefonoAspirante: z.string().min(10, 'Teléfono debe tener al menos 10 dígitos').max(15),
     correoAspirante: z.string().email('Correo electrónico inválido').max(100),
     profesionAspirante: z.string().min(2, 'Profesión es requerida').max(50),
+    usuario: z.string()
+        .min(2, 'El usuario debe tener al menos 2 caracteres')
+        .max(50, 'El usuario no puede exceder los 50 caracteres')
+        .trim()
+        .regex(/^[a-zA-Z0-9._-]+$/, 'El usuario solo puede contener letras, números, puntos, guiones y guiones bajos'),
     password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
 });
 
@@ -52,6 +57,7 @@ export default function RegisterTejedorPage() {
             estadoDireccionAspirante: '',
             municipioAspirante: '',
             parroquiaAspirante: '',
+            usuario: '',
             password: '',
         }
     });
@@ -304,10 +310,15 @@ export default function RegisterTejedorPage() {
                         </div>
 
                         <div className="space-y-2">
+                            <Label htmlFor="usuario" className="text-gray-700 font-medium">Nombre de Usuario</Label>
+                            <Input id="usuario" {...register('usuario')} placeholder="ej: juanperez123" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
+                            {errors.usuario && <p className="text-xs text-red-500">{errors.usuario.message}</p>}
+                        </div>
+
+                        <div className="space-y-2">
                             <Label htmlFor="password" className="text-gray-700 font-medium">Contraseña de Acceso</Label>
                             <Input id="password" type="password" {...register('password')} placeholder="Mínimo 8 caracteres" className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900" />
                             {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-                            <p className="text-xs text-gray-500">Tu usuario será tu número de cédula.</p>
                         </div>
                     </div>
 
