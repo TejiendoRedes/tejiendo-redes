@@ -23,7 +23,12 @@ const registrationSchema = z.object({
     cedulaAspirante: z.string().min(6, 'Cédula debe tener al menos 6 caracteres').max(12),
     nombreAspirante: z.string().min(2, 'Nombre es requerido').max(50),
     apellidoAspirante: z.string().min(2, 'Apellido es requerido').max(50),
-    fechaNacimiento: z.string().refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida'),
+    fechaNacimiento: z.string().refine((date) => {
+        const parsed = Date.parse(date);
+        if (isNaN(parsed)) return false;
+        const year = new Date(parsed).getFullYear();
+        return year >= 1900 && year <= new Date().getFullYear();
+    }, 'Fecha inválida o fuera de rango'),
     direccionAspirante: z.string().min(5, 'Dirección es muy corta').max(150),
     municipioAspirante: z.string().min(2, 'Municipio es requerido').max(100),
     estadoDireccionAspirante: z.string().min(2, 'Estado es requerido').max(100),

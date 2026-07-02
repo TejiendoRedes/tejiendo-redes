@@ -27,17 +27,17 @@ export default function LoginForm() {
         setLoading(true);
 
         try {
-            const success = await login(usuario, password, {
+            const result = await login(usuario, password, {
                 honeypot,
                 submissionTime: startTime
             });
 
-            if (success) {
+            if (result.success) {
                 toast.success('Sesión iniciada correctamente');
                 router.push('/dashboard');
                 router.refresh();
             } else {
-                toast.error('Usuario o contraseña incorrectos');
+                toast.error(result.error || 'Usuario o contraseña incorrectos');
             }
         } catch (error) {
             toast.error('Error al iniciar sesión');
