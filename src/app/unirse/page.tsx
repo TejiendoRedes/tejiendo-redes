@@ -51,8 +51,6 @@ export default function RegisterTejedorPage() {
             estadoDireccionAspirante: '',
             municipioAspirante: '',
             parroquiaAspirante: '',
-            usuario: '',
-            password: '',
         }
     });
 
