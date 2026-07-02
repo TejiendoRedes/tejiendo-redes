@@ -13,9 +13,9 @@ export function PageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+    <div className="flex-1 flex flex-col min-h-screen">
       <AppHeader title={title} subtitle={subtitle} />
-      <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:py-8">
+      <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:py-8 overflow-x-hidden">
         {actions && <div className="mb-6 flex flex-wrap items-center gap-3">{actions}</div>}
         {children}
       </main>

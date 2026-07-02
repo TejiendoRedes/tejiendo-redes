@@ -98,6 +98,13 @@ export function DataTable<T extends any>({
   const current = Math.min(page, pageCount - 1);
   const rows = filtered.slice(current * pageSize, current * pageSize + pageSize);
 
+  const getVisiblePages = () => {
+    if (pageCount <= 7) return Array.from({ length: pageCount }, (_, i) => i);
+    if (current <= 3) return [0, 1, 2, 3, 4, '...', pageCount - 1];
+    if (current >= pageCount - 4) return [0, '...', pageCount - 5, pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1];
+    return [0, '...', current - 1, current, current + 1, '...', pageCount - 1];
+  };
+
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
       {(title || (searchKeys && searchKeys.length > 0) || (filters && filters.length > 0)) && (
@@ -228,19 +235,25 @@ export function DataTable<T extends any>({
           >
             <ChevronLeft className="h-4 w-4" /> Anterior
           </button>
-          {Array.from({ length: pageCount }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i)}
-              className={cn(
-                "h-9 w-9 rounded-lg text-sm font-semibold transition-colors cursor-pointer",
-                i === current
-                  ? "bg-[#1e3a8a] text-white"
-                  : "border border-input bg-background text-foreground hover:bg-muted",
-              )}
-            >
-              {i + 1}
-            </button>
+          {getVisiblePages().map((p, i) => (
+            p === '...' ? (
+              <span key={`ellipsis-${i}`} className="flex h-9 w-9 items-center justify-center text-muted-foreground">
+                ...
+              </span>
+            ) : (
+              <button
+                key={p}
+                onClick={() => setPage(p as number)}
+                className={cn(
+                  "h-9 w-9 rounded-lg text-sm font-semibold transition-colors cursor-pointer",
+                  p === current
+                    ? "bg-[#1e3a8a] text-white"
+                    : "border border-input bg-background text-foreground hover:bg-muted",
+                )}
+              >
+                {(p as number) + 1}
+              </button>
+            )
           ))}
           <button
             onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}

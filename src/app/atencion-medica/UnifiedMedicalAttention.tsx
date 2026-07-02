@@ -35,6 +35,7 @@ export default function UnifiedMedicalAttention({
     const [isLoading, setIsLoading] = useState(false);
 
     // Setup State
+    const [tipoConsulta, setTipoConsulta] = useState<'abordaje' | 'comun'>('abordaje');
     const [selectedSetup, setSelectedSetup] = useState({
         codigoAbordaje: '',
         cedulaPaciente: '',
@@ -44,8 +45,13 @@ export default function UnifiedMedicalAttention({
     const [wizardInitialData, setWizardInitialData] = useState<Partial<WizardData>>({});
 
     const handleSetupNext = async () => {
-        if (!selectedSetup.codigoAbordaje || !selectedSetup.cedulaPaciente || !selectedSetup.cedulaMedico) {
+        if (!selectedSetup.cedulaPaciente || !selectedSetup.cedulaMedico) {
             toast.error('Por favor complete todos los campos requeridos');
+            return;
+        }
+
+        if (tipoConsulta === 'abordaje' && !selectedSetup.codigoAbordaje) {
+            toast.error('Por favor seleccione un abordaje');
             return;
         }
 
@@ -84,7 +90,7 @@ export default function UnifiedMedicalAttention({
         setIsLoading(true);
         try {
             const consultaData = {
-                codigoAbordaje: selectedSetup.codigoAbordaje,
+                codigoAbordaje: tipoConsulta === 'abordaje' ? selectedSetup.codigoAbordaje : undefined,
                 cedulaPaciente: selectedSetup.cedulaPaciente,
                 cedulaMedico: selectedSetup.cedulaMedico,
                 motivoConsulta: data.motivoConsulta,
@@ -155,25 +161,58 @@ export default function UnifiedMedicalAttention({
 
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <SearchableSelect
-                                        label="1. Seleccione el Abordaje"
-                                        items={abordajes.map((ab: any) => {
-                                            const abordajeData = ab.abordaje || ab;
-                                            return {
-                                                id: abordajeData.codigoAbordaje,
-                                                label: `${abordajeData.codigoAbordaje} - ${new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}`
-                                            };
-                                        })}
-                                        value={selectedSetup.codigoAbordaje}
-                                        onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, codigoAbordaje: val }))}
-                                        placeholder="Busque y seleccione el abordaje activo"
-                                        searchPlaceholder="Buscar por código..."
-                                    />
+                                    <Label className="text-sm font-medium text-gray-700 block">Tipo de Consulta</Label>
+                                    <div className="flex flex-col sm:flex-row gap-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="tipoConsulta" 
+                                                value="abordaje" 
+                                                checked={tipoConsulta === 'abordaje'} 
+                                                onChange={() => setTipoConsulta('abordaje')} 
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm font-medium text-gray-900">En Abordaje Comunitario</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="radio" 
+                                                name="tipoConsulta" 
+                                                value="comun" 
+                                                checked={tipoConsulta === 'comun'} 
+                                                onChange={() => {
+                                                    setTipoConsulta('comun');
+                                                    setSelectedSetup(prev => ({ ...prev, codigoAbordaje: '' }));
+                                                }} 
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm font-medium text-gray-900">Consulta Común / General</span>
+                                        </label>
+                                    </div>
                                 </div>
+
+                                {tipoConsulta === 'abordaje' && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                        <SearchableSelect
+                                            label="Seleccione el Abordaje"
+                                            items={abordajes.map((ab: any) => {
+                                                const abordajeData = ab.abordaje || ab;
+                                                return {
+                                                    id: abordajeData.codigoAbordaje,
+                                                    label: `${abordajeData.codigoAbordaje} - ${new Date(abordajeData.fechaAbordaje || abordajeData.fecha).toLocaleDateString()}`
+                                                };
+                                            })}
+                                            value={selectedSetup.codigoAbordaje}
+                                            onValueChange={(val) => setSelectedSetup(prev => ({ ...prev, codigoAbordaje: val }))}
+                                            placeholder="Busque y seleccione el abordaje activo"
+                                            searchPlaceholder="Buscar por código..."
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <SearchableSelect
-                                        label="2. Seleccione el Paciente"
+                                        label="Seleccione el Paciente"
                                         items={pacientes.map((p: any) => ({
                                             id: p.cedulaPaciente,
                                             label: `${p.nombrePaciente || p.nombre} ${p.apellidoPaciente || p.apellido}`,
@@ -189,7 +228,7 @@ export default function UnifiedMedicalAttention({
 
                                 <div className="space-y-2">
                                     <SearchableSelect
-                                        label="3. Médico Tratante"
+                                        label="Médico Tratante"
                                         items={medicos.map((m: any) => ({
                                             id: m.cedulaTejedor,
                                             label: `Dr(a). ${m.tejedor?.nombreTejedor || m.tejedor?.nombre1} ${m.tejedor?.apellidoTejedor || m.tejedor?.apellido1}`,

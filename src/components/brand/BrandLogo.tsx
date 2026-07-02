@@ -15,13 +15,20 @@ export function BrandLogo({ collapsed, className }: { collapsed?: boolean; class
     );
   }
   return (
-    <Image
-      src="/logo.png"
-      alt="Fundación Tejiendo Redes"
-      width={160}
-      height={48}
-      className={cn("h-12 w-auto object-contain", className)}
-    />
+    <div className={cn("flex items-center gap-2.5", className)}>
+      <div className="flex items-center justify-center">
+        <Image
+          src="/minilogo.png"
+          alt="Logo Tejiendo Redes"
+          width={40}
+          height={40}
+          className="object-contain"
+        />
+      </div>
+      <span className="text-[17px] font-extrabold leading-tight tracking-tight text-[#1e3a8a]">
+        Tejiendo Redes
+      </span>
+    </div>
   );
 }
 

@@ -13,6 +13,7 @@ import { useLayout } from "./LayoutContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { GlobalSearch } from "@/components/shared/GlobalSearch";
 
 export function AppHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { setMobileOpen } = useLayout();
@@ -25,7 +26,7 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6 shadow-sm">
+    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-gray-200 bg-white/80 backdrop-blur-md px-4 sm:px-6 shadow-sm">
       <div className="flex items-center gap-4 flex-1">
         <button
           onClick={() => setMobileOpen(true)}
@@ -42,35 +43,14 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative hidden lg:block">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="search"
-            placeholder="Buscar paciente, abordaje..."
-            className="h-10 w-[280px] rounded-full border border-gray-200 bg-white pl-10 pr-4 text-sm font-medium text-gray-700 outline-none transition-all placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
+        <GlobalSearch />
 
+        {/* Oculto temporalmente: Campana de Notificaciones (Mockup) */}
+        {/*
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              aria-label="Notificaciones"
-              className="relative rounded-full border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm outline-none"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 rounded-2xl p-2">
-            <DropdownMenuLabel className="px-2 py-1.5 font-bold text-gray-900">Notificaciones</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="flex flex-col items-center justify-center py-8 text-center text-sm text-gray-500">
-              <Bell className="mb-3 h-10 w-10 text-gray-200" />
-              <p className="font-medium text-gray-900">Estás al día</p>
-              <p>No tienes notificaciones nuevas</p>
-            </div>
-          </DropdownMenuContent>
+          ...
         </DropdownMenu>
+        */}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -95,6 +75,8 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {/* Oculto temporalmente: Opciones de Perfil (Mockup) */}
+            {/*
             <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2.5" onClick={() => router.push('/dashboard/admin')}>
               <User className="mr-2 h-4 w-4" />
               <span className="font-medium">Mi Perfil</span>
@@ -104,6 +86,7 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
               <span className="font-medium">Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            */}
             <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span className="font-bold">Cerrar Sesión</span>
