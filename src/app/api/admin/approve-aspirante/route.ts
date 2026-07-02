@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { aspirantes, auditLogs, tejedores } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { aspirantes, auditLogs, tejedores, users } from '@/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 
 /**
@@ -64,6 +64,26 @@ export async function POST(request: Request) {
                 // Eliminar el aspirante ya que ahora es un tejedor
                 await tx.delete(aspirantes)
                     .where(eq(aspirantes.cedulaAspirante, cedulaAspirante));
+
+                // Buscar el usuario asociado y aprobarlo
+                const [log] = await tx.select()
+                    .from(auditLogs)
+                    .where(and(
+                        eq(auditLogs.action, 'NEW_ASPIRANTE_POSTULATION'),
+                        eq(auditLogs.entityId, cedulaAspirante)
+                    ))
+                    .orderBy(desc(auditLogs.id))
+                    .limit(1);
+
+                if (log && log.details) {
+                    const parts = log.details.split(': ');
+                    if (parts.length > 1) {
+                        const username = parts[1].trim();
+                        await tx.update(users)
+                            .set({ approved: true, cedulaTejedor: cedulaAspirante })
+                            .where(eq(users.username, username));
+                    }
+                }
             } else {
                 // Si es rechazado, solo actualizamos el estado
                 await tx.update(aspirantes)
