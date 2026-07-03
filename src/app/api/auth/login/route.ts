@@ -147,9 +147,7 @@ export async function POST(request: Request) {
 
         const redirectTo = user.role === 'superuser' ? '/dashboard/super-usuario' :
             user.role === 'admin' ? '/dashboard/admin' :
-                user.role === 'tejedor' ? '/dashboard/tejedor' :
-                    user.role === 'medico' ? '/atencion-medica' :
-                        user.role === 'operador' ? '/datos-basicos' : '/dashboard';
+                ['tejedor', 'medico', 'operador'].includes(user.role) ? '/dashboard/tejedor' : '/dashboard';
 
         return NextResponse.json({
             success: true,
