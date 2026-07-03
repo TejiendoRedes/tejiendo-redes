@@ -5,7 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, UserCheck, MapPin, Download, Briefcase } from 'lucide-react';
+import { Edit, Trash2, UserCheck, MapPin, Download, Briefcase, UserPlus } from 'lucide-react';
 import { Responsable } from '@/db/schema/responsable';
 import { createResponsable, deleteResponsable, updateResponsable } from '@/actions/responsables-actions';
 import {
