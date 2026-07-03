@@ -1,9 +1,12 @@
-import { getAspirantes } from '@/queries/aspirantes';;
+import { getAspirantes } from '@/queries/aspirantes';
 import AspirantesClient from '@/components/features/aspirantes/aspirantes-client';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { getSession } from '@/lib/auth';
 
 export default async function AspirantesPage() {
-    // 1. Obtenemos los datos desde la Server Action
+    // 1. Obtenemos la sesión y los datos
+    const session = await getSession();
+    const canManage = session ? ['admin', 'superuser', 'operador'].includes(session.role) : false;
     const { data: aspirantes, success, error } = await getAspirantes();
 
     if (!success) {
@@ -22,5 +25,5 @@ export default async function AspirantesPage() {
         );
     }
 
-    return <AspirantesClient initialData={aspirantes || []} />;
+    return <AspirantesClient initialData={aspirantes || []} canManage={canManage} />;
 }

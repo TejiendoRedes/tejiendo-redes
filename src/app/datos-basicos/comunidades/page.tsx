@@ -1,8 +1,12 @@
-import { getComunidades } from '@/queries/comunidades';;
-import { getResponsables } from '@/queries/responsables';;
+import { getComunidades } from '@/queries/comunidades';
+import { getResponsables } from '@/queries/responsables';
 import ComunidadesClient from '@/components/features/comunidades/comunidades-client';
+import { getSession } from '@/lib/auth';
 
 export default async function ComunidadesPage() {
+    const session = await getSession();
+    const canManage = session ? ['admin', 'superuser', 'operador'].includes(session.role) : false;
+
     const [comunidadesRes, responsablesRes] = await Promise.all([
         getComunidades(),
         getResponsables(),
@@ -16,6 +20,7 @@ export default async function ComunidadesPage() {
         <ComunidadesClient
             initialData={comunidadesRes.data || []}
             responsables={responsablesRes.data || []}
+            canManage={canManage}
         />
     );
 }

@@ -22,9 +22,10 @@ import { useRouter } from 'next/navigation';
 
 interface EnfermedadesClientProps {
     initialData: Enfermedad[];
+    canEdit?: boolean;
 }
 
-export default function EnfermedadesClient({ initialData }: EnfermedadesClientProps) {
+export default function EnfermedadesClient({ initialData, canEdit = false }: EnfermedadesClientProps) {
     const router = useRouter();
 
     const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -103,33 +104,33 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
                 </p>
             )
         },
-        {
+        ...(canEdit ? [{
             key: 'acciones',
             header: '',
-            className: 'w-[1%] whitespace-nowrap text-right pr-6',
-            render: (enfermedad) => (
-                <div className="flex gap-2 justify-end">
+            className: 'text-right',
+            render: (e: any) => (
+                <div className="flex justify-end gap-1">
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(enfermedad)}
+                        onClick={() => handleEdit(e)}
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
                         title="Editar"
-                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(enfermedad.codigoEnfermedad)}
+                        onClick={() => handleDelete(e.codigoEnfermedad)}
+                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
                         title="Eliminar"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -173,13 +174,15 @@ export default function EnfermedadesClient({ initialData }: EnfermedadesClientPr
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button 
-                            onClick={handleAdd} 
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <Stethoscope className="w-4 h-4 mr-2" />
-                            Agregar Enfermedad
-                        </Button>
+                        {canEdit && (
+                            <Button 
+                                onClick={handleAdd} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Stethoscope className="w-4 h-4 mr-2" />
+                                Agregar Enfermedad
+                            </Button>
+                        )}
                     </div>
                 }
             >

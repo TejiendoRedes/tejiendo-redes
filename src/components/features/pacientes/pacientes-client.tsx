@@ -29,10 +29,11 @@ interface PacienteWithComunidad extends Paciente {
 
 interface PacientesClientProps {
     initialData: PacienteWithComunidad[];
-    comunidades: Comunidad[];
+    comunidades: any[];
+    canEdit?: boolean;
 }
 
-export default function PacientesClient({ initialData, comunidades }: PacientesClientProps) {
+export default function PacientesClient({ initialData, comunidades, canEdit = false }: PacientesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [viewingPaciente, setViewingPaciente] = React.useState<PacienteWithComunidad | null>(null);
@@ -165,11 +166,11 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                 </div>
             ),
         },
-        {
+        ...(canEdit ? [{
             key: 'acciones',
             header: '',
             className: 'text-right',
-            render: (p) => {
+            render: (p: any) => {
                 return (
                     <div className="flex justify-end gap-1">
                         <Button
@@ -202,7 +203,24 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                     </div>
                 );
             },
-        },
+        }] : [{
+            key: 'acciones',
+            header: '',
+            className: 'text-right',
+            render: (p: any) => (
+                <div className="flex justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewingPaciente(p)}
+                        className="hover:bg-blue-50 hover:text-[#1e3a8a] text-gray-500"
+                        title="Ver detalles"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                </div>
+            )
+        }]),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -248,13 +266,15 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button 
-                            onClick={handleAdd} 
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nuevo Paciente
-                        </Button>
+                        {canEdit && (
+                            <Button 
+                                onClick={handleAdd} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nuevo Paciente
+                            </Button>
+                        )}
                     </div>
                 }
             >

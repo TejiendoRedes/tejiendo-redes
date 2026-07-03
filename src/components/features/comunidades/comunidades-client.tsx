@@ -25,9 +25,10 @@ import { Badge } from '@/components/ui/badge';
 interface ComunidadesClientProps {
     initialData: Comunidad[];
     responsables: Responsable[];
+    canManage?: boolean;
 }
 
-export default function ComunidadesClient({ initialData, responsables }: ComunidadesClientProps) {
+export default function ComunidadesClient({ initialData, responsables, canManage = false }: ComunidadesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingComunidad, setEditingComunidad] = React.useState<Comunidad | null>(null);
@@ -143,11 +144,11 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                 );
             }
         },
-        {
+        ...(canManage ? [{
             key: 'acciones',
             header: '',
-            className: 'w-[1%] whitespace-nowrap text-right pr-6',
-            render: (c) => (
+            className: 'text-right',
+            render: (c: any) => (
                 <div className="flex items-center justify-end gap-1">
                     <Button
                         variant="ghost"
@@ -178,7 +179,24 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                     </Button>
                 </div>
             ),
-        },
+        }] : [{
+            key: 'acciones',
+            header: '',
+            className: 'text-right',
+            render: (c: any) => (
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewingComunidad(c)}
+                        title="Ver detalles"
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500 h-8 w-8 p-0"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                </div>
+            )
+        }]),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -229,13 +247,15 @@ export default function ComunidadesClient({ initialData, responsables }: Comunid
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button 
-                            onClick={handleAdd} 
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <Home className="w-4 h-4 mr-2" />
-                            Agregar Comunidad
-                        </Button>
+                        {canManage && (
+                            <Button 
+                                onClick={handleAdd} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Home className="w-4 h-4 mr-2" />
+                                Agregar Comunidad
+                            </Button>
+                        )}
                     </div>
                 }
             >

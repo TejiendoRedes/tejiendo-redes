@@ -65,9 +65,10 @@ interface Abordaje {
 
 interface PeticionesClientProps {
     initialData: Peticion[];
+    canEdit?: boolean;
 }
 
-export default function PeticionesClient({ initialData }: PeticionesClientProps) {
+export default function PeticionesClient({ initialData, canEdit = false }: PeticionesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
@@ -405,7 +406,7 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                     >
                         <Eye className="w-4 h-4 mr-1.5" /> Revisar
                     </Button>
-                    {row.estado === 'pendiente' && (
+                    {canEdit && row.estado === 'pendiente' && (
                         <Button
                             size="sm"
                             variant="ghost"
@@ -427,10 +428,12 @@ export default function PeticionesClient({ initialData }: PeticionesClientProps)
                 title="Entrega de Medicamentos" 
                 subtitle="Gestiona las entregas de medicamentos de forma independiente o en abordajes"
                 actions={
-                    <Button onClick={handleAdd} className="gap-2 bg-[#1e3a8a] text-white hover:bg-blue-800 rounded-xl shadow-sm">
-                        <Plus className="w-4 h-4" />
-                        Nueva Entrega
-                    </Button>
+                    canEdit && (
+                        <Button onClick={handleAdd} className="gap-2 bg-[#1e3a8a] text-white hover:bg-blue-800 rounded-xl shadow-sm">
+                            <Plus className="w-4 h-4" />
+                            Nueva Entrega
+                        </Button>
+                    )
                 }
             >
                 <DataTable

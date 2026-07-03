@@ -37,9 +37,10 @@ interface MedicosClientProps {
     initialMedicos: MedicoWithRelations[];
     tejedores: Tejedor[];
     especialidades: Especialidad[];
+    isAdmin?: boolean;
 }
 
-export default function MedicosClient({ initialMedicos, tejedores, especialidades }: MedicosClientProps) {
+export default function MedicosClient({ initialMedicos, tejedores, especialidades, isAdmin = false }: MedicosClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [viewingMedico, setViewingMedico] = React.useState<MedicoWithRelations | null>(null);
@@ -217,11 +218,11 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                 })()
             ) : '-'
         },
-        {
+        ...(isAdmin ? [{
             key: 'acciones',
             header: '',
             className: 'text-right',
-            render: (m) => (
+            render: (m: any) => (
                 <div className="flex justify-end gap-1">
                     <Button
                         variant="ghost"
@@ -252,7 +253,24 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                     </Button>
                 </div>
             ),
-        },
+        }] : [{
+            key: 'acciones',
+            header: '',
+            className: 'text-right',
+            render: (m: any) => (
+                <div className="flex justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewingMedico(m)}
+                        className="hover:bg-blue-50 hover:text-[#1e3a8a] text-gray-500"
+                        title="Ver detalles"
+                    >
+                        <Eye className="w-4 h-4" />
+                    </Button>
+                </div>
+            )
+        }]),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -312,13 +330,15 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button 
-                            onClick={handleAdd} 
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Asignar Médico
-                        </Button>
+                        {isAdmin && (
+                            <Button 
+                                onClick={handleAdd} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nuevo Médico
+                            </Button>
+                        )}
                     </div>
                 }
             >

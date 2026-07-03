@@ -31,6 +31,7 @@ interface ConsultasClientProps {
     medicos: any[];
     abordajes: any[];
     enfermedades: Enfermedad[];
+    isAdmin?: boolean;
 }
 
 export default function ConsultasClient({
@@ -38,7 +39,8 @@ export default function ConsultasClient({
     pacientes,
     medicos,
     abordajes,
-    enfermedades
+    enfermedades,
+    isAdmin = false
 }: ConsultasClientProps) {
     const [consultasData, setConsultasData] = React.useState(initialConsultas);
     const router = useRouter();
@@ -279,7 +281,8 @@ export default function ConsultasClient({
                         className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
                         title="Ver detalles"
                     >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver Resumen
                     </Button>
                     <Button
                         variant="ghost"
@@ -291,16 +294,18 @@ export default function ConsultasClient({
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteTarget(row.consulta.codigoConsulta)}
-                        disabled={isLoading}
-                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
-                        title="Eliminar"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {isAdmin && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteTarget(row.consulta.codigoConsulta)}
+                            disabled={isLoading}
+                            className="hover:bg-red-50 hover:text-red-600 text-gray-500"
+                            title="Eliminar registro"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    )}
                 </div>
             ),
         },

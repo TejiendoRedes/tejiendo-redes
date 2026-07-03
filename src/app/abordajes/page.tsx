@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, Users, HeartHandshake, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { EmptyState } from '@/components/shared/UIComponents';
+import { getSession } from '@/lib/auth';
 
 function getStatusStyles(estado: string) {
     switch (estado) {
@@ -19,6 +20,9 @@ function getStatusStyles(estado: string) {
 }
 
 export default async function AbordajesPage() {
+    const session = await getSession();
+    const canManageAbordajes = session ? ['admin', 'superuser', 'operador'].includes(session.role) : false;
+
     const result = await getAbordajes();
     const abordajes = result.success ? result.data : [];
 
@@ -28,13 +32,15 @@ export default async function AbordajesPage() {
                 title="Abordaje Tejiendo Redes" 
                 subtitle="Gestión de jornadas comunitarias y atenciones en campo"
                 actions={
-                    <Link 
-                        href="/abordajes/solicitudes-abordajes" 
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#1e3a8a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800"
-                    >
-                        <HeartHandshake className="h-4 w-4" />
-                        Ver Solicitudes
-                    </Link>
+                    canManageAbordajes ? (
+                        <Link 
+                            href="/abordajes/solicitudes-abordajes" 
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#1e3a8a] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800"
+                        >
+                            <HeartHandshake className="h-4 w-4" />
+                            Ver Solicitudes
+                        </Link>
+                    ) : undefined
                 }
             >
                 {abordajes && abordajes.length > 0 ? (

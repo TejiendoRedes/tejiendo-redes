@@ -22,9 +22,10 @@ import { AspiranteForm } from '@/components/forms/AspiranteForm';
 
 interface AspirantesClientProps {
     initialData: Aspirante[];
+    canManage?: boolean;
 }
 
-export default function AspirantesClient({ initialData }: AspirantesClientProps) {
+export default function AspirantesClient({ initialData, canManage = false }: AspirantesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingAspirante, setEditingAspirante] = React.useState<Aspirante | null>(null);
@@ -156,11 +157,11 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                 );
             }
         },
-        {
+        ...(canManage ? [{
             key: 'acciones',
             header: '',
             className: 'text-right',
-            render: (asp) => (
+            render: (asp: any) => (
                 <div className="flex gap-2 justify-end">
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(asp)} disabled={!!isPromoting}>
                         <Edit className="w-4 h-4" />
@@ -180,7 +181,7 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                     </Button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -230,13 +231,15 @@ export default function AspirantesClient({ initialData }: AspirantesClientProps)
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button
-                            onClick={handleAdd}
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nueva Postulación
-                        </Button>
+                        {canManage && (
+                            <Button
+                                onClick={handleAdd}
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nueva Postulación
+                            </Button>
+                        )}
                     </div>
                 }
             >

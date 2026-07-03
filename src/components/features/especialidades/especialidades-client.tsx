@@ -23,9 +23,10 @@ import { toast } from 'sonner';
 
 interface EspecialidadesClientProps {
     initialData: Especialidad[];
+    isAdmin?: boolean;
 }
 
-export default function EspecialidadesClient({ initialData }: EspecialidadesClientProps) {
+export default function EspecialidadesClient({ initialData, isAdmin = false }: EspecialidadesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingEspecialidad, setEditingEspecialidad] = React.useState<Especialidad | null>(null);
@@ -116,18 +117,18 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
                 </p>
             )
         },
-        {
+        ...(isAdmin ? [{
             key: 'acciones',
             header: '',
-            className: 'w-[1%] whitespace-nowrap text-right pr-6',
-            render: (e) => (
+            className: 'text-right',
+            render: (e: any) => (
                 <div className="flex gap-2 justify-end">
                     <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleEdit(e)}
                         title="Editar"
-                        className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-500 h-8 w-8 p-0"
+                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500 h-8 w-8 p-0"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>
@@ -136,13 +137,13 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
                         size="sm" 
                         onClick={() => handleDelete(e.codigoEspecialidad)}
                         title="Eliminar"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                        className="hover:bg-red-50 hover:text-red-600 text-gray-500 h-8 w-8 p-0"
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -180,13 +181,15 @@ export default function EspecialidadesClient({ initialData }: EspecialidadesClie
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button 
-                            onClick={handleAdd} 
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <GraduationCap className="w-4 h-4 mr-2" />
-                            Agregar Especialidad
-                        </Button>
+                        {isAdmin && (
+                            <Button 
+                                onClick={handleAdd} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Award className="w-4 h-4 mr-2" />
+                                Agregar Especialidad
+                            </Button>
+                        )}
                     </div>
                 }
             >

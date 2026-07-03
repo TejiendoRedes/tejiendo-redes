@@ -1,12 +1,16 @@
-import { getResponsables } from '@/queries/responsables';;
+import { getResponsables } from '@/queries/responsables';
 import ResponsablesClient from '@/components/features/responsables/responsables-client';
+import { getSession } from '@/lib/auth';
 
 export default async function ResponsablesPage() {
-    const { data: responsables, success } = await getResponsables();
+    const session = await getSession();
+    const canManage = session ? ['admin', 'superuser', 'operador'].includes(session.role) : false;
 
-    if (!success || !responsables) {
-        return <div>Error al cargar los responsables</div>;
+    const res = await getResponsables();
+
+    if (!res.success) {
+        return <div>Error al cargar los responsables.</div>;
     }
 
-    return <ResponsablesClient initialData={responsables} />;
+    return <ResponsablesClient initialData={res.data || []} canManage={canManage} />;
 }

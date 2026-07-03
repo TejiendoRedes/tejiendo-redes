@@ -23,9 +23,10 @@ import { MedicamentoForm } from '@/components/forms/MedicamentoForm';
 
 interface MedicamentosClientProps {
     initialData: Medicamento[];
+    canEdit?: boolean;
 }
 
-export default function MedicamentosClient({ initialData }: MedicamentosClientProps) {
+export default function MedicamentosClient({ initialData, canEdit = false }: MedicamentosClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingMedicamento, setEditingMedicamento] = React.useState<Medicamento | null>(null);
@@ -147,11 +148,11 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
             header: 'Estado',
             render: (med) => getExistenciaBadge(med.existencia),
         },
-        {
+        ...(canEdit ? [{
             key: 'acciones',
             header: '',
             className: 'text-right',
-            render: (med) => (
+            render: (med: any) => (
                 <div className="flex gap-1 justify-end">
                     <Button
                         variant="ghost"
@@ -173,7 +174,7 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                     </Button>
                 </div>
             ),
-        },
+        }] : []),
     ];
 
     const handleExport = (format: 'csv' | 'pdf') => {
@@ -207,10 +208,15 @@ export default function MedicamentosClient({ initialData }: MedicamentosClientPr
                 title="Inventario de Medicamentos" 
                 subtitle="Gestión integral de existencias e insumos médicos"
                 actions={
-                    <Button onClick={handleAdd} className="gap-2 bg-[#1e3a8a] text-white hover:bg-blue-800 rounded-xl shadow-sm">
-                        <Plus className="w-4 h-4" />
-                        Nuevo Medicamento
-                    </Button>
+                    canEdit && (
+                        <Button
+                            onClick={handleAdd}
+                            className="bg-[#1e3a8a] text-white hover:bg-blue-900 shadow-sm shadow-[#1e3a8a]/20"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Nuevo Medicamento
+                        </Button>
+                    )
                 }
             >
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

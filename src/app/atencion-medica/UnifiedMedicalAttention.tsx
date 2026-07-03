@@ -21,6 +21,7 @@ interface UnifiedMedicalAttentionProps {
     medicos: any[];
     abordajes: any[];
     enfermedades: any[];
+    canCreate?: boolean;
 }
 
 export default function UnifiedMedicalAttention({
@@ -28,7 +29,8 @@ export default function UnifiedMedicalAttention({
     comunidades,
     medicos,
     abordajes,
-    enfermedades
+    enfermedades,
+    canCreate = false
 }: UnifiedMedicalAttentionProps) {
     const router = useRouter();
     const [view, setView] = useState<'setup' | 'wizard'>('setup');
@@ -144,6 +146,26 @@ export default function UnifiedMedicalAttention({
         const abordajeData = a.abordaje || a;
         return abordajeData.codigoAbordaje === selectedSetup.codigoAbordaje;
     });
+
+    if (!canCreate) {
+        return (
+            <MainLayout>
+                <PageShell title="Atención Médica" subtitle="Registro de consultas e historias clínicas">
+                    <div className="flex flex-col items-center justify-center p-12 text-center bg-white rounded-3xl border border-red-100 shadow-sm">
+                        <Stethoscope className="w-16 h-16 text-red-300 mb-4" />
+                        <h2 className="text-xl font-bold text-gray-800">Acceso Restringido</h2>
+                        <p className="text-gray-500 mt-2 max-w-md">
+                            Solo el personal médico y los administradores pueden registrar nuevas consultas médicas. 
+                            Si necesitas acceder a las historias clínicas, visita el módulo de consultas.
+                        </p>
+                        <Button className="mt-6 bg-[#1e3a8a] text-white" onClick={() => router.push('/datos-basicos/consultas')}>
+                            Ver Historias Clínicas
+                        </Button>
+                    </div>
+                </PageShell>
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>
