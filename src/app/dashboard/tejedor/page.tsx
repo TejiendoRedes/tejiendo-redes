@@ -236,73 +236,99 @@ export default async function TejedorDashboard() {
                     <div className="lg:col-span-2 space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-gray-900">Herramientas Operativas</h3>
-                            <p className="text-sm text-gray-500">Módulos de trabajo en abordajes</p>
+                            <p className="text-sm text-gray-500">Módulos de trabajo rápido</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Censo y Pacientes */}
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100/50 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <ClipboardList className="w-24 h-24 text-blue-600 -mr-6 -mt-6 transform rotate-12" />
+                            {/* Censo y Pacientes (Todos) */}
+                            {['admin', 'superuser', 'operador', 'medico', 'tejedor'].includes(session.role) && (
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100/50 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <ClipboardList className="w-24 h-24 text-blue-600 -mr-6 -mt-6 transform rotate-12" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-blue-900 mb-2 relative z-10">Censo y Pacientes</h3>
+                                    <p className="text-sm text-blue-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
+                                        Accede al registro principal para inscribir o consultar pacientes en la comunidad.
+                                    </p>
+                                    <Link href="/datos-basicos/pacientes">
+                                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
+                                            Ir a Pacientes <ArrowRight className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
                                 </div>
-                                <h3 className="text-lg font-bold text-blue-900 mb-2 relative z-10">Censo y Pacientes</h3>
-                                <p className="text-sm text-blue-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
-                                    Accede al registro principal para inscribir o consultar pacientes en la comunidad.
-                                </p>
-                                <Link href="/datos-basicos/pacientes">
-                                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
-                                        Ir a Pacientes <ArrowRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                </Link>
-                            </div>
+                            )}
 
                             {/* Consultas Médicas */}
-                            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100/50 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Stethoscope className="w-24 h-24 text-emerald-600 -mr-6 -mt-6 transform rotate-12" />
+                            {['admin', 'superuser', 'medico', 'tejedor'].includes(session.role) && (
+                                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100/50 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Stethoscope className="w-24 h-24 text-emerald-600 -mr-6 -mt-6 transform rotate-12" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-emerald-900 mb-2 relative z-10">Consultas Médicas</h3>
+                                    <p className="text-sm text-emerald-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
+                                        Módulo de triaje, morbilidad y evaluación médica.
+                                    </p>
+                                    <Link href="/atencion-medica">
+                                        <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
+                                            Ir a Consultas <ArrowRight className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
                                 </div>
-                                <h3 className="text-lg font-bold text-emerald-900 mb-2 relative z-10">Consultas Médicas</h3>
-                                <p className="text-sm text-emerald-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
-                                    Módulo de triaje, morbilidad y evaluación médica.
-                                </p>
-                                <Link href="/atencion-medica">
-                                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
-                                        Ir a Consultas <ArrowRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                </Link>
-                            </div>
+                            )}
 
                             {/* Despacho de Farmacia */}
-                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100/50 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Pill className="w-24 h-24 text-orange-600 -mr-6 -mt-6 transform rotate-12" />
+                            {['admin', 'superuser', 'operador', 'medico', 'tejedor'].includes(session.role) && (
+                                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100/50 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Pill className="w-24 h-24 text-orange-600 -mr-6 -mt-6 transform rotate-12" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-orange-900 mb-2 relative z-10">Farmacia</h3>
+                                    <p className="text-sm text-orange-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
+                                        Gestiona la entrega de medicamentos para los pacientes.
+                                    </p>
+                                    <Link href="/farmacia/peticiones">
+                                        <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
+                                            Ir a Farmacia <ArrowRight className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
                                 </div>
-                                <h3 className="text-lg font-bold text-orange-900 mb-2 relative z-10">Farmacia</h3>
-                                <p className="text-sm text-orange-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
-                                    Gestiona la entrega de medicamentos para los pacientes.
-                                </p>
-                                <Link href="/farmacia/peticiones">
-                                    <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
-                                        Ir a Farmacia <ArrowRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                </Link>
-                            </div>
+                            )}
 
-                            {/* Mis Abordajes */}
-                            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-100/50 shadow-sm relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <CalendarHeart className="w-24 h-24 text-violet-600 -mr-6 -mt-6 transform rotate-12" />
+                            {/* Mis Abordajes (Operadores y Tejedores) */}
+                            {['admin', 'superuser', 'operador', 'tejedor'].includes(session.role) && (
+                                <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-6 border border-violet-100/50 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <CalendarHeart className="w-24 h-24 text-violet-600 -mr-6 -mt-6 transform rotate-12" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-violet-900 mb-2 relative z-10">Abordajes</h3>
+                                    <p className="text-sm text-violet-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
+                                        Gestiona o revisa las jornadas y actividades comunitarias.
+                                    </p>
+                                    <Link href="/abordajes">
+                                        <Button className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
+                                            Ver Historial <ArrowRight className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
                                 </div>
-                                <h3 className="text-lg font-bold text-violet-900 mb-2 relative z-10">Mis Abordajes</h3>
-                                <p className="text-sm text-violet-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
-                                    Revisa tu historial de participación comunitaria.
-                                </p>
-                                <Link href="/abordajes">
-                                    <Button className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
-                                        Ver Historial <ArrowRight className="w-4 h-4 ml-2" />
-                                    </Button>
-                                </Link>
-                            </div>
+                            )}
+
+                            {/* Enfermedades (Solo Medico si no ve Abordajes) */}
+                            {['medico'].includes(session.role) && (
+                                <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-6 border border-red-100/50 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <HeartPulse className="w-24 h-24 text-red-600 -mr-6 -mt-6 transform rotate-12" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-red-900 mb-2 relative z-10">Enfermedades</h3>
+                                    <p className="text-sm text-red-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
+                                        Catálogo de patologías y morbilidades del sistema.
+                                    </p>
+                                    <Link href="/datos-basicos/enfermedades">
+                                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
+                                            Gestionar <ArrowRight className="w-4 h-4 ml-2" />
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
