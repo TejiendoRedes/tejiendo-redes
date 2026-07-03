@@ -177,17 +177,17 @@ src/
 
 | Rol | Dashboard | Acceso |
 |---|---|---|
-| `superuser` | `/dashboard/super-usuario` | Acceso total al sistema |
+| `superuser` | `/dashboard/admin` | Acceso total al sistema |
 | `admin` | `/dashboard/admin` | Administración y operaciones |
 | `tejedor` | `/dashboard/tejedor` | Operaciones de campo |
-| `medico` | `/atencion-medica` | Consultas médicas |
-| `operador` | `/datos-basicos` | Gestión de datos |
+| `medico` | `/dashboard/tejedor` | Consultas médicas y farmacia |
+| `operador` | `/dashboard/tejedor` | Censo de pacientes y farmacia |
 
 ---
 
 ## Despliegue
 
-El proyecto está configurado para desplegarse en **Vercel**. Asegúrate de configurar las variables de entorno en el panel de Vercel.
+El proyecto está configurado para desplegarse en **Netlify**. Asegúrate de configurar las variables de entorno (`DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME`, `JWT_SECRET_KEY`) en el panel de Netlify.
 
 ---
 

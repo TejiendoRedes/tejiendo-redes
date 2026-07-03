@@ -37,9 +37,16 @@ Durante esta sesión nos enfocamos en erradicar todos los "bugs silenciosos" que
 - **Roles Corregidos:** Los Médicos ahora tienen acceso autorizado al módulo de Farmacia para poder revisar inventarios y registrar entregas sin bloqueos.
 
 ### 3. Permisos de Interfaz (RBAC UI) (✅ Validado)
-- **Problema anterior:** Todos los usuarios que entraban a ver la lista de Tejedores podían ver los botones de "Editar" y "Eliminar".
-- **Solución implementada:** Se añadieron condicionales a la tabla de Tejedores (`tejedores-client.tsx`). Ahora los Tejedores, Operadores y Médicos pueden ver el módulo de datos básicos, pero los botones de alteración de datos están estrictamente reservados para el Administrador.
-- **Resumen General:** El botón "Resumen General" de la barra lateral ahora es inteligente y redirige al administrador a su panel de estadísticas, y al resto del personal a su panel de métricas de voluntariado (`/dashboard/tejedor`).
+- **Problema anterior:** Todos los usuarios veían el mismo Dashboard genérico y los mismos botones sin importar su rol, además de que el menú lateral permitía navegar a zonas prohibidas.
+- **Solución implementada:** 
+  - Se añadieron condicionales a la tabla de Tejedores (`tejedores-client.tsx`). Los botones de edición están reservados para el Administrador.
+  - El menú lateral (`AppSidebar.tsx` y `nav-config.ts`) filtra dinámicamente las opciones según el rol.
+  - **Dashboard Dinámico:** Las tarjetas de "Herramientas Operativas" en el Resumen General ahora se renderizan condicionalmente. El Médico tiene acceso rápido a Enfermedades, el Operador no ve las Consultas, etc.
+
+### 4. Estandarización y Mensajes de Error (✅ Validado)
+- **Problema anterior:** Cuando fallaba la carga de datos en los módulos (ej. pérdida de conexión), la pantalla mostraba un texto plano roto (`<div>Error al cargar...</div>`), arruinando la experiencia gráfica.
+- **Solución implementada:** Se creó un componente global `ErrorState` y se inyectó en *todos* los módulos de Datos Básicos (Comunidades, Enfermedades, Especialidades, Médicos, etc.). Ahora el sistema muestra una interfaz estandarizada, amigable y clara frente a cualquier fallo técnico.
 
 ---
-**Estado General:** El código de producción (Backend y Frontend) se encuentra estable, las rutas críticas están blindadas con transacciones seguras y el flujo de los usuarios (login y navegación) cumple con todas las reglas de negocio. 🎉
+
+**Estado General:** El sistema cumple con todos los objetivos trazados: **Coordinación de Equipo** (roles estrictos), **Re-diseño Gráfico** (interfaces adaptativas) y **Estandarización de Errores** (UI consistente). El código de producción (Backend y Frontend) se encuentra estable y blindado. 🎉
