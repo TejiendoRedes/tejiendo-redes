@@ -13,8 +13,11 @@ const firaSans = Fira_Sans({
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Sistema de Abordajes',
+  title: 'Sistema de Registro',
   description: 'Gestión de salud comunitaria',
+  icons: {
+    icon: '/minilogo.png',
+  },
 };
 
 export default function RootLayout({
