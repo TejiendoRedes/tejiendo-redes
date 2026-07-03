@@ -34,7 +34,7 @@ export default function LoginForm() {
 
             if (result.success) {
                 toast.success('Sesión iniciada correctamente');
-                router.push('/dashboard');
+                router.push(result.redirectTo || '/dashboard');
                 router.refresh();
             } else {
                 toast.error(result.error || 'Usuario o contraseña incorrectos');

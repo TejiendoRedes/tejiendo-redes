@@ -100,6 +100,7 @@ export async function POST(request: Request) {
                 telefonoAspirante: sanitized.telefonoAspirante,
                 correoAspirante: sanitized.correoAspirante,
                 profesionAspirante: sanitized.profesionAspirante,
+                username: sanitized.usuario,
                 fechaPostulacion: new Date(),
                 estadoAspirante: 'Pendiente',
             });

@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 interface AuthContextType {
   user: Tejedor | null;
   loading: boolean;
-  login: (usuario: string, password: string, additionalData?: any) => Promise<{ success: boolean; error?: string }>;
+  login: (usuario: string, password: string, additionalData?: any) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
   logout: () => Promise<void>;
   hasRole: (roles: string[]) => boolean;
   csrfToken: string;
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, [fetchCsrf]);
 
-  const login = async (usuario: string, password: string, additionalData: any = {}): Promise<{ success: boolean; error?: string }> => {
+  const login = async (usuario: string, password: string, additionalData: any = {}): Promise<{ success: boolean; error?: string; redirectTo?: string }> => {
     try {
       setLoading(true);
 
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res.ok) {
         setUser(data.user);
-        return { success: true };
+        return { success: true, redirectTo: data.redirectTo };
       }
       return { success: false, error: data.error || 'Credenciales inválidas' };
     } catch (error) {

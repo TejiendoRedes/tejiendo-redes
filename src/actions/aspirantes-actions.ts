@@ -5,8 +5,7 @@ import { db } from '@/db';
 import { aspirantes, type NewAspirante, type Aspirante } from '@/db/schema/aspirantes';
 import { tejedores } from '@/db/schema/tejedores';
 import { users } from '@/db/schema/users';
-import { auditLogs } from '@/db/schema/audit_logs';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { getErrorMessage, isDuplicateKeyError } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
 
@@ -142,25 +141,11 @@ export async function promoverATejedor(aspirante: Aspirante) {
             await tx.delete(aspirantes)
                 .where(eq(aspirantes.cedulaAspirante, aspirante.cedulaAspirante));
 
-            // 3. Buscar el usuario asociado y aprobarlo
-            const [log] = await tx.select()
-                .from(auditLogs)
-                .where(and(
-                    eq(auditLogs.action, 'NEW_ASPIRANTE_POSTULATION'),
-                    eq(auditLogs.entityId, aspirante.cedulaAspirante)
-                ))
-                .orderBy(desc(auditLogs.id))
-                .limit(1);
-
-            if (log && log.details) {
-                // Extraer el username del log (formato: "Nueva postulación...: username")
-                const parts = log.details.split(': ');
-                if (parts.length > 1) {
-                    const username = parts[1].trim();
-                    await tx.update(users)
-                        .set({ approved: true, cedulaTejedor: aspirante.cedulaAspirante })
-                        .where(eq(users.username, username));
-                }
+            // 3. Vincular el usuario asociado
+            if (aspirante.username) {
+                await tx.update(users)
+                    .set({ approved: true, cedulaTejedor: aspirante.cedulaAspirante })
+                    .where(eq(users.username, aspirante.username));
             }
         });
 

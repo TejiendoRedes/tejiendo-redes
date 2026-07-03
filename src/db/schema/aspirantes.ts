@@ -16,6 +16,7 @@ export const aspirantes = mysqlTable('aspirantes', {
     telefonoAspirante: varchar('telefono_aspirante', { length: 15 }).notNull(),
     correoAspirante: varchar('correo_aspirante', { length: 100 }).notNull(),
     profesionAspirante: varchar('profesion_aspirante', { length: 50 }).notNull(),
+    username: varchar('username', { length: 50 }), // Vincula aspirante ↔ usuario de forma directa
     fechaPostulacion: date('fecha_postulacion', { mode: 'date' }).notNull(),
     // 'Pendiente', 'Aprobado', 'Rechazado'
     estadoAspirante: varchar('estado_aspirante', { length: 20 }).notNull().default('Pendiente'),

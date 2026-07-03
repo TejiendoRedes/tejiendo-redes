@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { encrypt, comparePassword } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { db } from '@/db';
-import { users, auditLogs } from '@/db/schema';
+import { users, auditLogs, tejedores } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { loginSchema } from '@/schemas/auth';
 import { sanitizeObject } from '@/lib/security/sanitize';
@@ -105,11 +105,29 @@ export async function POST(request: Request) {
             });
         });
 
-        // Crear sesión con los datos del usuario y su rol
+        // Crear sesión con datos reales del tejedor (si existe)
+        let nombreReal = user.username;
+        let apellidoReal = '';
+        let cedulaReal = user.cedulaTejedor || '';
+
+        if (user.cedulaTejedor) {
+            const [tejedor] = await db.select()
+                .from(tejedores)
+                .where(eq(tejedores.cedulaTejedor, user.cedulaTejedor))
+                .limit(1);
+
+            if (tejedor) {
+                nombreReal = tejedor.nombreTejedor;
+                apellidoReal = tejedor.apellidoTejedor;
+                cedulaReal = tejedor.cedulaTejedor;
+            }
+        }
+
         const userPayload = {
             id: user.id,
-            nombreTejedor: user.username,
-            cedulaTejedor: user.cedulaTejedor || '00000000',
+            nombreTejedor: nombreReal,
+            apellidoTejedor: apellidoReal,
+            cedulaTejedor: cedulaReal,
             role: user.role,
             usuario: user.username
         };
@@ -122,17 +140,19 @@ export async function POST(request: Request) {
         cookieStore.set('session', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict', // Changed to strict
+            sameSite: 'strict',
             path: '/',
             maxAge: 60 * 60 * 24, // 24h
         });
 
+        const redirectTo = user.role === 'superuser' ? '/dashboard/super-usuario' :
+            user.role === 'admin' ? '/dashboard/admin' :
+                user.role === 'tejedor' ? '/dashboard/tejedor' : '/dashboard';
+
         return NextResponse.json({
             success: true,
             user: userPayload,
-            redirectTo: user.role === 'superuser' ? '/dashboard/super-usuario' :
-                user.role === 'admin' ? '/dashboard/admin' :
-                    user.role === 'tejedor' ? '/dashboard/tejedor' : '/dashboard'
+            redirectTo
         });
 
     } catch (error) {
