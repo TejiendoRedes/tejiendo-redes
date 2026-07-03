@@ -391,7 +391,7 @@ export function LandingPage() {
               Con el apoyo de:
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-6 grayscale">
-              {["UNICEF", "ACNUR", "Universidad Central", "Cruz Roja"].map((name) => (
+              {["OCHA", "UNICEF", "ACNUR", "UCLA", "Acción Solidaria"].map((name) => (
                 <span
                   key={name}
                   className="text-2xl font-extrabold tracking-tight text-slate-400 transition-colors hover:text-slate-600"

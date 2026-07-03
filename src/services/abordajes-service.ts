@@ -245,25 +245,54 @@ export class AbordajesService {
 
     static async delete(id: string) {
         return await db.transaction(async (tx) => {
-            // 1. Eliminar medicamentos entregados
+            // 0. Devolver stock de peticiones entregadas antes de borrarlas
+            const entregadas = await tx.select()
+                .from(peticiones)
+                .where(and(
+                    eq(peticiones.codigoAbordaje, id),
+                    eq(peticiones.estado, 'entregado')
+                ));
+
+            for (const pet of entregadas) {
+                await tx.update(medicamentos)
+                    .set({
+                        existencia: sql`${medicamentos.existencia} + ${pet.cantidad}`
+                    })
+                    .where(eq(medicamentos.codigoMedicamento, pet.codigoMedicamento));
+            }
+
+            // 1. Eliminar peticiones asociadas (BUG-12 FIX: faltaba esta línea, FK restrict impedía borrar)
+            await tx.delete(peticiones).where(eq(peticiones.codigoAbordaje, id));
+
+            // 1.5 Devolver stock de medicamentos entregados en campo (tabla puente legacy)
+            const entregadosLegacy = await tx.select()
+                .from(medicamentosPacientes)
+                .where(eq(medicamentosPacientes.codigoAbordaje, id));
+
+            for (const med of entregadosLegacy) {
+                await tx.update(medicamentos)
+                    .set({
+                        existencia: sql`${medicamentos.existencia} + ${med.cantidadEntregada}`
+                    })
+                    .where(eq(medicamentos.codigoMedicamento, med.codigoMedicamento));
+            }
+
+            // 2. Eliminar medicamentos entregados (tabla puente legacy)
             await tx.delete(medicamentosPacientes).where(eq(medicamentosPacientes.codigoAbordaje, id));
 
-            // 2. Eliminar consultas asociadas (incluyendo sus enfermedades, que están en CASCADA en DB pero mejor ser explícitos si fuera necesario, aquí confiamos en la DB para consultas->enfermedades si está configurado, 
-            // pero consultas->abordaje es RESTRICT, so we MUST delete inquiries first)
-            // Primero borrar enfermedades de las consultas de este abordaje si fuera necesario, pero la relación consultas->enfermedades es cascade.
-            // Borramos las consultas.
+            // 3. Eliminar consultas asociadas
             await tx.delete(consultas).where(eq(consultas.codigoAbordaje, id));
 
-            // 3. Eliminar asistencia / check-ins
+            // 4. Eliminar asistencia / check-ins
             await tx.delete(abordajeAsistencia).where(eq(abordajeAsistencia.codigoAbordaje, id));
 
-            // 4. Eliminar tejedores asociados
+            // 5. Eliminar tejedores asociados
             await tx.delete(tejedoresAbordaje).where(eq(tejedoresAbordaje.codigoAbordaje, id));
 
-            // 5. Eliminar comunidades asociadas
+            // 6. Eliminar comunidades asociadas
             await tx.delete(abordajeComunidad).where(eq(abordajeComunidad.codigoAbordaje, id));
 
-            // 6. Finalmente eliminar el abordaje
+            // 7. Finalmente eliminar el abordaje
             return await tx.delete(abordaje).where(eq(abordaje.codigoAbordaje, id));
         });
     }

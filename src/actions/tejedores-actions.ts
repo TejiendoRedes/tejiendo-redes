@@ -11,6 +11,7 @@ import { medicamentos } from '@/db/schema/medicamentos';
 import { eq, desc, sql } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
+import { users } from '@/db/schema/users';
 
 /**
  * Obtener todos los tejedores
@@ -21,7 +22,11 @@ import { requireAuth } from '@/lib/auth';
  */
 export async function createTejedor(data: NewTejedor) {
     try {
-        await requireAuth();
+        const session = await requireAuth();
+        if (!['admin', 'superuser'].includes(session.role)) {
+            return { success: false, error: 'No autorizado para crear tejedores' };
+        }
+
         // Validaciones básicas
         if (!data.cedulaTejedor?.trim()) {
             return { success: false, error: 'La cédula es requerida' };
@@ -47,9 +52,16 @@ export async function createTejedor(data: NewTejedor) {
 /**
  * Actualizar un tejedor existente
  */
-export async function updateTejedor(cedula: string, data: Partial<NewTejedor>) {
+export async function updateTejedor(cedula: string, data: Partial<NewTejedor> & { systemRole?: string }) {
     try {
-        await requireAuth();
+        const session = await requireAuth();
+        if (!['admin', 'superuser'].includes(session.role)) {
+            return { success: false, error: 'No autorizado para editar tejedores' };
+        }
+
+        // Separar systemRole de los datos del tejedor
+        const { systemRole, ...tejedorData } = data;
+
         // Verificar que el tejedor existe
         const existing = await db.select()
             .from(tejedores)
@@ -60,9 +72,22 @@ export async function updateTejedor(cedula: string, data: Partial<NewTejedor>) {
             return { success: false, error: 'El tejedor no fue encontrado' };
         }
 
-        await db.update(tejedores)
-            .set(data)
-            .where(eq(tejedores.cedulaTejedor, cedula));
+        await db.transaction(async (tx) => {
+            // Actualizar datos del tejedor
+            if (Object.keys(tejedorData).length > 0) {
+                await tx.update(tejedores)
+                    .set(tejedorData)
+                    .where(eq(tejedores.cedulaTejedor, cedula));
+            }
+
+            // Actualizar el rol del sistema si fue proporcionado
+            if (systemRole) {
+                await tx.update(users)
+                    .set({ role: systemRole as any })
+                    .where(eq(users.cedulaTejedor, cedula));
+            }
+        });
+
         revalidatePath('/datos-basicos/tejedores');
         return { success: true, message: 'Tejedor actualizado correctamente' };
     } catch (error) {
@@ -76,7 +101,11 @@ export async function updateTejedor(cedula: string, data: Partial<NewTejedor>) {
  */
 export async function deleteTejedor(cedula: string) {
     try {
-        await requireAuth();
+        const session = await requireAuth();
+        if (!['admin', 'superuser'].includes(session.role)) {
+            return { success: false, error: 'No autorizado para eliminar tejedores' };
+        }
+
         // Verificar que el tejedor existe antes de eliminar
         const existing = await db.select()
             .from(tejedores)

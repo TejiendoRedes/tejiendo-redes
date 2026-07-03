@@ -31,7 +31,7 @@ export type NavGroup = {
 export const navGroups: NavGroup[] = [
   {
     title: "Dashboards",
-    items: [{ label: "Resumen General", to: "/dashboard/admin", icon: LayoutDashboard }],
+    items: [{ label: "Resumen General", to: "/dashboard", icon: LayoutDashboard }],
   },
   {
     title: "Atención Médica",

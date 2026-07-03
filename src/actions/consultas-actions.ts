@@ -63,10 +63,6 @@ export async function createConsulta(
         }).format(new Date());
 
         const horaFormateada = venezuelaTime;
-        const fechaActual = new Date(new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/Caracas'
-        }).format(new Date()));
-
 
         await db.transaction(async (tx) => {
             // 1. Insert Consulta

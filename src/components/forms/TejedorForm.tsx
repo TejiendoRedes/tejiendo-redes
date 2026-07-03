@@ -15,10 +15,11 @@ import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/d
 import { Tejedor } from '@/db/schema/tejedores';
 
 export interface TejedorFormProps {
-    initialData?: Tejedor;
+    initialData?: Tejedor & { systemRole?: string | null };
     onSubmit: (data: any) => Promise<void>;
     onCancel: () => void;
     isLoading?: boolean;
+    isAdmin?: boolean;
     submitLabel?: string;
 }
 
@@ -27,6 +28,7 @@ export function TejedorForm({
     onSubmit,
     onCancel,
     isLoading = false,
+    isAdmin = false,
     submitLabel
 }: TejedorFormProps) {
     // Initial form state
@@ -48,6 +50,7 @@ export function TejedorForm({
             ? formattedDate(initialData.fechaIngreso)
             : '',
         tipodeVoluntario: initialData?.tipodeVoluntario || '',
+        systemRole: initialData?.systemRole || '',
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
@@ -194,6 +197,27 @@ export function TejedorForm({
                         </SelectContent>
                     </Select>
                 </div>
+
+                {isAdmin && (
+                    <div className="space-y-2">
+                        <Label htmlFor="systemRole" className="text-blue-700">Rol del Sistema (Acceso)</Label>
+                        <Select
+                            value={formData.systemRole}
+                            onValueChange={(val) => setFormData({ ...formData, systemRole: val })}
+                        >
+                            <SelectTrigger className="h-11 border-blue-200 focus:border-blue-500 focus:ring-blue-500 bg-blue-50/50">
+                                <SelectValue placeholder="Seleccione acceso" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="tejedor">Voluntario Básico</SelectItem>
+                                <SelectItem value="medico">Médico (Atención Médica)</SelectItem>
+                                <SelectItem value="operador">Operador (Farmacia / Datos)</SelectItem>
+                                <SelectItem value="admin">Administrador</SelectItem>
+                                <SelectItem value="superuser">Superusuario</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
 
                 <div className="space-y-2">
                     <Label htmlFor="fechaIngreso">Fecha de Ingreso *</Label>

@@ -22,10 +22,11 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 
 interface TejedoresClientProps {
-    initialData: Tejedor[];
+    initialData: (Tejedor & { systemRole?: string | null })[];
+    isAdmin?: boolean;
 }
 
-export default function TejedoresClient({ initialData }: TejedoresClientProps) {
+export default function TejedoresClient({ initialData, isAdmin = false }: TejedoresClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [viewingTejedor, setViewingTejedor] = React.useState<Tejedor | null>(null);
@@ -158,24 +159,28 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                     >
                         <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(t)}
-                        className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
-                        title="Editar"
-                    >
-                        <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteTarget(t.cedulaTejedor)}
-                        className="hover:bg-red-50 hover:text-red-600 text-gray-500"
-                        title="Eliminar"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {isAdmin && (
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(t)}
+                                className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
+                                title="Editar"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteTarget(t.cedulaTejedor)}
+                                className="hover:bg-red-50 hover:text-red-600 text-gray-500"
+                                title="Eliminar"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </>
+                    )}
                 </div>
             ),
         },
@@ -220,13 +225,15 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        <Button 
-                            onClick={handleAdd} 
-                            className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Nuevo Tejedor
-                        </Button>
+                        {isAdmin && (
+                            <Button 
+                                onClick={handleAdd} 
+                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nuevo Tejedor
+                            </Button>
+                        )}
                     </div>
                 }
             >
@@ -313,6 +320,7 @@ export default function TejedoresClient({ initialData }: TejedoresClientProps) {
                             onSubmit={handleSubmit}
                             onCancel={() => setIsModalOpen(false)}
                             isLoading={isLoading}
+                            isAdmin={isAdmin}
                         />
                     </DialogContent>
                 </Dialog>

@@ -1,25 +1,17 @@
 /**
- * Escapes HTML and removes all tags to prevent XSS.
- * A lightweight, server-safe replacement for DOMPurify when only basic tag stripping is needed.
- * This avoids the complex JSDOM dependencies that cause ERR_REQUIRE_ESM in Next.js environments.
+ * Strips HTML tags to prevent XSS.
+ * BUG-09 FIX: Removed HTML entity encoding that was corrupting stored data
+ * (e.g., "D'Ávila" was saved as "D&#39;Ávila").
+ * 
+ * Drizzle ORM uses prepared statements (SQL injection safe).
+ * React auto-escapes JSX output (XSS safe for rendering).
+ * Only tag stripping is needed here.
  */
 export function sanitizeInput(input: string): string {
     if (!input) return '';
 
     // Remove all HTML tags using a robust regex
     let clean = input.replace(/<[^>]*>?/gm, '');
-
-    // Escape sensitive characters for additional security
-    const map: Record<string, string> = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-        '/': '&#x2F;',
-    };
-
-    clean = clean.replace(/[&<>"'/]/g, (match) => map[match]);
 
     return clean.trim();
 }

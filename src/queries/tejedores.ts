@@ -13,13 +13,21 @@ import { eq, desc, sql } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
 
+import { users } from '@/db/schema/users';
+
 /**
  * Obtener todos los tejedores
  */
 export async function getTejedores() {
     try {
         await requireAuth();
-        const data = await db.select().from(tejedores);
+        const data = await db.select({
+            ...tejedores,
+            systemRole: users.role,
+        })
+        .from(tejedores)
+        .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor));
+        
         return { success: true, data };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'los tejedores', 'obtener');
@@ -33,8 +41,12 @@ export async function getTejedores() {
 export async function getTejedor(cedula: string) {
     try {
         await requireAuth();
-        const result = await db.select()
+        const result = await db.select({
+            ...tejedores,
+            systemRole: users.role,
+        })
             .from(tejedores)
+            .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
             .where(eq(tejedores.cedulaTejedor, cedula))
             .limit(1);
 

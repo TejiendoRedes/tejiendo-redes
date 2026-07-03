@@ -78,46 +78,46 @@ export async function createPeticion(data: typeof peticiones.$inferInsert) {
 export async function updatePeticionEstado(id: number, estado: string) {
     try {
         await requireAuth();
-        // Obtener la petición actual
-        const peticion = await db.select()
-            .from(peticiones)
-            .where(eq(peticiones.id, id))
-            .limit(1);
 
-        if (!peticion[0]) {
-            return { success: false, error: 'Petición no encontrada' };
-        }
-
-        // Si se está aprobando/entregando y antes estaba pendiente
-        if (estado === 'entregado' && peticion[0].estado === 'pendiente') {
-            // Obtener el medicamento para verificar existencia
-            const medicamento = await db.select()
-                .from(medicamentos)
-                .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento))
-                .limit(1);
-
-            if (!medicamento[0]) {
-                return { success: false, error: 'Medicamento no encontrado' };
-            }
-
-            // Verificar que haya suficiente existencia
-            if (medicamento[0].existencia < peticion[0].cantidad) {
-                return {
-                    success: false,
-                    error: `No hay suficiente existencia. Disponible: ${medicamento[0].existencia}, Solicitado: ${peticion[0].cantidad}`
-                };
-            }
-
-            // Obtener fecha y hora actual en zona horaria de Venezuela (America/Caracas, UTC-4)
-            // Iniciar transacción
+        // BUG-04 FIX: Toda la lógica dentro de una transacción para evitar race conditions
+        // Si se está aprobando/entregando
+        if (estado === 'entregado') {
             await db.transaction(async (tx) => {
+                // Leer petición dentro de la transacción
+                const [peticion] = await tx.select()
+                    .from(peticiones)
+                    .where(eq(peticiones.id, id))
+                    .limit(1);
+
+                if (!peticion) {
+                    throw new Error('Petición no encontrada');
+                }
+
+                if (peticion.estado !== 'pendiente') {
+                    throw new Error('Solo se pueden entregar peticiones con estado pendiente');
+                }
+
+                // Leer medicamento dentro de la transacción
+                const [medicamento] = await tx.select()
+                    .from(medicamentos)
+                    .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento))
+                    .limit(1);
+
+                if (!medicamento) {
+                    throw new Error('Medicamento no encontrado');
+                }
+
+                if (medicamento.existencia < peticion.cantidad) {
+                    throw new Error(`No hay suficiente existencia. Disponible: ${medicamento.existencia}, Solicitado: ${peticion.cantidad}`);
+                }
+
                 const now = new Date();
                 const hours = now.getHours().toString().padStart(2, '0');
                 const minutes = now.getMinutes().toString().padStart(2, '0');
                 const seconds = now.getSeconds().toString().padStart(2, '0');
                 const horaFormateada = `${hours}:${minutes}:${seconds}`;
 
-                // Actualizar la petición con estado, fecha y hora de entrega local del sistema
+                // Actualizar la petición
                 await tx.update(peticiones)
                     .set({
                         estado: 'entregado',
@@ -126,47 +126,61 @@ export async function updatePeticionEstado(id: number, estado: string) {
                     })
                     .where(eq(peticiones.id, id));
 
-                // Restar la existencia del medicamento
+                // Restar existencia de forma atómica con SQL
                 await tx.update(medicamentos)
                     .set({
-                        existencia: medicamento[0].existencia - peticion[0].cantidad
+                        existencia: sql`${medicamentos.existencia} - ${peticion.cantidad}`
                     })
-                    .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento));
+                    .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento));
             });
         }
         // Si se está cancelando una entrega ya aprobada
-        else if (estado === 'cancelado' && peticion[0].estado === 'entregado') {
-            // Obtener el medicamento para devolver la existencia
-            const medicamento = await db.select()
-                .from(medicamentos)
-                .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento))
-                .limit(1);
-
-            if (!medicamento[0]) {
-                return { success: false, error: 'Medicamento no encontrado' };
-            }
-
-            // Iniciar transacción
+        else if (estado === 'cancelado') {
             await db.transaction(async (tx) => {
-                // Actualizar la petición a cancelado
-                await tx.update(peticiones)
-                    .set({
-                        estado: 'cancelado',
-                        fechaEntrega: null, // Limpiar fecha de entrega
-                        horaEntrega: null   // Limpiar hora de entrega
-                    })
-                    .where(eq(peticiones.id, id));
+                const [peticion] = await tx.select()
+                    .from(peticiones)
+                    .where(eq(peticiones.id, id))
+                    .limit(1);
 
-                // Devolver la existencia al medicamento
-                await tx.update(medicamentos)
-                    .set({
-                        existencia: medicamento[0].existencia + peticion[0].cantidad
-                    })
-                    .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento));
+                if (!peticion) {
+                    throw new Error('Petición no encontrada');
+                }
+
+                if (peticion.estado === 'entregado') {
+                    // Solo devolver stock si fue entregado previamente
+                    await tx.update(peticiones)
+                        .set({
+                            estado: 'cancelado',
+                            fechaEntrega: null,
+                            horaEntrega: null
+                        })
+                        .where(eq(peticiones.id, id));
+
+                    // Devolver existencia de forma atómica con SQL
+                    await tx.update(medicamentos)
+                        .set({
+                            existencia: sql`${medicamentos.existencia} + ${peticion.cantidad}`
+                        })
+                        .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento));
+                } else {
+                    // Cancelar petición pendiente: solo cambiar estado, sin tocar inventario
+                    await tx.update(peticiones)
+                        .set({ estado: 'cancelado' })
+                        .where(eq(peticiones.id, id));
+                }
             });
         }
-        // Para otros cambios de estado (cancelar petición pendiente, etc.)
+        // Para otros cambios de estado
         else {
+            const [peticion] = await db.select()
+                .from(peticiones)
+                .where(eq(peticiones.id, id))
+                .limit(1);
+
+            if (!peticion) {
+                return { success: false, error: 'Petición no encontrada' };
+            }
+
             await db.update(peticiones)
                 .set({ estado })
                 .where(eq(peticiones.id, id));
@@ -175,9 +189,9 @@ export async function updatePeticionEstado(id: number, estado: string) {
         revalidatePath('/farmacia/peticiones');
         revalidatePath('/farmacia/medicamentos');
         return { success: true, message: 'Estado actualizado correctamente' };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error updating peticion estado:', error);
-        return { success: false, error: 'Error al actualizar el estado' };
+        return { success: false, error: error?.message || 'Error al actualizar el estado' };
     }
 }
 
@@ -196,53 +210,44 @@ export async function marcarComoEntregada(codigoPeticion: string) {
 }
 
 /**
- * Eliminar una petición y devolver existencia al medicamento
+ * Eliminar una petición y devolver existencia al medicamento SOLO si fue entregada
+ * BUG-01 FIX: No devolver stock si la petición estaba pendiente (nunca se restó)
  */
 export async function deletePeticion(id: number) {
     try {
         await requireAuth();
-        // Obtener la petición antes de eliminarla
-        const peticion = await db.select()
-            .from(peticiones)
-            .where(eq(peticiones.id, id))
-            .limit(1);
 
-        if (!peticion[0]) {
-            return { success: false, error: 'Petición no encontrada' };
-        }
+        await db.transaction(async (tx) => {
+            // Obtener la petición dentro de la transacción
+            const [peticion] = await tx.select()
+                .from(peticiones)
+                .where(eq(peticiones.id, id))
+                .limit(1);
 
-        // Obtener el medicamento para devolver la existencia
-        const medicamento = await db.select()
-            .from(medicamentos)
-            .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento))
-            .limit(1);
+            if (!peticion) {
+                throw new Error('Petición no encontrada');
+            }
 
-        if (medicamento[0]) {
-            // Iniciar transacción
-            await db.transaction(async (tx) => {
-                // Eliminar la petición
-                await tx.delete(peticiones)
-                    .where(eq(peticiones.id, id));
-
-                // Devolver la existencia al medicamento
+            // Solo devolver stock si la petición fue entregada (el stock fue restado previamente)
+            if (peticion.estado === 'entregado') {
                 await tx.update(medicamentos)
                     .set({
-                        existencia: medicamento[0].existencia + peticion[0].cantidad
+                        existencia: sql`${medicamentos.existencia} + ${peticion.cantidad}`
                     })
-                    .where(eq(medicamentos.codigoMedicamento, peticion[0].codigoMedicamento));
-            });
-        } else {
-            // Si no encuentra el medicamento, solo elimina la petición
-            await db.delete(peticiones)
+                    .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento));
+            }
+
+            // Eliminar la petición
+            await tx.delete(peticiones)
                 .where(eq(peticiones.id, id));
-        }
+        });
 
         revalidatePath('/farmacia/peticiones');
         revalidatePath('/farmacia/medicamentos');
         return { success: true, message: 'Petición eliminada correctamente' };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error deleting peticion:', error);
-        return { success: false, error: 'Error al eliminar la petición' };
+        return { success: false, error: error?.message || 'Error al eliminar la petición' };
     }
 }
 

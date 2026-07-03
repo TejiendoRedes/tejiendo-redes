@@ -9,9 +9,14 @@ export type APIResponse<T = any> = {
   success: boolean;
   data?: T;
   error?: string;
+  message?: string;
 };
 
-export function createResponse<T>(success: boolean, data?: T, error?: string): APIResponse<T> {
-  return { success, data, error };
+export function createResponse<T>(success: boolean, data?: T, messageOrError?: string): APIResponse<T> {
+  // BUG-15 FIX: When success is true, the third arg is a message. When false, it's an error.
+  if (success) {
+    return { success, data, message: messageOrError };
+  }
+  return { success, data, error: messageOrError };
 }
 

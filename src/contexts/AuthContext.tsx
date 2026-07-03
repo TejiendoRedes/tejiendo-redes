@@ -134,7 +134,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasRole = (roles: string[]): boolean => {
     if (!user) return false;
-    const userRole = (user as any).role || user.tipodeVoluntario || '';
+    // BUG-11 FIX: Solo usar 'role' del JWT. 'tipodeVoluntario' es un campo
+    // de la tabla tejedores con valores como 'Activo'/'Tejedor Oficial' que
+    // nunca coinciden con roles del sistema ('admin', 'superuser', etc.)
+    const userRole = (user as any).role || '';
     return roles.includes(userRole);
   };
 

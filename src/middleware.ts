@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
     // 2.5 API Key Authentication for External Integration (v1)
     if (pathname.startsWith('/api/v1/')) {
         const apiKey = request.headers.get('x-api-key');
-        const validApiKey = process.env.INTEGRATION_API_KEY || 'tr_dev_api_key_2026';
+        const validApiKey = process.env.INTEGRATION_API_KEY;
         
         if (!apiKey || apiKey !== validApiKey) {
             return new NextResponse(JSON.stringify({ error: 'Unauthorized: Invalid or missing API Key' }), {
@@ -96,9 +96,9 @@ export async function middleware(request: NextRequest) {
 
     let response: NextResponse;
 
-    // 1. If user is logged in and hits /login or /, redirect to their specific dashboard
+    // 1. If user is logged in and hits /login or /, redirect to their landing page
     if (session && (isLoginPage || pathname === '/')) {
-        response = redirectToDashboard(session.role, request);
+        response = redirectAfterLogin(session.role, request);
     }
     // 2. If user is NOT logged in and tries to access protected content
     else if (!session && !isLoginPage && !isUnirsePage && !isPublicApi && !isStaticAsset && !isPrototipo) {
@@ -117,7 +117,21 @@ export async function middleware(request: NextRequest) {
         else if (pathname.startsWith('/dashboard/admin') && !['admin', 'superuser'].includes(session.role)) {
             response = redirectToDashboard(session.role, request);
         }
-        else if (pathname.startsWith('/dashboard/tejedor') && session.role !== 'tejedor') {
+        // Todos los roles logueados pueden ver el dashboard de tejedor (que es el personal)
+        else if (pathname.startsWith('/dashboard/tejedor') && !['tejedor', 'medico', 'operador', 'admin', 'superuser'].includes(session.role)) {
+            response = redirectToDashboard(session.role, request);
+        }
+        // BUG-10 FIX: Proteger rutas de módulos funcionales por rol
+        // Atención médica: solo médicos, admin, superuser y tejedores (médicos)
+        else if (pathname.startsWith('/atencion-medica') && !['medico', 'admin', 'superuser', 'tejedor'].includes(session.role)) {
+            response = redirectToDashboard(session.role, request);
+        }
+        // Farmacia: solo operador, medico, admin, superuser y tejedores (farmacia)
+        else if (pathname.startsWith('/farmacia') && !['operador', 'medico', 'admin', 'superuser', 'tejedor'].includes(session.role)) {
+            response = redirectToDashboard(session.role, request);
+        }
+        // Reportes y Estadísticas: solo admin, superuser
+        else if ((pathname.startsWith('/reportes') || pathname.startsWith('/estadisticas')) && !['admin', 'superuser'].includes(session.role)) {
             response = redirectToDashboard(session.role, request);
         }
         // Protect API routes
@@ -142,6 +156,26 @@ export async function middleware(request: NextRequest) {
 }
 
 function redirectToDashboard(role: string, request: NextRequest) {
+    let target = '/dashboard';
+    switch (role) {
+        case 'superuser':
+            target = '/dashboard/super-usuario';
+            break;
+        case 'admin':
+            target = '/dashboard/admin';
+            break;
+        case 'tejedor':
+        case 'medico':
+        case 'operador':
+            target = '/dashboard/tejedor';
+            break;
+        default:
+            target = '/login';
+    }
+    return NextResponse.redirect(new URL(target, request.url));
+}
+
+function redirectAfterLogin(role: string, request: NextRequest) {
     let target = '/dashboard';
     switch (role) {
         case 'superuser':

@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { mysqlTable, varchar, int, datetime, index } from 'drizzle-orm/mysql-core';
 import { pacientes } from './pacientes';
 import { medicamentos } from './medicamentos';
@@ -18,7 +19,7 @@ export const peticiones = mysqlTable('peticiones', {
         onUpdate: 'cascade'
     }),
     cantidad: int('cantidad').notNull(),
-    fechaPeticion: datetime('fecha_peticion').notNull().default(new Date()),
+    fechaPeticion: datetime('fecha_peticion').notNull().default(sql`now()`),
     fechaEntrega: datetime('fecha_entrega'), // Fecha de entrega/aprobación
     horaEntrega: varchar('hora_entrega', { length: 8 }), // Hora de entrega HH:MM:SS
     estado: varchar('estado', { length: 20 }).notNull().default('pendiente'), // pendiente, entregado, cancelado
