@@ -7,52 +7,62 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { navGroups } from "./nav-config";
 import { useLayout } from "./LayoutContext";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname() || '';
+  const { hasRole } = useAuth();
 
   return (
     <nav className="flex flex-col gap-5 px-3 py-4">
-      {navGroups.map((group) => (
-        <div key={group.title}>
-          {!collapsed && (
-            <p className="px-3 pb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground">
-              {group.title}
-            </p>
-          )}
-          <ul className="flex flex-col gap-1">
-            {group.items.map((item) => {
-              const active = item.to === "/dashboard" 
-                ? (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) 
-                : pathname.startsWith(item.to);
-              return (
-                <li key={item.to}>
-                  <Link
-                    href={item.to}
-                    onClick={onNavigate}
-                    title={collapsed ? item.label : undefined}
-                    className={cn(
-                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                      collapsed && "justify-center px-0",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-soft"
-                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                    )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "h-5 w-5 shrink-0",
-                        active ? "text-primary" : "text-muted-foreground group-hover:text-primary",
-                      )}
-                    />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
+      {navGroups
+        .filter(group => !group.roles || hasRole(group.roles))
+        .map((group) => {
+          const visibleItems = group.items.filter(item => !item.roles || hasRole(item.roles));
+          
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={group.title}>
+              {!collapsed && (
+                <p className="px-3 pb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {group.title}
+                </p>
+              )}
+              <ul className="flex flex-col gap-1">
+                {visibleItems.map((item) => {
+                  const active = item.to === "/dashboard" 
+                    ? (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) 
+                    : pathname.startsWith(item.to);
+                  return (
+                    <li key={item.to}>
+                      <Link
+                        href={item.to}
+                        onClick={onNavigate}
+                        title={collapsed ? item.label : undefined}
+                        className={cn(
+                          "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                          collapsed && "justify-center px-0",
+                          active
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-soft"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                        )}
+                      >
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5 shrink-0",
+                            active ? "text-primary" : "text-muted-foreground group-hover:text-primary",
+                          )}
+                        />
+                        {!collapsed && <span className="truncate">{item.label}</span>}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
     </nav>
   );
 }

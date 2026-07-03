@@ -80,12 +80,6 @@ export default function DatosBasicosPage() {
             path: '/datos-basicos/enfermedades',
             description: 'Catálogo de enfermedades',
         },
-        {
-            title: 'Consultas',
-            icon: <Stethoscope className="w-6 h-6" />,
-            path: '/datos-basicos/consultas',
-            description: 'Historial de consultas',
-        },
     ];
 
 
