@@ -21,7 +21,7 @@ export async function getNextCode(
             sql`SELECT MAX(${column}) as maxCode FROM ${table} FOR UPDATE`
         );
 
-        const rows = result[0] as Array<{ maxCode: string | null }>;
+        const rows = result[0] as unknown as Array<{ maxCode: string | null }>;
         const lastCode = rows[0]?.maxCode;
 
         if (!lastCode) {

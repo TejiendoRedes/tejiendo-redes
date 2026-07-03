@@ -22,13 +22,18 @@ export async function getTejedores() {
     try {
         await requireAuth();
         const data = await db.select({
-            ...tejedores,
+            tejedor: tejedores,
             systemRole: users.role,
         })
         .from(tejedores)
         .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor));
         
-        return { success: true, data };
+        const mappedData = data.map(row => ({
+            ...row.tejedor,
+            systemRole: row.systemRole
+        }));
+        
+        return { success: true, data: mappedData };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'los tejedores', 'obtener');
         return { success: false, error: errorMessage };
@@ -42,7 +47,7 @@ export async function getTejedor(cedula: string) {
     try {
         await requireAuth();
         const result = await db.select({
-            ...tejedores,
+            tejedor: tejedores,
             systemRole: users.role,
         })
             .from(tejedores)
@@ -54,7 +59,12 @@ export async function getTejedor(cedula: string) {
             return { success: false, error: 'Tejedor no encontrado' };
         }
 
-        return { success: true, data: result[0] };
+        const mappedData = {
+            ...result[0].tejedor,
+            systemRole: result[0].systemRole
+        };
+
+        return { success: true, data: mappedData };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'el tejedor', 'obtener');
         return { success: false, error: errorMessage };
