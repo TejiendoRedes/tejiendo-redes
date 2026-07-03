@@ -185,13 +185,9 @@ function redirectAfterLogin(role: string, request: NextRequest) {
             target = '/dashboard/admin';
             break;
         case 'tejedor':
-            target = '/dashboard/tejedor';
-            break;
         case 'medico':
-            target = '/atencion-medica';
-            break;
         case 'operador':
-            target = '/datos-basicos';
+            target = '/dashboard/tejedor';
             break;
         default:
             target = '/login';
