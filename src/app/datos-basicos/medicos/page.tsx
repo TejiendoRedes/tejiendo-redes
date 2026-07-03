@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getMedicos } from '@/queries/medicos';
 import { getTejedores } from '@/queries/tejedores';
 import { getEspecialidades } from '@/queries/especialidades';
@@ -15,7 +16,7 @@ export default async function MedicosPage() {
     ]);
 
     if (!medicosRes.success || !tejedoresRes.success || !especialidadesRes.success) {
-        return <div>Error al cargar los datos.</div>;
+        return <ErrorState title="Error de Carga" message="Error al cargar los datos." />;
     }
 
     return (

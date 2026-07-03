@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getEnfermedades } from '@/queries/enfermedades';
 import EnfermedadesClient from '@/components/features/enfermedades/enfermedades-client';
 import { getSession } from '@/lib/auth';
@@ -9,7 +10,7 @@ export default async function EnfermedadesPage() {
     const res = await getEnfermedades();
 
     if (!res.success) {
-        return <div>Error al cargar las enfermedades.</div>;
+        return <ErrorState title="Error de Carga" message="Error al cargar las enfermedades." />;
     }
 
     return (

@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getEspecialidades } from '@/queries/especialidades';
 import EspecialidadesClient from '@/components/features/especialidades/especialidades-client';
 import { getSession } from '@/lib/auth';
@@ -9,7 +10,7 @@ export default async function EspecialidadesPage() {
     const res = await getEspecialidades();
 
     if (!res.success) {
-        return <div>Error al cargar las especialidades</div>;
+        return <ErrorState title="Error de Carga" message="Error al cargar las especialidades" />;
     }
 
     return <EspecialidadesClient initialData={res.data || []} isAdmin={isAdmin} />;

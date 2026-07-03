@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getOrganismos } from '@/queries/organismos';
 import { getTejedores } from '@/queries/tejedores';
 import OrganismosClient from '@/components/features/organismos/organismos-client';
@@ -13,7 +14,7 @@ export default async function OrganismosPage() {
     ]);
 
     if (!organismosRes.success || !tejedoresRes.success) {
-        return <div>Error al cargar los datos.</div>;
+        return <ErrorState title="Error de Carga" message="Error al cargar los datos." />;
     }
 
     return (

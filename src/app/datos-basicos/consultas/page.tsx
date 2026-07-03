@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getConsultas } from '@/queries/consultas';
 import { getPacientes } from '@/queries/pacientes';
 import { getMedicos } from '@/queries/medicos';
@@ -25,7 +26,7 @@ export default async function ConsultasPage() {
         getEnfermedades()
     ]);
 
-    if (!consultasRes.success) return <div>Error loading Consultas</div>;
+    if (!consultasRes.success) return <ErrorState title="Error de Carga" message="Error loading Consultas" />;
 
     return (
         <ConsultasClient

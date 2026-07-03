@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getPacientes } from '@/queries/pacientes';
 import { getComunidades } from '@/queries/comunidades';
 import PacientesClient from '@/components/features/pacientes/pacientes-client';
@@ -13,7 +14,7 @@ export default async function PacientesPage() {
     ]);
 
     if (!pacientesRes.success || !comunidadesRes.success) {
-        return <div>Error al cargar los datos.</div>;
+        return <ErrorState title="Error de Carga" message="Error al cargar los datos." />;
     }
 
     return (

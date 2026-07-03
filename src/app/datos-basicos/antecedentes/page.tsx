@@ -1,3 +1,4 @@
+import { ErrorState } from '@/components/ui/ErrorState';
 import { getAntecedentes } from '@/queries/antecedentes';;
 import { getPacientes } from '@/queries/pacientes';;
 import AntecedentesClient from '@/components/features/antecedentes/antecedentes-client';
@@ -9,7 +10,7 @@ export default async function AntecedentesPage() {
     ]);
 
     if (!antecedentesRes.success || !pacientesRes.success) {
-        return <div>Error al cargar los datos.</div>;
+        return <ErrorState title="Error de Carga" message="Error al cargar los datos." />;
     }
 
     // Extract patients from the response, handling the joined structure if necessary, 
