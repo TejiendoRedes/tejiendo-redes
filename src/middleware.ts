@@ -130,8 +130,8 @@ export async function middleware(request: NextRequest) {
         else if (pathname.startsWith('/farmacia') && !['operador', 'medico', 'admin', 'superuser', 'tejedor'].includes(session.role)) {
             response = redirectToDashboard(session.role, request);
         }
-        // Reportes y Estadísticas: solo admin, superuser, y tejedor (solo lectura visual)
-        else if ((pathname.startsWith('/reportes') || pathname.startsWith('/estadisticas')) && !['admin', 'superuser', 'tejedor'].includes(session.role)) {
+        // Reportes y Estadísticas: solo lectura visual para el resto
+        else if ((pathname.startsWith('/reportes') || pathname.startsWith('/estadisticas')) && !['admin', 'superuser', 'tejedor', 'medico', 'operador'].includes(session.role)) {
             response = redirectToDashboard(session.role, request);
         }
         // Protect API routes
