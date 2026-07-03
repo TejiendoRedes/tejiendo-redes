@@ -145,8 +145,7 @@ export async function POST(request: Request) {
             maxAge: 60 * 60 * 24, // 24h
         });
 
-        const redirectTo = user.role === 'superuser' ? '/dashboard/super-usuario' :
-            user.role === 'admin' ? '/dashboard/admin' :
+        const redirectTo = ['superuser', 'admin'].includes(user.role) ? '/dashboard/admin' :
                 ['tejedor', 'medico', 'operador'].includes(user.role) ? '/dashboard/tejedor' : '/dashboard';
 
         return NextResponse.json({

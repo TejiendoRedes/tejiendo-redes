@@ -159,8 +159,6 @@ function redirectToDashboard(role: string, request: NextRequest) {
     let target = '/dashboard';
     switch (role) {
         case 'superuser':
-            target = '/dashboard/super-usuario';
-            break;
         case 'admin':
             target = '/dashboard/admin';
             break;
@@ -179,8 +177,6 @@ function redirectAfterLogin(role: string, request: NextRequest) {
     let target = '/dashboard';
     switch (role) {
         case 'superuser':
-            target = '/dashboard/super-usuario';
-            break;
         case 'admin':
             target = '/dashboard/admin';
             break;

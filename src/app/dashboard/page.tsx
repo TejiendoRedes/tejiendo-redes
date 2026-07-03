@@ -11,7 +11,6 @@ export default async function DashboardPage() {
     // Fallback redirect logic in case middleware is bypassed
     switch (session.role) {
         case 'superuser':
-            redirect('/dashboard/super-usuario');
         case 'admin':
             redirect('/dashboard/admin');
         case 'tejedor':
