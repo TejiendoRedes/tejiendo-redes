@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, GraduationCap, FileText, Hash, Download, Activity } from 'lucide-react';
+import { Edit, Trash2, GraduationCap, FileText, Hash, Download, Activity, Award } from 'lucide-react';
 import { Especialidad } from '@/db/schema/especialidades';
 import { createEspecialidad, deleteEspecialidad, updateEspecialidad } from '@/actions/especialidades-actions';
 import {
