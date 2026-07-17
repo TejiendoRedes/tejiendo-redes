@@ -132,6 +132,15 @@ export default function MedicamentosClient({ initialData, canEdit = false }: Med
             )
         },
         {
+            key: 'precio',
+            header: 'Precio',
+            render: (med) => (
+                <span className="font-medium text-gray-900">
+                    {Number(med.precio ?? 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+            )
+        },
+        {
             key: 'existencia',
             header: 'Existencia',
             render: (med) => (
@@ -182,15 +191,17 @@ export default function MedicamentosClient({ initialData, canEdit = false }: Med
             codigo: m.codigoMedicamento,
             nombre: m.nombreMedicamento,
             presentacion: m.presentacion,
+            precio: m.precio,
             existencia: m.existencia,
             descripcion: m.descripcion || '-',
         }));
 
-        const headers = ['codigo', 'nombre', 'presentacion', 'existencia', 'descripcion'];
+        const headers = ['codigo', 'nombre', 'presentacion', 'precio', 'existencia', 'descripcion'];
         const columnsData = [
             { header: 'Código', dataKey: 'codigo' as const },
             { header: 'Nombre', dataKey: 'nombre' as const },
             { header: 'Presentación', dataKey: 'presentacion' as const },
+            { header: 'Precio', dataKey: 'precio' as const },
             { header: 'Existencia', dataKey: 'existencia' as const },
             { header: 'Descripción', dataKey: 'descripcion' as const },
         ];

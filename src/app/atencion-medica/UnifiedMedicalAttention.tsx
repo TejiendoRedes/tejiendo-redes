@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, ArrowRight, Stethoscope } from 'lucide-react';
+import { Activity, ArrowRight, Stethoscope, ClipboardList } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { getAntecedentesByPaciente } from '@/queries/consultas';
 import { saveConsultaWizard } from '@/actions/consultas-actions';
 import { ConsultaWizard, type WizardData } from '@/components/features/consultas/ConsultaWizard';
+import { AbordajeHistorialEstadisticas } from '@/components/atencion-medica/AbordajeHistorialEstadisticas';
 
 interface UnifiedMedicalAttentionProps {
     pacientes: any[];
@@ -33,7 +34,7 @@ export default function UnifiedMedicalAttention({
     canCreate = false
 }: UnifiedMedicalAttentionProps) {
     const router = useRouter();
-    const [view, setView] = useState<'setup' | 'wizard'>('setup');
+    const [view, setView] = useState<'setup' | 'wizard' | 'historial'>('setup');
     const [isLoading, setIsLoading] = useState(false);
 
     // Setup State
@@ -169,11 +170,41 @@ export default function UnifiedMedicalAttention({
 
     return (
         <MainLayout>
-            <PageShell 
-                title="Atención Médica" 
-                subtitle={view === 'setup' ? "Consulta clínica · Seleccionar abordaje" : "Consulta clínica · Registro paso a paso"}
+            <PageShell
+                title="Atención Médica"
+                subtitle={
+                    view === 'historial'
+                        ? "Historial y estadísticas de abordajes"
+                        : view === 'setup'
+                            ? "Consulta clínica · Seleccionar abordaje"
+                            : "Consulta clínica · Registro paso a paso"
+                }
+                actions={
+                    view !== 'wizard' ? (
+                        <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setView('setup')}
+                                className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${view === 'setup' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <Activity className="w-4 h-4" />
+                                Nueva Consulta
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setView('historial')}
+                                className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${view === 'historial' ? 'bg-white shadow-sm text-[#1e3a8a]' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <ClipboardList className="w-4 h-4" />
+                                Historial de Abordajes
+                            </button>
+                        </div>
+                    ) : undefined
+                }
             >
-                {view === 'setup' ? (
+                {view === 'historial' ? (
+                    <AbordajeHistorialEstadisticas abordajes={abordajes} />
+                ) : view === 'setup' ? (
                     <div className="space-y-6 max-w-2xl mx-auto pt-8">
                         <Card className="p-8 border-none shadow-2xl bg-white rounded-3xl">
                             <div className="flex items-center gap-3 mb-6 pb-4 border-b">

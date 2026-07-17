@@ -2,6 +2,8 @@
 
 Sistema web para la gestión integral de abordajes comunitarios en salud. Permite administrar tejedores (voluntarios), pacientes, comunidades, abordajes, consultas médicas, farmacia y reportes.
 
+🌐 **Aplicación en producción:** [https://tejiendoredes-registro.netlify.app](https://tejiendoredes-registro.netlify.app)
+
 ---
 
 ## Stack Tecnológico
@@ -88,6 +90,8 @@ npm run dev:turbo
 ```
 
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+
+> **Nota:** La versión desplegada en producción está disponible en [https://tejiendoredes-registro.netlify.app](https://tejiendoredes-registro.netlify.app).
 
 ---
 
@@ -187,7 +191,11 @@ src/
 
 ## Despliegue
 
-El proyecto está configurado para desplegarse en **Netlify**. Asegúrate de configurar las variables de entorno (`DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME`, `JWT_SECRET_KEY`) en el panel de Netlify.
+El proyecto está desplegado en **Netlify** y accesible en:
+
+🔗 **[https://tejiendoredes-registro.netlify.app](https://tejiendoredes-registro.netlify.app)**
+
+Asegúrate de configurar las variables de entorno (`DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME`, `JWT_SECRET_KEY`) en el panel de Netlify.
 
 ---
 

@@ -7,7 +7,7 @@ import { eq, sum } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { requireAuth } from '@/lib/auth';
-import { MedicamentoSchema } from '@/schemas/medicamentos';
+import { MedicamentoSchema, UpdateMedicamentoSchema } from '@/schemas/medicamentos';
 
 /**
  * Obtener todos los medicamentos (con búsqueda opcional)
@@ -56,7 +56,7 @@ export async function updateMedicamento(codigo: string, data: Partial<typeof med
     try {
         await requireAuth();
 
-        const validation = MedicamentoSchema.partial().safeParse(data);
+        const validation = UpdateMedicamentoSchema.safeParse(data);
         if (!validation.success) {
             return { success: false, error: validation.error.errors[0].message };
         }

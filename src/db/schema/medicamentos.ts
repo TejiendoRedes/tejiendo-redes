@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, decimal } from 'drizzle-orm/mysql-core';
 
 /**
  * Tabla: medicamentos
@@ -10,6 +10,7 @@ export const medicamentos = mysqlTable('medicamentos', {
     presentacion: varchar('presentacion', { length: 100 }).notNull(),
     descripcion: text('descripcion').notNull(),
     existencia: int('existencia').notNull().default(0),
+    precio: decimal('precio', { precision: 10, scale: 2, mode: 'number' }).notNull().default(0),
 });
 
 export type Medicamento = typeof medicamentos.$inferSelect;

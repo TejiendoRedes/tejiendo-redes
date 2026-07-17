@@ -6,7 +6,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, MapPin, Users, Calendar, Download, Eye, FileText } from 'lucide-react';
+import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, MapPin, Users, Calendar, Download, Eye, FileText, MessageCircle } from 'lucide-react';
 import { createSolicitudAbordaje, deleteSolicitudAbordaje, confirmarSolicitudAbordaje, rechazarSolicitudAbordaje } from '@/actions/solicitudes-abordajes-actions';
 import {
     Dialog,
@@ -20,7 +20,6 @@ import { NumberInput } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -51,6 +50,8 @@ interface Comunidad {
     nombreComunidad: string;
 }
 
+const TIPOS_ABORDAJE = ['Educativo', 'Médico', 'Social', 'Deportivo', 'Cultural', 'Religioso'];
+
 interface SolicitudesAbordajesClientProps {
     initialData: SolicitudAbordaje[];
     comunidades: Comunidad[];
@@ -79,6 +80,24 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         recursosAdicionales: '',
     });
 
+    const tiposSeleccionados = formData.tipoAbordaje ? formData.tipoAbordaje.split(',').filter(Boolean) : [];
+
+    const handleToggleTipoAbordaje = (tipo: string) => {
+        setFormData(prev => {
+            const actuales = prev.tipoAbordaje ? prev.tipoAbordaje.split(',').filter(Boolean) : [];
+            const nuevos = actuales.includes(tipo)
+                ? actuales.filter(t => t !== tipo)
+                : [...actuales, tipo];
+            return { ...prev, tipoAbordaje: nuevos.join(',') };
+        });
+    };
+
+    const handleSolicitarNuevaComunidad = () => {
+        const mensaje = '¡Hola! Quisiera solicitar el registro de una nueva comunidad en el sistema de Tejiendo Redes para poder crear una solicitud de abordaje. Estos son los datos que tengo disponibles:';
+        const url = `https://wa.me/584245718876?text=${encodeURIComponent(mensaje)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
     const handleAdd = () => {
         setFormData({
             codigoComunidad: '',
@@ -94,6 +113,12 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!formData.tipoAbordaje) {
+            toast.error('Debe seleccionar al menos un tipo de abordaje');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -249,7 +274,11 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
             render: (row) => (
                 <div>
                     <div className="font-medium">{row.descripcionActividad}</div>
-                    <div className="text-sm text-gray-500">{row.tipoAbordaje}</div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {row.tipoAbordaje.split(',').filter(Boolean).map((tipo) => (
+                            <Badge key={tipo} variant="outline" className="text-xs">{tipo}</Badge>
+                        ))}
+                    </div>
                 </div>
             ),
         },
@@ -434,6 +463,14 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                         placeholder="Busque y seleccione la comunidad"
                                         searchPlaceholder="Buscar por nombre..."
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={handleSolicitarNuevaComunidad}
+                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 hover:text-green-800 hover:underline"
+                                    >
+                                        <MessageCircle className="w-3.5 h-3.5" />
+                                        ¿No encuentra la comunidad? Solicitar su registro al administrador
+                                    </button>
                                 </div>
                             </div>
 
@@ -462,21 +499,19 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="tipo">Tipo de Abordaje</Label>
-                                    <Select value={formData.tipoAbordaje} onValueChange={(value) => setFormData(prev => ({ ...prev, tipoAbordaje: value }))} required>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar tipo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Educativo">Educativo</SelectItem>
-                                            <SelectItem value="Médico">Médico</SelectItem>
-                                            <SelectItem value="Social">Social</SelectItem>
-                                            <SelectItem value="Deportivo">Deportivo</SelectItem>
-                                            <SelectItem value="Cultural">Cultural</SelectItem>
-                                            <SelectItem value="Religioso">Religioso</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="space-y-2 col-span-2">
+                                    <Label>Tipo de Abordaje (puede seleccionar varios)</Label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-md border p-3">
+                                        {TIPOS_ABORDAJE.map((tipo) => (
+                                            <label key={tipo} className="flex items-center gap-2 text-sm cursor-pointer">
+                                                <Checkbox
+                                                    checked={tiposSeleccionados.includes(tipo)}
+                                                    onCheckedChange={() => handleToggleTipoAbordaje(tipo)}
+                                                />
+                                                {tipo}
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -556,6 +591,14 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                         <h4 className="text-sm font-medium text-gray-500">Actividad</h4>
                                         <p>{selectedSolicitud.descripcionActividad}</p>
                                     </div>
+                                    <div className="col-span-2">
+                                        <h4 className="text-sm font-medium text-gray-500">Tipo(s) de Abordaje</h4>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {selectedSolicitud.tipoAbordaje.split(',').filter(Boolean).map((tipo) => (
+                                                <Badge key={tipo} variant="outline">{tipo}</Badge>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Fecha y Hora</h4>
                                         <p>{selectedSolicitud.fechaSugerida} a las {selectedSolicitud.horaInicioSugerida}</p>
@@ -563,6 +606,10 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Participantes Estimados</h4>
                                         <p>{selectedSolicitud.participantesEstimados} personas</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <h4 className="text-sm font-medium text-gray-500">Recursos Adicionales Necesarios</h4>
+                                        <p>{selectedSolicitud.recursosAdicionales || 'Sin especificar'}</p>
                                     </div>
                                 </div>
 

@@ -5,6 +5,7 @@ import { comunidades } from '@/db/schema/comunidades';
 import { tejedores } from '@/db/schema/tejedores';
 import { consultas } from '@/db/schema/consultas';
 import { medicamentos } from '@/db/schema/medicamentos';
+import { responsable } from '@/db/schema/responsable';
 import { eq, and, sql, lt } from 'drizzle-orm';
 import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
 import { pacientes } from '@/db/schema/pacientes';
@@ -69,13 +70,26 @@ export class AbordajesService {
                     codigoComunidad: comunidades.codigoComunidad,
                     nombreComunidad: comunidades.nombreComunidad,
                     municipio: comunidades.municipio,
-                    parroquia: comunidades.direccion,
+                    parroquia: comunidades.parroquia,
                     estado: comunidades.estado,
                     habitantes: comunidades.cantidadHabitantes,
                     observaciones: abordajeComunidad.observaciones,
+                    tipoComunidad: comunidades.tipoComunidad,
+                    direccion: comunidades.direccion,
+                    telefonoComunidad: comunidades.telefonoComunidad,
+                    cantidadFamilias: comunidades.cantidadFamilias,
+                    cantidadNinos: comunidades.cantidadNinos,
+                    cantidadAdolescentes: comunidades.cantidadAdolescentes,
+                    cantidadMayores: comunidades.cantidadMayores,
+                    cantidadMayores60: comunidades.cantidadMayores60,
+                    nombreResponsable: responsable.nombreResponsable,
+                    apellidoResponsable: responsable.apellidoResponsable,
+                    cargoResponsable: responsable.cargo,
+                    telefonoResponsable: responsable.telefonoResponsable,
                 })
                     .from(abordajeComunidad)
                     .innerJoin(comunidades, eq(abordajeComunidad.codigoComunidad, comunidades.codigoComunidad))
+                    .leftJoin(responsable, eq(comunidades.cedulaResponsable, responsable.cedulaResponsable))
                     .where(eq(abordajeComunidad.codigoAbordaje, id)),
                 db.select({
                     cedulaTejedor: tejedores.cedulaTejedor,

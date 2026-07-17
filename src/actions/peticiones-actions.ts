@@ -75,13 +75,17 @@ export async function createPeticion(data: typeof peticiones.$inferInsert) {
 /**
  * Actualizar estado de una petición (restar existencias solo cuando se aprueba/entrega, devolver cuando se cancela)
  */
-export async function updatePeticionEstado(id: number, estado: string) {
+export async function updatePeticionEstado(id: number, estado: string, cedulaTejedor?: string) {
     try {
         await requireAuth();
 
         // BUG-04 FIX: Toda la lógica dentro de una transacción para evitar race conditions
         // Si se está aprobando/entregando
         if (estado === 'entregado') {
+            if (!cedulaTejedor) {
+                return { success: false, error: 'Debe indicar el tejedor responsable de la entrega' };
+            }
+
             await db.transaction(async (tx) => {
                 // Leer petición dentro de la transacción
                 const [peticion] = await tx.select()
@@ -122,7 +126,8 @@ export async function updatePeticionEstado(id: number, estado: string) {
                     .set({
                         estado: 'entregado',
                         fechaEntrega: now,
-                        horaEntrega: horaFormateada
+                        horaEntrega: horaFormateada,
+                        cedulaTejedor
                     })
                     .where(eq(peticiones.id, id));
 
@@ -152,7 +157,8 @@ export async function updatePeticionEstado(id: number, estado: string) {
                         .set({
                             estado: 'cancelado',
                             fechaEntrega: null,
-                            horaEntrega: null
+                            horaEntrega: null,
+                            cedulaTejedor: null
                         })
                         .where(eq(peticiones.id, id));
 
@@ -198,11 +204,11 @@ export async function updatePeticionEstado(id: number, estado: string) {
 /**
  * Marcar petición como entregada
  */
-export async function marcarComoEntregada(codigoPeticion: string) {
+export async function marcarComoEntregada(codigoPeticion: string, cedulaTejedor: string) {
     try {
         await requireAuth();
         const id = parseInt(codigoPeticion);
-        return await updatePeticionEstado(id, 'entregado');
+        return await updatePeticionEstado(id, 'entregado', cedulaTejedor);
     } catch (error) {
         console.error('Error marcando como entregada:', error);
         return { success: false, error: 'Error al marcar como entregada' };

@@ -6,9 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { Loader2 } from 'lucide-react';
 import { Abordaje } from '@/db/schema/abordajes';
+
+const TIPOS_ABORDAJE = ['Educativo', 'Médico', 'Social', 'Deportivo', 'Cultural', 'Religioso'];
 
 export interface AbordajeFormProps {
     initialData?: Abordaje;
@@ -65,6 +68,18 @@ export function AbordajeForm({
 
     const handleSelectChange = (value: string, name: string) => {
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const tiposSeleccionados = formData.tipoAbordaje ? formData.tipoAbordaje.split(',').filter(Boolean) : [];
+
+    const handleToggleTipoAbordaje = (tipo: string) => {
+        setFormData(prev => {
+            const actuales = prev.tipoAbordaje ? prev.tipoAbordaje.split(',').filter(Boolean) : [];
+            const nuevos = actuales.includes(tipo)
+                ? actuales.filter(t => t !== tipo)
+                : [...actuales, tipo];
+            return { ...prev, tipoAbordaje: nuevos.join(',') };
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -171,23 +186,18 @@ export function AbordajeForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="tipoAbordaje">Tipo de Abordaje</Label>
-                    <Select
-                        value={formData.tipoAbordaje}
-                        onValueChange={(val) => handleSelectChange(val, 'tipoAbordaje')}
-                    >
-                        <SelectTrigger id="tipoAbordaje">
-                            <SelectValue placeholder="Seleccionar tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Educativo">Educativo</SelectItem>
-                            <SelectItem value="Médico">Médico</SelectItem>
-                            <SelectItem value="Social">Social</SelectItem>
-                            <SelectItem value="Deportivo">Deportivo</SelectItem>
-                            <SelectItem value="Cultural">Cultural</SelectItem>
-                            <SelectItem value="Religioso">Religioso</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <Label>Tipo de Abordaje (puede seleccionar varios)</Label>
+                    <div className="grid grid-cols-2 gap-2 rounded-md border p-3">
+                        {TIPOS_ABORDAJE.map((tipo) => (
+                            <label key={tipo} className="flex items-center gap-2 text-sm cursor-pointer">
+                                <Checkbox
+                                    checked={tiposSeleccionados.includes(tipo)}
+                                    onCheckedChange={() => handleToggleTipoAbordaje(tipo)}
+                                />
+                                {tipo}
+                            </label>
+                        ))}
+                    </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="participantesEstimados">Participantes Estimados</Label>

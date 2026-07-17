@@ -12,7 +12,7 @@ export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     fechaSugerida: varchar('fecha_sugerida', { length: 20 }).notNull(), // Formato flexible para fecha sugerida
     horaInicioSugerida: varchar('hora_inicio_sugerida', { length: 10 }).notNull(), // Formato flexible para hora
     descripcionActividad: text('descripcion_actividad').notNull(),
-    tipoAbordaje: varchar('tipo_abordaje', { length: 50 }).notNull(), // Educativo, Médico, Social, etc.
+    tipoAbordaje: varchar('tipo_abordaje', { length: 150 }).notNull(), // Uno o más tipos separados por comas: Educativo,Médico,Social, etc.
     participantesEstimados: int('participantes_estimados').notNull(),
     recursosAdicionales: text('recursos_adicionales'), // Qué más se necesita
     estado: varchar('estado', { length: 20 }).notNull().default('pendiente'), // pendiente, confirmado, rechazado

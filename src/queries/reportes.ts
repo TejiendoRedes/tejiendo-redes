@@ -56,10 +56,9 @@ export async function getReporteAbordajes(params: unknown) {
                 descripcion: abordaje.descripcion,
                 hora_inicio: abordaje.horaInicio,
                 hora_fin: abordaje.horaFin,
-                comunidades: sql<string>`(
-                    SELECT GROUP_CONCAT(c.nombre_comunidad SEPARATOR ', ')
+                comunidades: sql<number>`(
+                    SELECT COUNT(DISTINCT ac.codigo_comunidad)
                     FROM abordaje_comunidad ac
-                    JOIN comunidades c ON ac.codigo_comunidad = c.codigo_comunidad
                     WHERE ac.codigo_abordaje = abordaje.codigo_abordaje
                 )`,
                 pacientes_atendidos: sql<number>`(
@@ -148,7 +147,7 @@ export async function getReportePacientes(params: unknown) {
             .select({
                 cedula_paciente: pacientes.cedulaPaciente,
                 codigo_comunidad: pacientes.codigoComunidad,
-                nombre_comunidad: comunidades.nombreComunidad,
+                nombre_comunidad: sql<string>`COALESCE(${comunidades.nombreComunidad}, 'Desconocida')`,
                 nombre_paciente: pacientes.nombrePaciente,
                 apellido_paciente: pacientes.apellidoPaciente,
                 fecha_nacimiento: pacientes.fechaNacimiento,
@@ -299,12 +298,11 @@ export async function getReporteMedicamentos(params: unknown) {
                 codigo_medicamento: medicamentos.codigoMedicamento,
                 nombre_medicamento: medicamentos.nombreMedicamento,
                 presentacion: medicamentos.presentacion,
-                total_entregado: sql<number>`COALESCE(SUM(CASE WHEN ${and(...peticionConditions)} THEN ${peticiones.cantidad} ELSE 0 END), 0)`.as('total_entregado'),
+                existencia: medicamentos.existencia,
+                descripcion: medicamentos.descripcion,
             })
             .from(medicamentos)
-            .leftJoin(peticiones, eq(medicamentos.codigoMedicamento, peticiones.codigoMedicamento))
-            .groupBy(medicamentos.codigoMedicamento, medicamentos.nombreMedicamento, medicamentos.presentacion)
-            .orderBy(desc(sql`total_entregado`), medicamentos.nombreMedicamento);
+            .orderBy(medicamentos.nombreMedicamento);
 
         return { success: true, data: result };
     } catch (error) {

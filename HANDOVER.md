@@ -1,5 +1,7 @@
 # Guía de Traspaso (Handover) — Tejiendo Redes
 
+🌐 **Producción:** [https://tejiendoredes-registro.netlify.app](https://tejiendoredes-registro.netlify.app)
+
 Guía práctica para el nuevo equipo de desarrollo. Léela antes de hacer cualquier cambio en el proyecto.
 
 ---
@@ -11,6 +13,7 @@ Guía práctica para el nuevo equipo de desarrollo. Léela antes de hacer cualqu
 3. Lee el [DATABASE.md](./DATABASE.md) para entender los scripts de BD.
 4. Levanta el proyecto con `npm run dev:turbo`.
 5. Prueba iniciar sesión con los usuarios de prueba del seed.
+6. Compara tu entorno local con la [versión en producción](https://tejiendoredes-registro.netlify.app) para verificar que todo funciona correctamente.
 
 ---
 

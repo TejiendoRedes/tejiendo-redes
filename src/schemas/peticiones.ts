@@ -11,6 +11,7 @@ export const PeticionSchema = z.object({
 export const UpdatePeticionSchema = z.object({
     estado: z.enum(['pendiente', 'entregado', 'cancelado']),
     notas: z.string().optional(),
+    cedulaTejedor: z.string().optional(),
 });
 
 export type PeticionInput = z.infer<typeof PeticionSchema>;

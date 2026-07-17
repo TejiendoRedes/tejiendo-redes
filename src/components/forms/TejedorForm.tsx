@@ -14,9 +14,20 @@ import {
 import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
 import { Tejedor } from '@/db/schema/tejedores';
 
+const PROFESIONES_PREDEFINIDAS = [
+    "Médico",
+    "Enfermero/a",
+    "Trabajador/a Social",
+    "Psicólogo/a",
+    "Docente",
+    "Abogado/a",
+    "Ingeniero/a",
+    "Administrador/a"
+];
+
 export interface TejedorFormProps {
     initialData?: Tejedor & { systemRole?: string | null };
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: Omit<Tejedor, 'fechaPromocion'> & { systemRole?: string }) => Promise<void>;
     onCancel: () => void;
     isLoading?: boolean;
     isAdmin?: boolean;
@@ -32,8 +43,16 @@ export function TejedorForm({
     submitLabel
 }: TejedorFormProps) {
     // Initial form state
+    const initialCedulaParts = initialData?.cedulaTejedor?.match(/^([VPE])-(.+)$/);
+    const initialTipoCedula = initialCedulaParts ? initialCedulaParts[1] : 'V';
+    const initialNumeroCedula = initialCedulaParts ? initialCedulaParts[2] : (initialData?.cedulaTejedor || '');
+
+    const initialProfesion = initialData?.profesionTejedor || '';
+    const isPredefinida = initialProfesion === '' || PROFESIONES_PREDEFINIDAS.includes(initialProfesion);
+
     const initialFormState = {
-        cedulaTejedor: initialData?.cedulaTejedor || '',
+        tipoCedula: initialTipoCedula,
+        cedulaTejedor: initialNumeroCedula,
         nombreTejedor: initialData?.nombreTejedor || '',
         apellidoTejedor: initialData?.apellidoTejedor || '',
         fechaNacimiento: initialData?.fechaNacimiento
@@ -45,7 +64,8 @@ export function TejedorForm({
         parroquiaTejedor: initialData?.parroquiaTejedor || '',
         telefonoTejedor: initialData?.telefonoTejedor || '',
         correoTejedor: initialData?.correoTejedor || '',
-        profesionTejedor: initialData?.profesionTejedor || '',
+        profesionSelect: isPredefinida ? (initialProfesion || '') : 'Otros',
+        profesionOtra: isPredefinida ? '' : initialProfesion,
         fechaIngreso: initialData?.fechaIngreso
             ? formattedDate(initialData.fechaIngreso)
             : '',
@@ -54,6 +74,7 @@ export function TejedorForm({
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
+    const [errors, setErrors] = React.useState<Record<string, string>>({});
 
     const [estados] = React.useState(getEstados());
     const [municipios, setMunicipios] = React.useState<any[]>([]);
@@ -90,58 +111,131 @@ export function TejedorForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const dataToSave = {
-            ...formData,
+
+        const newErrors: Record<string, string> = {};
+
+        const finalProfesion = formData.profesionSelect === 'Otros' ? formData.profesionOtra : formData.profesionSelect;
+
+        if (!finalProfesion || !finalProfesion.trim()) {
+            newErrors.profesionTejedor = "La profesión es requerida";
+        }
+
+        if (formData.cedulaTejedor && !/^\d+$/.test(formData.cedulaTejedor)) {
+            newErrors.cedulaTejedor = "El número de cédula debe contener solo números";
+        }
+
+        if (formData.nombreTejedor && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombreTejedor)) {
+            newErrors.nombreTejedor = "El nombre debe contener solo letras";
+        }
+
+        if (formData.apellidoTejedor && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.apellidoTejedor)) {
+            newErrors.apellidoTejedor = "El apellido debe contener solo letras";
+        }
+
+        if (formData.telefonoTejedor && !/^[\d\+\-\s]+$/.test(formData.telefonoTejedor)) {
+            newErrors.telefonoTejedor = "El teléfono debe contener solo números, + o -";
+        }
+
+        if (formData.correoTejedor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correoTejedor)) {
+            newErrors.correoTejedor = "El correo electrónico no tiene un formato válido";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setErrors({});
+
+        const { tipoCedula, profesionSelect, profesionOtra, ...restFormData } = formData;
+
+        const dataToSave: Omit<Tejedor, 'fechaPromocion'> & { systemRole?: string } = {
+            ...restFormData,
+            cedulaTejedor: `${tipoCedula}-${formData.cedulaTejedor}`,
+            profesionTejedor: finalProfesion,
             fechaNacimiento: new Date(formData.fechaNacimiento),
             fechaIngreso: new Date(formData.fechaIngreso),
         };
         await onSubmit(dataToSave);
     };
 
+    const todayDate = new Date().toISOString().split('T')[0];
+
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="cedula">Cédula *</Label>
-                    <Input
-                        id="cedula"
-                        value={formData.cedulaTejedor}
-                        onChange={(e) =>
-                            setFormData({ ...formData, cedulaTejedor: e.target.value })
-                        }
-                        required
-                        disabled={!!initialData}
-                        maxLength={12}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                    <Label htmlFor="cedula" className={errors.cedulaTejedor ? "text-red-500" : ""}>Cédula *</Label>
+                    <div className="flex gap-2">
+                        <Select
+                            value={formData.tipoCedula}
+                            onValueChange={(val) => setFormData({ ...formData, tipoCedula: val })}
+                            disabled={!!initialData}
+                        >
+                            <SelectTrigger className="w-[65px] h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                                <SelectValue placeholder="Tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="V">V</SelectItem>
+                                <SelectItem value="E">E</SelectItem>
+                                <SelectItem value="P">P</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            id="cedula"
+                            value={formData.cedulaTejedor}
+                            onChange={(e) => {
+                                setFormData({ ...formData, cedulaTejedor: e.target.value });
+                                if (errors.cedulaTejedor) setErrors({ ...errors, cedulaTejedor: '' });
+                            }}
+                            required
+                            disabled={!!initialData}
+                            maxLength={12}
+                            placeholder="Ej: 12345678"
+                            onFocus={(e) => e.target.placeholder = ""}
+                            onBlur={(e) => e.target.placeholder = "Ej: 12345678"}
+                            className={`flex-1 h-11 shadow-sm focus:ring-blue-500 ${errors.cedulaTejedor ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
+                        />
+                    </div>
+                    {errors.cedulaTejedor && <p className="text-red-500 text-sm mt-1">{errors.cedulaTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="nombre">Nombre *</Label>
+                    <Label htmlFor="nombre" className={errors.nombreTejedor ? "text-red-500" : ""}>Nombre *</Label>
                     <Input
                         id="nombre"
                         value={formData.nombreTejedor}
-                        onChange={(e) =>
-                            setFormData({ ...formData, nombreTejedor: e.target.value })
-                        }
+                        onChange={(e) => {
+                            setFormData({ ...formData, nombreTejedor: e.target.value });
+                            if (errors.nombreTejedor) setErrors({ ...errors, nombreTejedor: '' });
+                        }}
                         required
                         maxLength={50}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Ej: Juan"
+                        onFocus={(e) => e.target.placeholder = ""}
+                        onBlur={(e) => e.target.placeholder = "Ej: Juan"}
+                        className={`h-11 shadow-sm focus:ring-blue-500 ${errors.nombreTejedor ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                     />
+                    {errors.nombreTejedor && <p className="text-red-500 text-sm mt-1">{errors.nombreTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="apellido">Apellido *</Label>
+                    <Label htmlFor="apellido" className={errors.apellidoTejedor ? "text-red-500" : ""}>Apellido *</Label>
                     <Input
                         id="apellido"
                         value={formData.apellidoTejedor}
-                        onChange={(e) =>
-                            setFormData({ ...formData, apellidoTejedor: e.target.value })
-                        }
+                        onChange={(e) => {
+                            setFormData({ ...formData, apellidoTejedor: e.target.value });
+                            if (errors.apellidoTejedor) setErrors({ ...errors, apellidoTejedor: '' });
+                        }}
                         required
                         maxLength={50}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Ej: Pérez"
+                        onFocus={(e) => e.target.placeholder = ""}
+                        onBlur={(e) => e.target.placeholder = "Ej: Pérez"}
+                        className={`h-11 shadow-sm focus:ring-blue-500 ${errors.apellidoTejedor ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                     />
+                    {errors.apellidoTejedor && <p className="text-red-500 text-sm mt-1">{errors.apellidoTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -149,27 +243,49 @@ export function TejedorForm({
                     <Input
                         id="fechaNacimiento"
                         type="date"
+                        max={todayDate}
                         value={formData.fechaNacimiento}
                         onChange={(e) =>
                             setFormData({ ...formData, fechaNacimiento: e.target.value })
                         }
                         required
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="profesion">Profesión *</Label>
-                    <Input
-                        id="profesion"
-                        value={formData.profesionTejedor}
-                        onChange={(e) =>
-                            setFormData({ ...formData, profesionTejedor: e.target.value })
-                        }
-                        required
-                        maxLength={50}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
+                    <Label htmlFor="profesion" className={errors.profesionTejedor ? "text-red-500" : ""}>Profesión *</Label>
+                    <div className="flex gap-2">
+                        <Select
+                            value={formData.profesionSelect}
+                            onValueChange={(val) => setFormData({ ...formData, profesionSelect: val })}
+                            required
+                        >
+                            <SelectTrigger className={`h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${formData.profesionSelect === 'Otros' ? 'w-1/2' : 'w-full'}`}>
+                                <SelectValue placeholder="Seleccione una profesión" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {PROFESIONES_PREDEFINIDAS.map(p => (
+                                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                                ))}
+                                <SelectItem value="Otros">Otros</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {formData.profesionSelect === 'Otros' && (
+                            <Input
+                                placeholder="Especifique..."
+                                value={formData.profesionOtra}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, profesionOtra: e.target.value });
+                                    if (errors.profesionTejedor) setErrors({ ...errors, profesionTejedor: '' });
+                                }}
+                                required={formData.profesionSelect === 'Otros'}
+                                maxLength={50}
+                                className={`flex-1 h-11 shadow-sm focus:ring-blue-500 ${errors.profesionTejedor ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
+                            />
+                        )}
+                    </div>
+                    {errors.profesionTejedor && <p className="text-red-500 text-sm mt-1">{errors.profesionTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -179,7 +295,7 @@ export function TejedorForm({
                         onValueChange={(val) => setFormData({ ...formData, tipodeVoluntario: val })}
                         required
                     >
-                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder="Seleccione un tipo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -229,37 +345,47 @@ export function TejedorForm({
                             setFormData({ ...formData, fechaIngreso: e.target.value })
                         }
                         required
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="telefono">Teléfono *</Label>
+                    <Label htmlFor="telefono" className={errors.telefonoTejedor ? "text-red-500" : ""}>Teléfono *</Label>
                     <Input
                         id="telefono"
                         value={formData.telefonoTejedor}
-                        onChange={(e) =>
-                            setFormData({ ...formData, telefonoTejedor: e.target.value })
-                        }
+                        onChange={(e) => {
+                            setFormData({ ...formData, telefonoTejedor: e.target.value });
+                            if (errors.telefonoTejedor) setErrors({ ...errors, telefonoTejedor: '' });
+                        }}
                         required
                         maxLength={15}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Ej: 04141234567"
+                        onFocus={(e) => e.target.placeholder = ""}
+                        onBlur={(e) => e.target.placeholder = "Ej: 04141234567"}
+                        className={`h-11 shadow-sm focus:ring-blue-500 ${errors.telefonoTejedor ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                     />
+                    {errors.telefonoTejedor && <p className="text-red-500 text-sm mt-1">{errors.telefonoTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="correo">Correo Electrónico *</Label>
+                    <Label htmlFor="correo" className={errors.correoTejedor ? "text-red-500" : ""}>Correo Electrónico *</Label>
                     <Input
                         id="correo"
                         type="email"
                         value={formData.correoTejedor}
-                        onChange={(e) =>
-                            setFormData({ ...formData, correoTejedor: e.target.value })
-                        }
+                        onChange={(e) => {
+                            setFormData({ ...formData, correoTejedor: e.target.value });
+                            if (errors.correoTejedor) setErrors({ ...errors, correoTejedor: '' });
+                        }}
                         required
                         maxLength={100}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Ej: juan.perez@example.com"
+                        onFocus={(e) => e.target.placeholder = ""}
+                        onBlur={(e) => e.target.placeholder = "Ej: juan.perez@example.com"}
+                        className={`h-11 shadow-sm focus:ring-blue-500 ${errors.correoTejedor ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
                     />
+                    {errors.correoTejedor && <p className="text-red-500 text-sm mt-1">{errors.correoTejedor}</p>}
                 </div>
 
                 <div className="col-span-full space-y-2">
@@ -272,7 +398,10 @@ export function TejedorForm({
                         }
                         required
                         maxLength={150}
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Ej: Calle Principal, etc, etc. "
+                        onFocus={(e) => e.target.placeholder = ""}
+                        onBlur={(e) => e.target.placeholder = "Ej: Calle Principal, etc, etc. "}
+                        className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 
@@ -282,7 +411,7 @@ export function TejedorForm({
                         value={formData.estadoTejedor}
                         onValueChange={handleEstadoChange}
                     >
-                        <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="estado" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder="Seleccione un estado" />
                         </SelectTrigger>
                         <SelectContent>
@@ -302,7 +431,7 @@ export function TejedorForm({
                         onValueChange={handleMunicipioChange}
                         disabled={!formData.estadoTejedor}
                     >
-                        <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="municipio" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder={formData.estadoTejedor ? "Seleccione un municipio" : "Seleccione primero el estado"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -322,7 +451,7 @@ export function TejedorForm({
                         onValueChange={handleParroquiaChange}
                         disabled={!formData.municipioTejedor}
                     >
-                        <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="parroquia" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder={formData.municipioTejedor ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -347,7 +476,7 @@ export function TejedorForm({
                 </Button>
                 <Button
                     type="submit"
-                    className="px-8 shadow-lg shadow-blue-900/20 transition-all active:scale-95"
+                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95"
                     disabled={isLoading}
                 >
                     {isLoading ? 'Guardando...' : (submitLabel || (initialData ? 'Guardar Tejedor' : 'Guardar Tejedor'))}

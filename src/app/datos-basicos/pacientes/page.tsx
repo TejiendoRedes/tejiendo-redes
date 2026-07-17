@@ -21,7 +21,6 @@ export default async function PacientesPage() {
         <PacientesClient
             initialData={pacientesRes.data || []}
             comunidades={comunidadesRes.data || []}
-            canEdit={canEdit}
         />
     );
 }

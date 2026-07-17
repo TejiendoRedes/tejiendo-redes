@@ -285,7 +285,15 @@ export function HistoryStation({ abordaje }: { abordaje: AbordajeWithRelations }
                             </div>
                             <div>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Categoría de Abordaje</p>
-                                <p className="font-semibold text-gray-700">{abordaje.tipoAbordaje || 'No especificado'}</p>
+                                {abordaje.tipoAbordaje ? (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {abordaje.tipoAbordaje.split(',').filter(Boolean).map((tipo) => (
+                                            <Badge key={tipo} variant="outline" className="text-xs">{tipo}</Badge>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="font-semibold text-gray-700">No especificado</p>
+                                )}
                             </div>
                         </div>
 

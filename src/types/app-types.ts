@@ -11,6 +11,18 @@ export interface AbordajeComunidadData {
     estado: string;
     habitantes: number;
     observaciones: string | null;
+    tipoComunidad: string | null;
+    direccion: string | null;
+    telefonoComunidad: string | null;
+    cantidadFamilias: number | null;
+    cantidadNinos: number | null;
+    cantidadAdolescentes: number | null;
+    cantidadMayores: number | null;
+    cantidadMayores60: number | null;
+    nombreResponsable: string | null;
+    apellidoResponsable: string | null;
+    cargoResponsable: string | null;
+    telefonoResponsable: string | null;
 }
 
 export interface AbordajeTejedorData {

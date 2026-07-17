@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { peticiones, medicamentos, pacientes, abordaje, type NewPeticion, type Peticion } from '@/db/schema';
+import { peticiones, medicamentos, pacientes, abordaje, tejedores, type NewPeticion, type Peticion } from '@/db/schema';
 import { eq, and, gt, sql, desc, inArray } from 'drizzle-orm';
 import { comunidades } from '@/db/schema/comunidades';
 import { getErrorMessage } from '@/lib/error-handler';
@@ -34,11 +34,15 @@ export async function getPeticiones() {
             existencia: medicamentos.existencia,
             codigoAbordaje: peticiones.codigoAbordaje,
             descripcionAbordaje: abordaje.descripcion,
+            cedulaTejedor: peticiones.cedulaTejedor,
+            nombreTejedor: tejedores.nombreTejedor,
+            apellidoTejedor: tejedores.apellidoTejedor,
         })
             .from(peticiones)
             .leftJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
             .leftJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
             .leftJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
+            .leftJoin(tejedores, eq(peticiones.cedulaTejedor, tejedores.cedulaTejedor))
             .orderBy(desc(peticiones.fechaPeticion));
 
         return { success: true, data: result as any[] };

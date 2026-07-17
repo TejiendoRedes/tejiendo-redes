@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Pill, Package, Truck } from 'lucide-react';
+import { ArrowLeft, Edit, Pill, Package, Truck, DollarSign } from 'lucide-react';
 import { getEntityDetails } from '@/queries/global-search';;
 import { EntityDetails } from '@/types/app-types';
 import { Loader2 } from 'lucide-react';
@@ -79,6 +79,17 @@ export default function MedicamentoDetallePage() {
                                 <div>
                                     <p className="text-xs text-gray-500">Código</p>
                                     <p className="text-sm font-medium">{data.codigoMedicamento}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                    <DollarSign className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500">Precio</p>
+                                    <p className="text-sm font-medium">
+                                        {Number(data.precio ?? 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </p>
                                 </div>
                             </div>
                         </CardContent>

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList, Eye } from 'lucide-react';
 import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado } from '@/actions/peticiones-actions';
 import { getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/queries/peticiones';;
+import { getTejedores } from '@/queries/tejedores';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
@@ -42,6 +43,16 @@ interface Peticion {
     nombreMedicamento: string | null;
     presentacion: string | null;
     existencia: number | null;
+    cedulaTejedor?: string | null;
+    nombreTejedor?: string | null;
+    apellidoTejedor?: string | null;
+}
+
+interface Tejedor {
+    cedulaTejedor: string;
+    nombreTejedor: string;
+    apellidoTejedor: string;
+    profesionTejedor?: string;
 }
 
 interface Paciente {
@@ -84,10 +95,15 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
     const [pacientes, setPacientes] = React.useState<Paciente[]>([]);
     const [medicamentos, setMedicamentos] = React.useState<Medicamento[]>([]);
     const [abordajes, setAbordajes] = React.useState<Abordaje[]>([]);
+    const [tejedores, setTejedores] = React.useState<Tejedor[]>([]);
     const [selectedPaciente, setSelectedPaciente] = React.useState<string>('');
     const [selectedMedicamento, setSelectedMedicamento] = React.useState<string>('');
     const [selectedAbordaje, setSelectedAbordaje] = React.useState<string>('');
     const [isAbordaje, setIsAbordaje] = React.useState(false);
+
+    // Confirmación de responsable al marcar una entrega como completada
+    const [showEntregaConfirm, setShowEntregaConfirm] = React.useState(false);
+    const [selectedTejedorEntrega, setSelectedTejedorEntrega] = React.useState('');
 
     const [formData, setFormData] = React.useState({
         codigoPaciente: '',
@@ -101,7 +117,15 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
         loadPacientes();
         loadMedicamentos();
         loadAbordajes();
+        loadTejedores();
     }, []);
+
+    const loadTejedores = async () => {
+        const result = await getTejedores();
+        if (result.success) {
+            setTejedores(result.data || []);
+        }
+    };
 
     const loadPacientes = async () => {
         const result = await getPacientesForSelect();
@@ -156,12 +180,19 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
     };
 
     const handleMarcarEntregada = async (codigo: string) => {
-        // Extraer el ID numérico del código de petición
-        const id = parseInt(codigo);
-        const res = await updatePeticionEstado(id, 'entregado');
+        if (!selectedTejedorEntrega) {
+            toast.error('Debe seleccionar el tejedor responsable de la entrega');
+            return;
+        }
+
+        const tejedor = tejedores.find(t => t.cedulaTejedor === selectedTejedorEntrega);
+
+        const res = await marcarComoEntregada(codigo, selectedTejedorEntrega);
         if (res.success) {
             toast.success(res.message);
             setIsDetailsModalOpen(false);
+            setShowEntregaConfirm(false);
+            setSelectedTejedorEntrega('');
             router.refresh();
             // Actualizar la lista local con estado, fecha y hora de entrega
             const ahora = new Date();
@@ -169,7 +200,15 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             setPeticiones(prev =>
                 prev.map(p =>
                     p.codigoPeticion === codigo
-                        ? { ...p, estado: 'entregado', fechaEntrega: ahora, horaEntrega: horaActual }
+                        ? {
+                            ...p,
+                            estado: 'entregado',
+                            fechaEntrega: ahora,
+                            horaEntrega: horaActual,
+                            cedulaTejedor: selectedTejedorEntrega,
+                            nombreTejedor: tejedor?.nombreTejedor || null,
+                            apellidoTejedor: tejedor?.apellidoTejedor || null,
+                        }
                         : p
                 )
             );
@@ -359,6 +398,9 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                                 {row.horaEntrega.slice(0, 5)} {/* HH:MM */}
                             </span>
                         </div>
+                        {row.nombreTejedor && (
+                            <span className="text-xs text-gray-500">Por: {row.nombreTejedor} {row.apellidoTejedor}</span>
+                        )}
                     </div>
                 ) : (
                     <span className="text-gray-400">-</span>
@@ -400,6 +442,8 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                         size="sm"
                         onClick={() => {
                             setSelectedPeticion(row);
+                            setShowEntregaConfirm(false);
+                            setSelectedTejedorEntrega('');
                             setIsDetailsModalOpen(true);
                         }}
                         className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-600 font-medium px-2 py-1 h-8"
@@ -606,6 +650,14 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                                             <p className="text-gray-400">-</p>
                                         )}
                                     </div>
+                                    {selectedPeticion.estado === 'entregado' && selectedPeticion.nombreTejedor && (
+                                        <div className="col-span-2">
+                                            <h4 className="text-sm font-medium text-gray-500">Entregado por</h4>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {selectedPeticion.nombreTejedor} {selectedPeticion.apellidoTejedor}
+                                            </p>
+                                        </div>
+                                    )}
                                     {selectedPeticion.notas && (
                                         <div className="col-span-2">
                                             <h4 className="text-sm font-medium text-gray-500">Notas Adicionales</h4>
@@ -613,6 +665,22 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                                         </div>
                                     )}
                                 </div>
+
+                                {selectedPeticion.estado === 'pendiente' && showEntregaConfirm && (
+                                    <div className="space-y-2 border border-green-200 bg-green-50 p-4 rounded-lg">
+                                        <Label>Tejedor Responsable de la Entrega</Label>
+                                        <SearchableSelect
+                                            items={tejedores}
+                                            value={selectedTejedorEntrega}
+                                            onValueChange={setSelectedTejedorEntrega}
+                                            placeholder="Seleccionar responsable..."
+                                            searchPlaceholder="Buscar por nombre..."
+                                            idField="cedulaTejedor"
+                                            labelField="nombreTejedor"
+                                            secondaryLabelField="profesionTejedor"
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="flex justify-end gap-2 pt-4">
                                     <Button
@@ -623,13 +691,23 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                                         Cerrar
                                     </Button>
 
-                                    {selectedPeticion.estado === 'pendiente' && (
+                                    {selectedPeticion.estado === 'pendiente' && !showEntregaConfirm && (
+                                        <Button
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => setShowEntregaConfirm(true)}
+                                        >
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Marcar como Entregado
+                                        </Button>
+                                    )}
+
+                                    {selectedPeticion.estado === 'pendiente' && showEntregaConfirm && (
                                         <Button
                                             className="bg-green-600 hover:bg-green-700 text-white"
                                             onClick={() => handleMarcarEntregada(selectedPeticion.codigoPeticion)}
                                         >
                                             <CheckCircle className="w-4 h-4 mr-2" />
-                                            Marcar como Entregado
+                                            Confirmar Entrega
                                         </Button>
                                     )}
 

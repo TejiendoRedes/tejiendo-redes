@@ -13,7 +13,7 @@ export const abordaje = mysqlTable('abordaje', {
     horaFin: time('hora_fin').notNull(),
     descripcion: text('descripcion').notNull(),
     // Campos unificados de la solicitud
-    tipoAbordaje: varchar('tipo_abordaje', { length: 50 }),
+    tipoAbordaje: varchar('tipo_abordaje', { length: 150 }), // Uno o más tipos separados por comas
     participantesEstimados: int('participantes_estimados'),
     recursosAdicionales: text('recursos_adicionales'),
     lugar: boolean('lugar').notNull().default(false),

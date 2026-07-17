@@ -15,6 +15,8 @@ export type WizardData = {
     alergias: string;
     enfermedadesFamilia: string;
     cirugiasPrevias: string;
+    historialEnfermedades: string;
+    consultasMedicasPrevias: string;
     medicamentosActuales: string;
     // Triaje (Paso 2)
     peso: string;
@@ -36,6 +38,8 @@ const INITIAL_DATA: WizardData = {
     alergias: '',
     enfermedadesFamilia: '',
     cirugiasPrevias: '',
+    historialEnfermedades: '',
+    consultasMedicasPrevias: '',
     medicamentosActuales: '',
     peso: '',
     talla: '',

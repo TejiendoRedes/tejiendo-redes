@@ -3,6 +3,7 @@ import { mysqlTable, varchar, int, datetime, index } from 'drizzle-orm/mysql-cor
 import { pacientes } from './pacientes';
 import { medicamentos } from './medicamentos';
 import { abordaje } from './abordajes';
+import { tejedores } from './tejedores';
 
 /**
  * Tabla: peticiones
@@ -27,6 +28,10 @@ export const peticiones = mysqlTable('peticiones', {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }),
+    cedulaTejedor: varchar('cedula_tejedor', { length: 12 }).references(() => tejedores.cedulaTejedor, {
+        onDelete: 'restrict',
+        onUpdate: 'cascade'
+    }), // Responsable que marcó la entrega (solo se completa al pasar a 'entregado')
     notas: varchar('notas', { length: 255 }),
 }, (table) => ({
     pacienteIdx: index('idx_paciente').on(table.codigoPaciente),

@@ -8,32 +8,62 @@ import { abordaje } from '@/db/schema/abordajes';
 import { pacientes } from '@/db/schema/pacientes';
 import { especialidades } from '@/db/schema/especialidades';
 import { medicos } from '@/db/schema/medicos';
-import { eq, inArray, sql, desc } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { tejedores } from '@/db/schema/tejedores';
-import { getErrorMessage } from '@/lib/error-handler';
-import { getNextCode } from '@/lib/id-generator';
-import { requireAuth } from '@/lib/auth';
-import { ConsultaSchema } from '@/schemas/consultas';
-import { antecedentes, type NewAntecedente } from '@/db/schema/antecedentes';
 
-// Eliminado: checkCodeExists (ahora se genera automáticamente)
+/**
+ * Validar si un código ya existe
+ */
+async function checkCodeExists(codigo: string) {
+    const existing = await db.select({ codigo: consultas.codigoConsulta })
+        .from(consultas)
+        .where(eq(consultas.codigoConsulta, codigo))
+        .limit(1);
+    return existing.length > 0;
+}
 
 /**
  * Obtener todas las consultas con relaciones
  */
+export async function getConsultas() {
+    try {
+        // En un caso real masiva, esto deberia tener paginacion y filtros
+        const data = await db.select({
+            consulta: consultas,
+            nombrePaciente: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
+            nombreMedico: sql<string>`concat(${tejedores.nombreTejedor}, ' ', ${tejedores.apellidoTejedor})`,
+            codigoAbordaje: abordaje.codigoAbordaje,
+            fechaAbordaje: abordaje.fechaAbordaje,
+        })
+            .from(consultas)
+            .leftJoin(pacientes, eq(consultas.cedulaPaciente, pacientes.cedulaPaciente))
+            .leftJoin(medicos, eq(consultas.cedulaMedico, medicos.cedulaTejedor))
+            .leftJoin(tejedores, eq(medicos.cedulaTejedor, tejedores.cedulaTejedor))
+            .leftJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje));
 
-
-/**
- * Obtener historial de consultas de un paciente
- */
-
-/**
- * Obtener historial de medicamentos entregados a un paciente
- */
+        // Para evitar N+1, podriamos traer las enfermedades en un segundo query si son necesarias para la lista
+        // Por ahora, solo retornamos los datos basicos para la tabla
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error fetching consultas:', error);
+        return { success: false, error: 'Error al obtener las consultas' };
+    }
+}
 
 /**
  * Obtener enfermedades asociadas a una consulta
  */
+export async function getEnfermedadesByConsulta(codigoConsulta: string) {
+    try {
+        const data = await db.select()
+            .from(consultasEnfermedades)
+            .where(eq(consultasEnfermedades.codigoConsulta, codigoConsulta));
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error fetching consulta enfermedades:', error);
+        return { success: false, error: 'Error al obtener enfermedades de la consulta' };
+    }
+}
 
 /**
  * Crear una nueva consulta con sus enfermedades asociadas
@@ -43,54 +73,29 @@ export async function createConsulta(
     enfermedadesIds: string[]
 ) {
     try {
-        await requireAuth();
-
-        const validation = ConsultaSchema.safeParse(data);
-        if (!validation.success) {
-            return { success: false, error: validation.error.errors[0].message };
+        if (await checkCodeExists(data.codigoConsulta)) {
+            return { success: false, error: 'El código de consulta ya existe' };
         }
-
-        // Generación automática del código de consulta (CON-001...)
-        const newCode = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
-
-        // Obtener fecha y hora actual en zona horaria de Venezuela (America/Caracas, UTC-4)
-        const venezuelaTime = new Intl.DateTimeFormat('es-VE', {
-            timeZone: 'America/Caracas',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        }).format(new Date());
-
-        const horaFormateada = venezuelaTime;
 
         await db.transaction(async (tx) => {
             // 1. Insert Consulta
-            await tx.insert(consultas).values({
-                ...data,
-                codigoConsulta: newCode,
-                horaConsulta: horaFormateada
-            });
+            await tx.insert(consultas).values(data);
 
             // 2. Insert Enfermedades Relations
             if (enfermedadesIds.length > 0) {
                 const relations: NewConsultaEnfermedad[] = enfermedadesIds.map(id => ({
-                    codigoConsulta: newCode,
+                    codigoConsulta: data.codigoConsulta,
                     codigoEnfermedad: id
                 }));
                 await tx.insert(consultasEnfermedades).values(relations);
             }
         });
 
-        revalidatePath('/atencion-medica');
-        // Also revalidate the specific abordaje page if this consulta belongs to an abordaje
-        if (data.codigoAbordaje) {
-            revalidatePath(`/abordajes/${data.codigoAbordaje}`);
-        }
-        return { success: true, message: `Consulta creada correctamente con código ${newCode}` };
+        revalidatePath('/datos-basicos/consultas');
+        return { success: true, message: 'Consulta creada correctamente' };
     } catch (error) {
-        const errorMessage = getErrorMessage(error, 'la consulta', 'crear');
-        return { success: false, error: errorMessage };
+        console.error('Error creating consulta:', error);
+        return { success: false, error: 'Error al crear la consulta' };
     }
 }
 
@@ -103,13 +108,6 @@ export async function updateConsulta(
     enfermedadesIds: string[]
 ) {
     try {
-        await requireAuth();
-
-        const validation = ConsultaSchema.partial().safeParse(data);
-        if (!validation.success) {
-            return { success: false, error: validation.error.errors[0].message };
-        }
-
         await db.transaction(async (tx) => {
             // 1. Update Consulta
             await tx.update(consultas)
@@ -130,11 +128,11 @@ export async function updateConsulta(
             }
         });
 
-        revalidatePath('/atencion-medica');
+        revalidatePath('/datos-basicos/consultas');
         return { success: true, message: 'Consulta actualizada correctamente' };
     } catch (error) {
-        const errorMessage = getErrorMessage(error, 'la consulta', 'actualizar');
-        return { success: false, error: errorMessage };
+        console.error('Error updating consulta:', error);
+        return { success: false, error: 'Error al actualizar la consulta' };
     }
 }
 
@@ -143,111 +141,64 @@ export async function updateConsulta(
  */
 export async function deleteConsulta(codigo: string) {
     try {
-        await requireAuth();
         // Cascade delete should handle children, but explicit delete is safer sometimes depending on DB config
         // defined in schema as cascade, so just deleting parent is enough.
         await db.delete(consultas)
             .where(eq(consultas.codigoConsulta, codigo));
-        revalidatePath('/atencion-medica');
+        revalidatePath('/datos-basicos/consultas');
         return { success: true, message: 'Consulta eliminada correctamente' };
     } catch (error) {
-        const errorMessage = getErrorMessage(error, 'la consulta', 'eliminar');
-        return { success: false, error: errorMessage };
+        console.error('Error deleting consulta:', error);
+        return { success: false, error: 'Error al eliminar la consulta' };
     }
 }
 
-/**
- * Guardar Consulta desde el Wizard (Incluye Antecedentes)
- */
-export async function saveConsultaWizard(
-    consultaData: Omit<NewConsulta, 'codigoConsulta' | 'fechaConsulta' | 'horaConsulta'>,
-    enfermedadesIds: string[],
-    antecedentesData: Omit<NewAntecedente, 'codigoAntecedente' | 'cedulaPaciente'>,
-    codigoConsultaExistente?: string
-) {
+export async function saveConsultaWizard(consultaData: any, enfermedadesIds: string[], antecedentesData: any, editingId?: string) {
     try {
-        await requireAuth();
-
-        const venezuelaTime = new Intl.DateTimeFormat('es-VE', {
-            timeZone: 'America/Caracas',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        }).format(new Date());
-
         await db.transaction(async (tx) => {
-            // 1. Manejar Antecedentes (Upsert logic based on cedulaPaciente)
-            // Primero verificamos si ya tiene antecedentes
-            const existingAntecedente = await tx.query.antecedentes.findFirst({
-                where: eq(antecedentes.cedulaPaciente, consultaData.cedulaPaciente)
-            });
-
-            if (existingAntecedente) {
-                // Actualizar
-                await tx.update(antecedentes)
-                    .set(antecedentesData)
-                    .where(eq(antecedentes.cedulaPaciente, consultaData.cedulaPaciente));
+            const codigo = editingId || consultaData.codigoConsulta || `CNS-${Date.now().toString().slice(-6)}`;
+            const newConsulta = {
+                codigoConsulta: codigo,
+                codigoAbordaje: consultaData.codigoAbordaje || null,
+                cedulaPaciente: consultaData.cedulaPaciente,
+                cedulaMedico: consultaData.cedulaMedico,
+                motivoConsulta: consultaData.motivoConsulta || '',
+                diagnosticoTexto: consultaData.diagnosticoTexto || '',
+                tratamiento: consultaData.tratamiento || '',
+                recomendaciones: consultaData.recomendaciones || '',
+                tensionArterial: antecedentesData.TA || null,
+                fechaConsulta: new Date(),
+            };
+            
+            // Check if exists
+            const existing = await tx.select({ c: consultas.codigoConsulta }).from(consultas).where(eq(consultas.codigoConsulta, codigo));
+            if (existing.length > 0) {
+                await tx.update(consultas).set(newConsulta as any).where(eq(consultas.codigoConsulta, codigo));
             } else {
-                // Crear nuevo
-                const newAntCode = await getNextCode(antecedentes, antecedentes.codigoAntecedente, 'ANT-');
-                await tx.insert(antecedentes).values({
-                    ...antecedentesData,
-                    codigoAntecedente: newAntCode,
-                    cedulaPaciente: consultaData.cedulaPaciente
-                });
+                await tx.insert(consultas).values(newConsulta as any);
             }
-
-            // 2. Manejar Consulta
-            let codigoGuardado = codigoConsultaExistente;
-
-            if (codigoConsultaExistente) {
-                // Update
-                await tx.update(consultas)
-                    .set({
-                        ...consultaData,
-                        tensionArterial: antecedentesData.TA // Sincronizamos
-                    })
-                    .where(eq(consultas.codigoConsulta, codigoConsultaExistente));
-
-                // Sync Enfermedades
-                await tx.delete(consultasEnfermedades)
-                    .where(eq(consultasEnfermedades.codigoConsulta, codigoConsultaExistente));
-
-                if (enfermedadesIds.length > 0) {
-                    const relations: NewConsultaEnfermedad[] = enfermedadesIds.map(id => ({
-                        codigoConsulta: codigoConsultaExistente,
-                        codigoEnfermedad: id
-                    }));
-                    await tx.insert(consultasEnfermedades).values(relations);
-                }
-            } else {
-                // Insert
-                codigoGuardado = await getNextCode(consultas, consultas.codigoConsulta, 'CON-');
-                await tx.insert(consultas).values({
-                    ...consultaData,
-                    codigoConsulta: codigoGuardado,
-                    horaConsulta: venezuelaTime,
-                    tensionArterial: antecedentesData.TA
-                });
-
-                if (enfermedadesIds.length > 0) {
-                    const relations: NewConsultaEnfermedad[] = enfermedadesIds.map(id => ({
-                        codigoConsulta: codigoGuardado as string,
-                        codigoEnfermedad: id
-                    }));
-                    await tx.insert(consultasEnfermedades).values(relations);
-                }
+            
+            // Sync enfermedades
+            await tx.delete(consultasEnfermedades).where(eq(consultasEnfermedades.codigoConsulta, codigo));
+            if (enfermedadesIds && enfermedadesIds.length > 0) {
+                const rels = enfermedadesIds.map(id => ({ codigoConsulta: codigo, codigoEnfermedad: id }));
+                await tx.insert(consultasEnfermedades).values(rels);
             }
+            
+            // Update patient records with antecedents
+            await tx.update(pacientes)
+                .set({
+                    historialEnfermedades: antecedentesData.enfermedadesPrevias || antecedentesData.historialEnfermedades || null,
+                    consultasMedicasPrevias: antecedentesData.consultasMedicasPrevias || null,
+                    nota: antecedentesData.nota || null,
+                })
+                .where(eq(pacientes.cedulaPaciente, consultaData.cedulaPaciente));
         });
-
         revalidatePath('/atencion-medica');
-        if (consultaData.codigoAbordaje) {
-            revalidatePath(`/abordajes/${consultaData.codigoAbordaje}`);
-        }
-        return { success: true, message: 'Consulta registrada exitosamente' };
-    } catch (error) {
-        const errorMessage = getErrorMessage(error, 'el registro paso a paso', 'crear');
-        return { success: false, error: errorMessage };
+        revalidatePath('/datos-basicos/consultas');
+        return { success: true, message: editingId ? 'Consulta actualizada correctamente' : 'Consulta guardada exitosamente' };
+    } catch (error: any) {
+        console.error('Error guardando consulta wizard:', error);
+        return { success: false, error: 'Error al guardar la consulta' };
     }
 }

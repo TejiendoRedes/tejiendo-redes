@@ -1,868 +1,575 @@
 'use client';
 
-import React, { useEffect, useState, useTransition } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Download, FileText, Filter, Loader2, BarChart as BarChartIcon, PieChart as PieChartIcon, Table as TableIcon } from 'lucide-react';
-import { DataTable } from '@/components/ui-kit/DataTable';
+import { Download, FileText, Search } from 'lucide-react';
+import { DataTable } from '@/components/shared/DataTable';
 import { toast } from 'sonner';
-import { exportToCSV, exportToPDF, ExportColumn } from '@/lib/export-utils';
-import { getEstadoNombre, getMunicipioNombre, VENEZUELA_DATA, Estado, Municipio, Parroquia } from '@/data/venezuela-location';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-
-import { ReporteAbordajeItem, ReporteComunidadItem, ReportePacienteItem, ReporteMorbilidadItem, ReporteMedicamentoItem } from '@/types/app-types';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { MINILOGO_B64 } from './logoBase64';
 
 interface ReportesClientProps {
     comunidades: Array<{ codigo_comunidad: string; nombre_comunidad: string }>;
-    reporteAbordajes: ReporteAbordajeItem[];
-    reporteComunidades: ReporteComunidadItem[];
-    reportePacientes: ReportePacienteItem[];
-    dataMorbilidad: ReporteMorbilidadItem[];
-    reporteMedicamentos: ReporteMedicamentoItem[];
+    reporteAbordajes: Array<{
+        codigo_abordaje: string;
+        fecha_abordaje: Date;
+        descripcion: string;
+        comunidades: number;
+        pacientes_atendidos: number;
+        hora_inicio: string;
+        hora_fin: string;
+    }>;
+    reporteComunidades: Array<{
+        codigo_comunidad: string;
+        nombre_comunidad: string;
+        estado: string;
+        municipio: string;
+        cantidad_habitantes: number;
+        pacientes_tratados: number;
+        abordajes_realizados: number;
+        total_consultas: number;
+    }>;
+    reportePacientes: Array<{
+        cedula_paciente: string;
+        codigo_comunidad: string;
+        nombre_comunidad: string;
+        nombre_paciente: string;
+        apellido_paciente: string;
+        fecha_nacimiento: Date;
+        direccion_paciente: string;
+        telefono_paciente: string;
+        correo_paciente: string;
+    }>;
+    dataMorbilidad: Array<{
+        codigo_enfermedad: string;
+        nombre_enfermedad: string;
+        tipo_patologia: string;
+        total_casos: number;
+        pacientes_afectados: number;
+        porcentaje: string;
+        ultima_consulta: Date | null;
+    }>;
+    reporteMedicamentos: Array<{
+        codigo_medicamento: string;
+        nombre_medicamento: string;
+        presentacion: string;
+        existencia: number;
+        descripcion: string;
+    }>;
 }
 
+const COLORES_GRAFICA = ['#1e3a5f', '#2563eb', '#7c3aed', '#059669', '#dc2626', '#f59e0b', '#ec4899', '#0891b2'];
+
+const TIPO_COMUNIDAD_MAP: Record<string, string> = {
+    '1': 'Urbana', '2': 'Rural', '3': 'Indigena', '4': 'Base de Misiones',
+};
+
 export default function ReportesClient({
-    comunidades,
-    reporteAbordajes,
-    reporteComunidades,
-    reportePacientes,
-    dataMorbilidad,
-    reporteMedicamentos
+    comunidades, reporteAbordajes, reporteComunidades,
+    reportePacientes, dataMorbilidad, reporteMedicamentos
 }: ReportesClientProps) {
-    const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const [isPending, startTransition] = useTransition();
 
-    const [fechaInicio, setFechaInicio] = useState(searchParams.get('fechaInicio') || '');
-    const [fechaFin, setFechaFin] = useState(searchParams.get('fechaFin') || '');
-    const [comunidadFiltro, setComunidadFiltro] = useState(searchParams.get('codigoComunidad') || 'todas');
-    const [estadoFiltro, setEstadoFiltro] = useState(searchParams.get('estado') || 'todos');
-    const [municipioFiltro, setMunicipioFiltro] = useState(searchParams.get('municipio') || 'todos');
-    const [parroquiaFiltro, setParroquiaFiltro] = useState(searchParams.get('parroquia') || 'todas');
-    const [tipoComunidadFiltro, setTipoComunidadFiltro] = useState(searchParams.get('tipoComunidad') || 'todos');
+    const [abordajeFechaInicio, setAbordajeFechaInicio] = React.useState('');
+    const [abordajeFechaFin, setAbordajeFechaFin] = React.useState('');
+    const [abordajeEstado, setAbordajeEstado] = React.useState('todos');
+    const [comunidadSearch, setComunidadSearch] = React.useState('');
+    const [comunidadTipo, setComunidadTipo] = React.useState('todos');
+    const [pacienteComunidad, setPacienteComunidad] = React.useState('todas');
+    const [pacienteSexo, setPacienteSexo] = React.useState('todos');
+    const [morbilidadTipo, setMorbilidadTipo] = React.useState('todos');
+    const [medicamentoStock, setMedicamentoStock] = React.useState('todos');
 
-    const [chartViews, setChartViews] = useState<Record<string, 'table' | 'bar' | 'pie'>>({
-        abordajes: 'table',
-        comunidades: 'table',
-        pacientes: 'bar', // Changed default for patients to show the new charts
-        morbilidad: 'table',
-        medicamentos: 'table'
+    const abordajesFiltrados = reporteAbordajes.filter(a => {
+        const fecha = new Date(a.fecha_abordaje);
+        const desde = abordajeFechaInicio ? new Date(abordajeFechaInicio) : null;
+        const hasta = abordajeFechaFin ? new Date(abordajeFechaFin) : null;
+        if (desde && fecha < desde) return false;
+        if (hasta && fecha > hasta) return false;
+        if (abordajeEstado !== 'todos' && (a as any).estado !== abordajeEstado) return false;
+        return true;
     });
 
-    // Lógica de Grupos Etarios
-    const ageGroups = React.useMemo(() => {
-        const groups = {
-            'Niñez (0-12)': 0,
-            'Adolescencia (13-17)': 0,
-            'Adultez (18-59)': 0,
-            'Adulto Mayor (60+)': 0,
-            'No especificado': 0
-        };
+    const comunidadesFiltradas = reporteComunidades.filter(c => {
+        const matchNombre = c.nombre_comunidad.toLowerCase().includes(comunidadSearch.toLowerCase());
+        const matchTipo = comunidadTipo === 'todos' || (c as any).tipoComunidad === comunidadTipo;
+        return matchNombre && matchTipo;
+    });
 
-        const calculateAge = (birthday: Date | string | null) => {
-            if (!birthday) return -1;
-            const birthDate = new Date(birthday);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-            return age;
-        };
+    const pacientesFiltrados = reportePacientes.filter(p => {
+        if (pacienteComunidad !== 'todas' && p.codigo_comunidad !== pacienteComunidad) return false;
+        return true;
+    });
 
-        reportePacientes.forEach(p => {
-            const age = calculateAge(p.fecha_nacimiento);
-            if (age === -1) groups['No especificado']++;
-            else if (age <= 12) groups['Niñez (0-12)']++;
-            else if (age <= 17) groups['Adolescencia (13-17)']++;
-            else if (age <= 59) groups['Adultez (18-59)']++;
-            else groups['Adulto Mayor (60+)']++;
-        });
+    const morbilidadFiltrada = dataMorbilidad
+        .filter(m => morbilidadTipo === 'todos' || m.tipo_patologia === morbilidadTipo)
+        .sort((a, b) => Number(b.total_casos) - Number(a.total_casos));
 
-        return Object.entries(groups).map(([name, value]) => ({ name, value }));
-    }, [reportePacientes]);
+    const tiposPatologia = [...new Set(dataMorbilidad.map(m => m.tipo_patologia).filter(Boolean))];
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+    const datosGraficaMorbilidad = morbilidadFiltrada
+        .filter(m => Number(m.total_casos) > 0)
+        .slice(0, 8)
+        .map(m => ({
+            nombre: m.nombre_enfermedad.length > 15 ? m.nombre_enfermedad.substring(0, 15) + '...' : m.nombre_enfermedad,
+            casos: Number(m.total_casos),
+        }));
 
-    const availableEstados = VENEZUELA_DATA;
-    const availableMunicipios = estadoFiltro !== 'todos' ? VENEZUELA_DATA.find(e => e.id === estadoFiltro)?.municipios || [] : [];
-    const availableParroquias = (estadoFiltro !== 'todos' && municipioFiltro !== 'todos') ? availableMunicipios.find(m => m.id === municipioFiltro)?.parroquias || [] : [];
+    const medicamentosFiltrados = reporteMedicamentos.filter(m => {
+        if (medicamentoStock === 'critico') return m.existencia < 20;
+        if (medicamentoStock === 'medio') return m.existencia >= 20 && m.existencia < 50;
+        if (medicamentoStock === 'optimo') return m.existencia >= 50;
+        return true;
+    });
 
-    const updateFilters = () => {
-        const params = new URLSearchParams();
+    // CSV real
+    const generarCSV = (tabName: string) => {
+        let headers: string[] = [];
+        let rows: string[][] = [];
 
-        if (fechaInicio) params.set('fechaInicio', fechaInicio);
-        if (fechaFin) params.set('fechaFin', fechaFin);
-        if (comunidadFiltro && comunidadFiltro !== 'todas') params.set('codigoComunidad', comunidadFiltro);
-        if (estadoFiltro && estadoFiltro !== 'todos') params.set('estado', estadoFiltro);
-        if (municipioFiltro && municipioFiltro !== 'todos') params.set('municipio', municipioFiltro);
-        if (parroquiaFiltro && parroquiaFiltro !== 'todas') params.set('parroquia', parroquiaFiltro);
-        if (tipoComunidadFiltro && tipoComunidadFiltro !== 'todos') params.set('tipoComunidad', tipoComunidadFiltro);
+        if (tabName === 'Abordajes') {
+            headers = ['Codigo', 'Fecha', 'Descripcion', 'Comunidades', 'Pacientes Atendidos', 'Hora Inicio', 'Hora Fin'];
+            rows = abordajesFiltrados.map(a => [
+                a.codigo_abordaje,
+                new Date(a.fecha_abordaje).toLocaleDateString('es-VE'),
+                '"' + a.descripcion + '"',
+                String(a.comunidades),
+                String(a.pacientes_atendidos),
+                a.hora_inicio || '-',
+                a.hora_fin || '-',
+            ]);
+        } else if (tabName === 'Comunidades') {
+            headers = ['Nombre Comunidad', 'Estado', 'Municipio', 'Habitantes', 'Pacientes Tratados', 'Abordajes Realizados', 'Consultas Realizadas'];
+            rows = comunidadesFiltradas.map(c => [
+                '"' + c.nombre_comunidad + '"',
+                c.estado, c.municipio,
+                String(c.cantidad_habitantes),
+                String(c.pacientes_tratados),
+                String(c.abordajes_realizados),
+                String(c.total_consultas),
+            ]);
+        } else if (tabName === 'Pacientes') {
+            headers = ['Cedula', 'Nombre', 'Apellido', 'Comunidad', 'Fecha Nacimiento', 'Telefono', 'Correo'];
+            rows = pacientesFiltrados.map(p => [
+                p.cedula_paciente, p.nombre_paciente, p.apellido_paciente,
+                '"' + p.nombre_comunidad + '"',
+                p.fecha_nacimiento ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE') : '-',
+                p.telefono_paciente, p.correo_paciente,
+            ]);
+        } else if (tabName === 'Morbilidad') {
+            headers = ['Enfermedad', 'Tipo Patologia', 'Total Casos', 'Pacientes Afectados', 'Porcentaje', 'Ultima Consulta'];
+            rows = morbilidadFiltrada.map(m => [
+                '"' + m.nombre_enfermedad + '"',
+                m.tipo_patologia,
+                String(m.total_casos),
+                String(m.pacientes_afectados),
+                m.porcentaje + '%',
+                m.ultima_consulta ? new Date(m.ultima_consulta).toLocaleDateString('es-VE') : '-',
+            ]);
+        } else if (tabName === 'Medicamentos') {
+            headers = ['Codigo', 'Nombre', 'Presentacion', 'Existencia', 'Estado Stock', 'Descripcion'];
+            rows = medicamentosFiltrados.map(m => [
+                m.codigo_medicamento,
+                '"' + m.nombre_medicamento + '"',
+                '"' + m.presentacion + '"',
+                String(m.existencia),
+                m.existencia < 20 ? 'CRITICO' : m.existencia < 50 ? 'MEDIO' : 'OPTIMO',
+                '"' + m.descripcion + '"',
+            ]);
+        }
 
-        startTransition(() => {
-            router.push(`${pathname}?${params.toString()}`);
-        });
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const fecha = new Date().toISOString().split('T')[0];
+        link.download = 'reporte-' + tabName.toLowerCase() + '-' + fecha + '.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success('CSV de ' + tabName + ' descargado correctamente');
     };
 
-    const renderChartControls = (tab: string) => (
-        <div className="flex bg-gray-50/80 rounded-xl p-1 items-center mr-2 border border-gray-100 backdrop-blur-sm shadow-inner">
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setChartViews(prev => ({ ...prev, [tab]: 'table' }))}
-                title="Ver Tabla"
-                className={`rounded-lg transition-all ${chartViews[tab] === 'table' ? 'bg-white shadow-sm text-[#1e3a8a] hover:text-blue-900' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100/50'}`}
-            >
-                <TableIcon className="w-4 h-4" />
-            </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setChartViews(prev => ({ ...prev, [tab]: 'bar' }))}
-                title="Gráfico de Barras"
-                className={`rounded-lg transition-all ${chartViews[tab] === 'bar' ? 'bg-white shadow-sm text-[#1e3a8a] hover:text-blue-900' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100/50'}`}
-            >
-                <BarChartIcon className="w-4 h-4" />
-            </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setChartViews(prev => ({ ...prev, [tab]: 'pie' }))}
-                title="Gráfico Circular"
-                className={`rounded-lg transition-all ${chartViews[tab] === 'pie' ? 'bg-white shadow-sm text-[#1e3a8a] hover:text-blue-900' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100/50'}`}
-            >
-                <PieChartIcon className="w-4 h-4" />
-            </Button>
-        </div>
-    );
+    // PDF con logo
+    const generarPDF = (tabName: string) => {
+        const doc = new jsPDF();
+        const fechaGeneracion = new Date().toLocaleDateString('es-VE', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+        const colorPrimario: [number, number, number] = [30, 58, 95];
+        const colorSecundario: [number, number, number] = [37, 99, 235];
 
-    const handleExport = (format: 'csv' | 'pdf', tabName: string, data: any[], columns: any[]) => {
-        try {
-            const exportColumns: ExportColumn<any>[] = columns.map(col => ({
-                header: col.label,
-                key: col.key,
-                render: col.render
-            }));
+        doc.setFillColor(...colorPrimario);
+        doc.rect(0, 0, 210, 30, 'F');
+        doc.addImage(MINILOGO_B64, 'PNG', 5, 2, 26, 26);
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(15);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Sistema de Abordajes', 35, 11);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Fundacion Tejiendo Redes - Gestion de Salud Comunitaria', 35, 18);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Reporte de ' + tabName, 196, 11, { align: 'right' });
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Generado: ' + fechaGeneracion, 196, 18, { align: 'right' });
+        doc.setDrawColor(...colorSecundario);
+        doc.setLineWidth(0.5);
+        doc.line(14, 34, 196, 34);
+        let startY = 38;
 
-            const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `reporte-${tabName}-${timestamp}`;
-            const title = `Reporte de ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`;
+        const headStyles = { fillColor: colorPrimario, textColor: 255 as any, fontStyle: 'bold' as any, fontSize: 8 };
+        const footStyles = { fillColor: colorSecundario, textColor: 255 as any, fontStyle: 'bold' as any, fontSize: 8 };
+        const altRows = { fillColor: [240, 244, 255] as any };
+        const baseStyles = { fontSize: 8, cellPadding: 3 };
 
-            if (format === 'csv') {
-                exportToCSV(data, exportColumns, filename);
-                toast.success('Reporte CSV exportado exitosamente');
-            } else {
-                exportToPDF(data, exportColumns, filename, title);
-                toast.success('Reporte PDF exportado exitosamente');
-            }
-        } catch (error) {
-            console.error('Error exportando:', error);
-            toast.error('Error al exportar el reporte');
+        if (tabName === 'Abordajes') {
+            autoTable(doc, {
+                startY,
+                head: [['Codigo', 'Fecha', 'Descripcion', 'Comunidades', 'Pacientes', 'Hora Inicio', 'Hora Fin']],
+                body: abordajesFiltrados.map(a => [
+                    a.codigo_abordaje,
+                    new Date(a.fecha_abordaje).toLocaleDateString('es-VE'),
+                    a.descripcion,
+                    String(a.comunidades),
+                    String(a.pacientes_atendidos),
+                    a.hora_inicio || '-',
+                    a.hora_fin || '-',
+                ]),
+                foot: [['TOTAL', '', abordajesFiltrados.length + ' abordajes', '',
+                    String(abordajesFiltrados.reduce((s, a) => s + (a.pacientes_atendidos || 0), 0)), '', '']],
+                headStyles, footStyles, alternateRowStyles: altRows, styles: baseStyles,
+                columnStyles: { 2: { cellWidth: 50 } },
+            });
+        } else if (tabName === 'Comunidades') {
+            autoTable(doc, {
+                startY,
+                head: [['Nombre Comunidad', 'Estado', 'Municipio', 'Habitantes', 'Pacientes', 'Abordajes', 'Consultas']],
+                body: comunidadesFiltradas.map(c => [
+                    c.nombre_comunidad, c.estado, c.municipio,
+                    String(c.cantidad_habitantes), String(c.pacientes_tratados),
+                    String(c.abordajes_realizados), String(c.total_consultas),
+                ]),
+                foot: [['TOTAL: ' + comunidadesFiltradas.length + ' comunidades', '', '',
+                    String(comunidadesFiltradas.reduce((s, c) => s + (c.cantidad_habitantes || 0), 0)),
+                    String(comunidadesFiltradas.reduce((s, c) => s + (c.pacientes_tratados || 0), 0)),
+                    String(comunidadesFiltradas.reduce((s, c) => s + (c.abordajes_realizados || 0), 0)),
+                    String(comunidadesFiltradas.reduce((s, c) => s + (c.total_consultas || 0), 0)),
+                ]],
+                headStyles, footStyles, alternateRowStyles: altRows, styles: baseStyles,
+            });
+        } else if (tabName === 'Pacientes') {
+            autoTable(doc, {
+                startY,
+                head: [['Cedula', 'Nombre', 'Apellido', 'Comunidad', 'Fecha Nac.', 'Telefono']],
+                body: pacientesFiltrados.map(p => [
+                    p.cedula_paciente, p.nombre_paciente, p.apellido_paciente,
+                    p.nombre_comunidad,
+                    p.fecha_nacimiento ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE') : '-',
+                    p.telefono_paciente,
+                ]),
+                foot: [['TOTAL: ' + pacientesFiltrados.length + ' pacientes', '', '', '', '', '']],
+                headStyles, footStyles, alternateRowStyles: altRows, styles: baseStyles,
+            });
+        } else if (tabName === 'Morbilidad') {
+            autoTable(doc, {
+                startY,
+                head: [['Enfermedad', 'Tipo Patologia', 'Total Casos', 'Pacientes Afectados', '% del Total', 'Ultima Consulta']],
+                body: morbilidadFiltrada.map(m => [
+                    m.nombre_enfermedad, m.tipo_patologia,
+                    String(m.total_casos), String(m.pacientes_afectados),
+                    m.porcentaje + '%',
+                    m.ultima_consulta ? new Date(m.ultima_consulta).toLocaleDateString('es-VE') : '-',
+                ]),
+                foot: [['TOTAL: ' + morbilidadFiltrada.length + ' enfermedades', '',
+                    String(morbilidadFiltrada.reduce((s, m) => s + Number(m.total_casos || 0), 0)),
+                    String(morbilidadFiltrada.reduce((s, m) => s + Number(m.pacientes_afectados || 0), 0)),
+                    '', '']],
+                headStyles, footStyles, alternateRowStyles: altRows, styles: baseStyles,
+            });
+        } else if (tabName === 'Medicamentos') {
+            autoTable(doc, {
+                startY,
+                head: [['Codigo', 'Nombre', 'Presentacion', 'Existencia', 'Estado Stock', 'Descripcion']],
+                body: medicamentosFiltrados.map(m => [
+                    m.codigo_medicamento, m.nombre_medicamento, m.presentacion,
+                    String(m.existencia),
+                    m.existencia < 20 ? 'CRITICO' : m.existencia < 50 ? 'MEDIO' : 'OPTIMO',
+                    m.descripcion,
+                ]),
+                foot: [['TOTAL: ' + medicamentosFiltrados.length + ' medicamentos', '', '', '', '', '']],
+                headStyles, footStyles, alternateRowStyles: altRows, styles: baseStyles,
+                didParseCell: (data) => {
+                    if (data.section === 'body' && data.column.index === 4) {
+                        if (data.cell.raw === 'CRITICO') { data.cell.styles.textColor = [220, 38, 38]; data.cell.styles.fontStyle = 'bold'; }
+                        else if (data.cell.raw === 'MEDIO') { data.cell.styles.textColor = [180, 83, 9]; }
+                        else { data.cell.styles.textColor = [22, 101, 52]; }
+                    }
+                },
+            });
         }
+
+        const totalPaginas = (doc as any).internal.getNumberOfPages();
+        for (let i = 1; i <= totalPaginas; i++) {
+            doc.setPage(i);
+            doc.setFillColor(...colorPrimario);
+            doc.rect(0, 285, 210, 12, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.text('Fundacion Tejiendo Redes - Sistema de Abordajes', 14, 292);
+            doc.text('Pagina ' + i + ' de ' + totalPaginas, 196, 292, { align: 'right' });
+        }
+
+        const fecha = new Date().toISOString().split('T')[0];
+        doc.save('reporte-' + tabName.toLowerCase() + '-' + fecha + '.pdf');
+        toast.success('PDF de ' + tabName + ' generado correctamente');
     };
 
     return (
-        <div className="space-y-6">
-            {/* Filtros Globales */}
-            <Card className="rounded-2xl shadow-sm border-gray-100 overflow-visible bg-white/70 backdrop-blur-md">
-                <CardHeader className="bg-transparent border-b border-gray-50 pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg text-gray-800">
-                        <Filter className="w-5 h-5 text-[#1e3a8a]" />
-                        Filtros de Reporte
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4 items-end">
-                        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 w-full">
-                            <div className="space-y-2">
-                                <Label htmlFor="fechaInicio" className="text-xs">Fecha Inicio</Label>
-                                <Input
-                                    id="fechaInicio"
-                                    type="date"
-                                    value={fechaInicio}
-                                    onChange={(e) => setFechaInicio(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="fechaFin" className="text-xs">Fecha Fin</Label>
-                                <Input
-                                    id="fechaFin"
-                                    type="date"
-                                    value={fechaFin}
-                                    onChange={(e) => setFechaFin(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tipoComunidad" className="text-xs">Tipo Comunidad</Label>
-                                <Select value={tipoComunidadFiltro} onValueChange={setTipoComunidadFiltro}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Todos" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todos">Todos</SelectItem>
-                                        <SelectItem value="1">Urbana</SelectItem>
-                                        <SelectItem value="2">Rural</SelectItem>
-                                        <SelectItem value="3">Indígena</SelectItem>
-                                        <SelectItem value="4">Base de Misiones</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2 lg:col-span-2">
-                                <Label htmlFor="comunidad" className="text-xs">Comunidad (Busq. Exacta)</Label>
-                                <Select value={comunidadFiltro} onValueChange={setComunidadFiltro}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Seleccione comunidad" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todas">Todas las comunidades</SelectItem>
-                                        {comunidades.map((c) => (
-                                            <SelectItem key={c.codigo_comunidad} value={c.codigo_comunidad}>
-                                                {c.nombre_comunidad}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2 lg:col-span-2 flex items-end">
-                                <Button onClick={updateFilters} disabled={isPending} className="w-full rounded-xl bg-[#1e3a8a] hover:bg-blue-900 shadow-sm text-white">
-                                    {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                    Aplicar Filtros
-                                </Button>
-                            </div>
-
-                            <div className="space-y-2 lg:col-span-2">
-                                <Label htmlFor="estado" className="text-xs">Estado</Label>
-                                <Select value={estadoFiltro} onValueChange={(val) => { setEstadoFiltro(val); setMunicipioFiltro('todos'); setParroquiaFiltro('todas'); }}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Todos los estados" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todos">Todos los estados</SelectItem>
-                                        {availableEstados.map((e) => (
-                                            <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2 lg:col-span-2">
-                                <Label htmlFor="municipio" className="text-xs">Municipio</Label>
-                                <Select value={municipioFiltro} onValueChange={(val) => { setMunicipioFiltro(val); setParroquiaFiltro('todas'); }} disabled={estadoFiltro === 'todos'}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Todos los municipios" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todos">Todos los municipios</SelectItem>
-                                        {availableMunicipios.map((m) => (
-                                            <SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2 lg:col-span-2">
-                                <Label htmlFor="parroquia" className="text-xs">Parroquia</Label>
-                                <Select value={parroquiaFiltro} onValueChange={setParroquiaFiltro} disabled={municipioFiltro === 'todos'}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Todas las parroquias" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todas">Todas las parroquias</SelectItem>
-                                        {availableParroquias.map((p) => (
-                                            <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Tabs de Reportes */}
-            <Tabs defaultValue="abordajes" className="w-full space-y-6">
-                <TabsList className="grid w-full grid-cols-5 bg-white p-1.5 rounded-xl shadow-sm border border-gray-100 h-auto">
-                    <TabsTrigger value="abordajes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Abordajes</TabsTrigger>
-                    <TabsTrigger value="comunidades" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Comunidades</TabsTrigger>
-                    <TabsTrigger value="pacientes" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Pacientes</TabsTrigger>
-                    <TabsTrigger value="morbilidad" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Morbilidad</TabsTrigger>
-                    <TabsTrigger value="medicamentos" className="rounded-lg py-2.5 font-medium data-[state=active]:bg-[#1e3a8a]/10 data-[state=active]:text-[#1e3a8a] data-[state=active]:shadow-sm transition-all cursor-pointer">Medicamentos</TabsTrigger>
+        <>
+            <Tabs defaultValue="abordajes" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="abordajes">Abordajes</TabsTrigger>
+                    <TabsTrigger value="comunidades">Comunidades</TabsTrigger>
+                    <TabsTrigger value="pacientes">Pacientes</TabsTrigger>
+                    <TabsTrigger value="morbilidad">Morbilidad</TabsTrigger>
+                    <TabsTrigger value="medicamentos">Medicamentos</TabsTrigger>
                 </TabsList>
 
-                {/* Reporte Abordajes */}
-                <TabsContent value="abordajes" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
-                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
-                            <CardTitle className="text-xl text-gray-800">Reporte de Abordajes</CardTitle>
-                            <div className="flex gap-2 items-center">
-                                {renderChartControls('abordajes')}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="cursor-pointer"
-                                    onClick={() => handleExport('csv', 'Abordajes', reporteAbordajes, [
-                                        { key: 'codigo_abordaje', label: 'Código' },
-                                        { key: 'fecha_abordaje', label: 'Fecha', render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' }) },
-                                        { key: 'descripcion', label: 'Descripción' },
-                                        { key: 'comunidades', label: 'Comunidades' },
-                                        { key: 'pacientes_atendidos', label: 'Pacientes' }
-                                    ])}
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    CSV
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('pdf', 'Abordajes', reporteAbordajes, [
-                                        { key: 'codigo_abordaje', label: 'Código' },
-                                        { key: 'fecha_abordaje', label: 'Fecha', render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' }) },
-                                        { key: 'descripcion', label: 'Descripción' },
-                                        { key: 'comunidades', label: 'Comunidades' },
-                                        { key: 'pacientes_atendidos', label: 'Pacientes' }
-                                    ])}
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    PDF
-                                </Button>
+                <TabsContent value="abordajes">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Reporte de Abordajes</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => generarCSV('Abordajes')}><Download className="w-4 h-4 mr-2" /> CSV</Button>
+                                <Button variant="outline" size="sm" onClick={() => generarPDF('Abordajes')}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            {chartViews.abordajes === 'table' && (
-                                <DataTable
-                                    data={reporteAbordajes}
-                                    columns={[
-                                        { key: 'codigo_abordaje', header: 'Código', sortable: true },
-                                        {
-                                            key: 'fecha_abordaje',
-                                            header: 'Fecha',
-                                            sortable: true,
-                                            render: (item: ReporteAbordajeItem) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE', { timeZone: 'UTC' })
-                                        },
-                                        { key: 'descripcion', header: 'Descripción' },
-                                        { key: 'comunidades', header: 'Comunidades', sortable: true },
-                                        { key: 'pacientes_atendidos', header: 'Pacientes Atendidos', sortable: true },
-                                        { key: 'hora_inicio', header: 'Hora Inicio', sortable: true },
-                                        { key: 'hora_fin', header: 'Hora Fin', sortable: true },
-                                    ]}
-                                    searchPlaceholder="Buscar abordaje..."
-                                />
-                            )}
-                            {chartViews.abordajes === 'bar' && (
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={reporteAbordajes} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="codigo_abordaje" angle={-45} textAnchor="end" height={60} />
-                                            <YAxis />
-                                            <RechartsTooltip />
-                                            <Legend />
-                                            <Bar dataKey="pacientes_atendidos" name="Pacientes Atendidos" fill="#8884d8" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="space-y-1"><Label>Fecha Inicio</Label><Input type="date" value={abordajeFechaInicio} onChange={e => setAbordajeFechaInicio(e.target.value)} /></div>
+                                <div className="space-y-1"><Label>Fecha Fin</Label><Input type="date" value={abordajeFechaFin} onChange={e => setAbordajeFechaFin(e.target.value)} /></div>
+                                <div className="space-y-1">
+                                    <Label>Estado</Label>
+                                    <Select value={abordajeEstado} onValueChange={setAbordajeEstado}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="todos">Todos</SelectItem>
+                                            <SelectItem value="Planificado">Planificado</SelectItem>
+                                            <SelectItem value="En Curso">En Curso</SelectItem>
+                                            <SelectItem value="Finalizado">Finalizado</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            )}
-                            {chartViews.abordajes === 'pie' && (
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={reporteAbordajes}
-                                                dataKey="pacientes_atendidos"
-                                                nameKey="codigo_abordaje"
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={150}
-                                                label
-                                            >
-                                                {reporteAbordajes.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <RechartsTooltip />
-                                            <Legend />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            )}
+                            </div>
+                            <DataTable data={abordajesFiltrados} columns={[
+                                { key: 'codigo_abordaje', label: 'Codigo', sortable: true },
+                                { key: 'fecha_abordaje', label: 'Fecha', sortable: true, render: (item: any) => new Date(item.fecha_abordaje).toLocaleDateString('es-VE') },
+                                { key: 'descripcion', label: 'Descripcion' },
+                                { key: 'comunidades', label: 'Comunidades', sortable: true },
+                                { key: 'pacientes_atendidos', label: 'Pacientes Atendidos', sortable: true },
+                                { key: 'hora_inicio', label: 'Hora Inicio' },
+                                { key: 'hora_fin', label: 'Hora Fin' },
+                            ]} searchPlaceholder="Buscar abordaje..." />
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* Reporte Comunidades */}
-                <TabsContent value="comunidades" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
-                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
-                            <CardTitle className="text-xl text-gray-800">Reporte de Comunidades</CardTitle>
-                            <div className="flex gap-2 items-center">
-                                {renderChartControls('comunidades')}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('csv', 'Comunidades', reporteComunidades, [
-                                        { key: 'codigo_comunidad', label: 'Código' },
-                                        { key: 'nombre_comunidad', label: 'Nombre' },
-                                        { key: 'estado', label: 'Estado', render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado) },
-                                        { key: 'municipio', label: 'Municipio', render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio) },
-                                        { key: 'parroquia', label: 'Parroquia' },
-                                        { key: 'cantidad_habitantes', label: 'Habitantes' },
-                                        { key: 'cantidad_familias', label: 'Familias' },
-                                        { key: 'pacientes_tratados', label: 'Pacientes' },
-                                        { key: 'total_consultas', label: 'Consultas' },
-                                    ])}
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    CSV
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('pdf', 'Comunidades', reporteComunidades, [
-                                        { key: 'codigo_comunidad', label: 'Código' },
-                                        { key: 'nombre_comunidad', label: 'Nombre' },
-                                        { key: 'estado', label: 'Estado', render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado) },
-                                        { key: 'municipio', label: 'Municipio', render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio) },
-                                        { key: 'cantidad_habitantes', label: 'Hab.' },
-                                        { key: 'pacientes_tratados', label: 'Pac.' },
-                                        { key: 'total_consultas', label: 'Cons.' },
-                                    ])}
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    PDF
-                                </Button>
+                <TabsContent value="comunidades">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Reporte de Comunidades</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => generarCSV('Comunidades')}><Download className="w-4 h-4 mr-2" /> CSV</Button>
+                                <Button variant="outline" size="sm" onClick={() => generarPDF('Comunidades')}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            {chartViews.comunidades === 'table' && (
-                                <DataTable
-                                    data={reporteComunidades}
-                                    columns={[
-                                        { key: 'codigo_comunidad', header: 'Código', sortable: true },
-                                        { key: 'nombre_comunidad', header: 'Nombre Comunidad', sortable: true },
-                                        {
-                                            key: 'estado',
-                                            header: 'Estado',
-                                            sortable: true,
-                                            render: (item: ReporteComunidadItem) => getEstadoNombre(item.estado)
-                                        },
-                                        {
-                                            key: 'municipio',
-                                            header: 'Municipio',
-                                            sortable: true,
-                                            render: (item: ReporteComunidadItem) => getMunicipioNombre(item.estado, item.municipio)
-                                        },
-                                        { key: 'parroquia', header: 'Parroquia', sortable: true },
-                                        { key: 'cantidad_habitantes', header: 'Habitantes', sortable: true },
-                                        { key: 'cantidad_familias', header: 'Familias', sortable: true },
-                                        {
-                                            key: 'pacientes_tratados',
-                                            header: 'Pacientes Tratados',
-                                            sortable: true,
-                                        },
-                                        {
-                                            key: 'abordajes_realizados',
-                                            header: 'Abordajes Realizados',
-                                            sortable: true,
-                                        },
-                                        { key: 'total_consultas', header: 'Consultas Realizadas', sortable: true },
-                                    ]}
-                                    searchPlaceholder="Buscar comunidad..."
-                                />
-                            )}
-                            {chartViews.comunidades === 'bar' && (
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={reporteComunidades} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="nombre_comunidad" angle={-45} textAnchor="end" height={80} />
-                                            <YAxis />
-                                            <RechartsTooltip />
-                                            <Legend verticalAlign="top" />
-                                            <Bar dataKey="pacientes_tratados" name="Pacientes Tratados" fill="#82ca9d" />
-                                            <Bar dataKey="total_consultas" name="Total Consultas" fill="#8884d8" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="space-y-1">
+                                    <Label>Buscar por nombre</Label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <Input type="text" placeholder="Ej: La Esperanza..." value={comunidadSearch} onChange={e => setComunidadSearch(e.target.value)} className="pl-10" />
+                                    </div>
                                 </div>
-                            )}
-                            {chartViews.comunidades === 'pie' && (
-                                <div className="h-[400px] w-full mt-4 flex flex-col items-center">
-                                    <h3 className="text-gray-700 font-semibold mb-2">Total de Consultas por Comunidad</h3>
-                                    <ResponsiveContainer width="100%" height="80%">
-                                        <PieChart>
-                                            <Pie
-                                                data={reporteComunidades}
-                                                dataKey="total_consultas"
-                                                nameKey="nombre_comunidad"
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={150}
-                                                label
-                                            >
-                                                {reporteComunidades.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <RechartsTooltip />
-                                            <Legend />
-                                        </PieChart>
-                                    </ResponsiveContainer>
+                                <div className="space-y-1">
+                                    <Label>Tipo de comunidad</Label>
+                                    <Select value={comunidadTipo} onValueChange={setComunidadTipo}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="todos">Todos los tipos</SelectItem>
+                                            <SelectItem value="1">Urbana</SelectItem>
+                                            <SelectItem value="2">Rural</SelectItem>
+                                            <SelectItem value="3">Indigena</SelectItem>
+                                            <SelectItem value="4">Base de Misiones</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            )}
+                            </div>
+                            <DataTable data={comunidadesFiltradas} columns={[
+                                { key: 'nombre_comunidad', label: 'Nombre Comunidad', sortable: true },
+                                { key: 'estado', label: 'Estado', sortable: true },
+                                { key: 'municipio', label: 'Municipio', sortable: true },
+                                { key: 'cantidad_habitantes', label: 'Habitantes', sortable: true },
+                                { key: 'pacientes_tratados', label: 'Pacientes Tratados', sortable: true },
+                                { key: 'abordajes_realizados', label: 'Abordajes Realizados', sortable: true },
+                                { key: 'total_consultas', label: 'Consultas Realizadas', sortable: true },
+                            ]} searchPlaceholder="Buscar comunidad..." />
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* Reporte Pacientes */}
-                <TabsContent value="pacientes" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
-                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
-                            <CardTitle className="text-xl text-gray-800">Reporte de Pacientes</CardTitle>
-                            <div className="flex gap-2 items-center">
-                                {renderChartControls('pacientes')}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('csv', 'Pacientes', reportePacientes, [
-                                        { key: 'cedula_paciente', label: 'Cédula' },
-                                        { key: 'nombre_paciente', label: 'Nombre' },
-                                        { key: 'apellido_paciente', label: 'Apellido' },
-                                        { key: 'nombre_comunidad', label: 'Comunidad' },
-                                        { key: 'estado', label: 'Estado', render: (item: ReportePacienteItem) => getEstadoNombre(item.estado || '') },
-                                        { key: 'municipio', label: 'Municipio', render: (item: ReportePacienteItem) => getMunicipioNombre(item.estado || '', item.municipio || '') },
-                                        { key: 'telefono_paciente', label: 'Teléfono' },
-                                    ])}
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    CSV
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('pdf', 'Pacientes', reportePacientes, [
-                                        { key: 'cedula_paciente', label: 'Cédula' },
-                                        { key: 'nombre_paciente', label: 'Nombre' },
-                                        { key: 'apellido_paciente', label: 'Apellido' },
-                                        { key: 'nombre_comunidad', label: 'Comunidad' },
-                                        { key: 'estado', label: 'Estado', render: (item: ReportePacienteItem) => getEstadoNombre(item.estado || '') },
-                                        { key: 'telefono_paciente', label: 'Teléfono' }
-                                    ])}
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    PDF
-                                </Button>
+                <TabsContent value="pacientes">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Reporte de Pacientes</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => generarCSV('Pacientes')}><Download className="w-4 h-4 mr-2" /> CSV</Button>
+                                <Button variant="outline" size="sm" onClick={() => generarPDF('Pacientes')}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            {chartViews.pacientes === 'table' && (
-                                <DataTable
-                                    data={reportePacientes}
-                                    columns={[
-                                        { key: 'cedula_paciente', header: 'Cédula', sortable: true },
-                                        { key: 'nombre_comunidad', header: 'Comunidad', sortable: true },
-                                        {
-                                            key: 'estado',
-                                            header: 'Estado',
-                                            sortable: true,
-                                            render: (item: ReportePacienteItem) => getEstadoNombre(item.estado || '')
-                                        },
-                                        {
-                                            key: 'municipio',
-                                            header: 'Municipio',
-                                            sortable: true,
-                                            render: (item: ReportePacienteItem) => getMunicipioNombre(item.estado || '', item.municipio || '')
-                                        },
-                                        { key: 'nombre_paciente', header: 'Nombre', sortable: true },
-                                        { key: 'apellido_paciente', header: 'Apellido', sortable: true },
-                                        {
-                                            key: 'fecha_nacimiento',
-                                            header: 'Fecha de Nac.',
-                                            render: (p: ReportePacienteItem) =>
-                                                p.fecha_nacimiento
-                                                    ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE', { timeZone: 'UTC' })
-                                                    : '-',
-                                            sortable: true,
-                                        },
-                                        { key: 'telefono_paciente', header: 'Teléfono' },
-                                    ]}
-                                    searchPlaceholder="Buscar paciente..."
-                                />
-                            )}
-                            {chartViews.pacientes === 'bar' && (
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={ageGroups} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="name" />
-                                            <YAxis />
-                                            <RechartsTooltip />
-                                            <Legend />
-                                            <Bar dataKey="value" name="Cantidad de Pacientes" fill="#8884d8" label={{ position: 'top' }} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="space-y-1">
+                                    <Label>Comunidad</Label>
+                                    <Select value={pacienteComunidad} onValueChange={setPacienteComunidad}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="todas">Todas las comunidades</SelectItem>
+                                            {comunidades.map(c => (<SelectItem key={c.codigo_comunidad} value={c.codigo_comunidad}>{c.nombre_comunidad}</SelectItem>))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            )}
-                            {chartViews.pacientes === 'pie' && (
-                                <div className="h-[400px] w-full mt-4 flex flex-col items-center">
-                                    <h3 className="text-gray-700 font-semibold mb-2">Distribución por Grupos Etarios</h3>
-                                    <ResponsiveContainer width="100%" height="80%">
-                                        <PieChart>
-                                            <Pie
-                                                data={ageGroups}
-                                                dataKey="value"
-                                                nameKey="name"
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={150}
-                                                label={(props: any) => `${props.name}: ${(props.percent * 100).toFixed(1)}%`}
-                                            >
-                                                {ageGroups.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <RechartsTooltip />
-                                            <Legend />
-                                        </PieChart>
-                                    </ResponsiveContainer>
+                                <div className="space-y-1">
+                                    <Label>Sexo</Label>
+                                    <Select value={pacienteSexo} onValueChange={setPacienteSexo}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="todos">Todos</SelectItem>
+                                            <SelectItem value="M">Masculino</SelectItem>
+                                            <SelectItem value="F">Femenino</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            )}
+                            </div>
+                            <DataTable data={pacientesFiltrados} columns={[
+                                { key: 'cedula_paciente', label: 'Cedula', sortable: true },
+                                { key: 'nombre_comunidad', label: 'Comunidad', sortable: true },
+                                { key: 'nombre_paciente', label: 'Nombre', sortable: true },
+                                { key: 'apellido_paciente', label: 'Apellido', sortable: true },
+                                { key: 'fecha_nacimiento', label: 'Fecha Nac.', render: (p: any) => p.fecha_nacimiento ? new Date(p.fecha_nacimiento).toLocaleDateString('es-VE') : '-', sortable: true },
+                                { key: 'telefono_paciente', label: 'Telefono' },
+                            ]} searchPlaceholder="Buscar paciente..." />
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* Reporte Morbilidad */}
-                <TabsContent value="morbilidad" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
-                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
-                            <CardTitle className="text-xl text-gray-800">Reporte de Morbilidad</CardTitle>
-                            <div className="flex gap-2 items-center">
-                                {renderChartControls('morbilidad')}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('csv', 'Morbilidad', dataMorbilidad, [
-                                        { key: 'codigo_enfermedad', label: 'Código' },
-                                        { key: 'nombre_enfermedad', label: 'Enfermedad' },
-                                        { key: 'tipo_patologia', label: 'Tipo' },
-                                        { key: 'total_casos', label: 'Casos' },
-                                        { key: 'porcentaje', label: '%', render: (item: ReporteMorbilidadItem) => `${item.porcentaje}%` }
-                                    ])}
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    CSV
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('pdf', 'Morbilidad', dataMorbilidad, [
-                                        { key: 'codigo_enfermedad', label: 'Código' },
-                                        { key: 'nombre_enfermedad', label: 'Enfermedad' },
-                                        { key: 'tipo_patologia', label: 'Tipo' },
-                                        { key: 'total_casos', label: 'Casos' },
-                                        { key: 'porcentaje', label: '%', render: (item: ReporteMorbilidadItem) => `${item.porcentaje}%` }
-                                    ])}
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    PDF
-                                </Button>
+                <TabsContent value="morbilidad">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Reporte de Morbilidad</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => generarCSV('Morbilidad')}><Download className="w-4 h-4 mr-2" /> CSV</Button>
+                                <Button variant="outline" size="sm" onClick={() => generarPDF('Morbilidad')}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            {chartViews.morbilidad === 'table' && (
-                                <DataTable
-                                    data={dataMorbilidad}
-                                    columns={[
-                                        { key: 'codigo_enfermedad', header: 'Código Enfermedad', sortable: true },
-                                        { key: 'nombre_enfermedad', header: 'Nombre Enfermedad', sortable: true },
-                                        { key: 'tipo_patologia', header: 'Tipo Patología', sortable: true },
-                                        { key: 'total_casos', header: 'Total Casos', sortable: true },
-                                        { key: 'pacientes_afectados', header: 'Pacientes Afectados', sortable: true },
-                                        {
-                                            key: 'porcentaje',
-                                            header: '% del Total',
-                                            render: (d: ReporteMorbilidadItem) => `${d.porcentaje}%`,
-                                            sortable: true,
-                                        },
-                                        {
-                                            key: 'ultima_consulta',
-                                            header: 'Última Consulta',
-                                            render: (d: ReporteMorbilidadItem) =>
-                                                d.ultima_consulta
-                                                    ? new Date(d.ultima_consulta).toLocaleDateString('es-VE', { timeZone: 'UTC' })
-                                                    : '-',
-                                            sortable: true,
-                                        },
-                                    ]}
-                                    searchPlaceholder="Buscar tipo de morbilidad..."
-                                />
-                            )}
-                            {chartViews.morbilidad === 'bar' && (
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={dataMorbilidad.slice(0, 15)} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="nombre_enfermedad" angle={-45} textAnchor="end" height={100} />
-                                            <YAxis />
-                                            <RechartsTooltip />
-                                            <Legend verticalAlign="top" />
-                                            <Bar dataKey="total_casos" name="Casos Reportados" fill="#ff7300" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            )}
-                            {chartViews.morbilidad === 'pie' && (
-                                <div className="h-[500px] w-full mt-4 flex flex-col items-center">
-                                    <h3 className="text-gray-700 font-semibold mb-2">
-                                        Porcentaje de Casos por Enfermedad {dataMorbilidad.length > 10 ? '(Top 10)' : `(Top ${dataMorbilidad.length})`}
-                                    </h3>
-                                    <ResponsiveContainer width="100%" height="90%">
-                                        <PieChart>
-                                            <Pie
-                                                data={dataMorbilidad.slice(0, 10)}
-                                                dataKey="total_casos"
-                                                nameKey="nombre_enfermedad"
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={180}
-                                                label={(props: any) => props.percent !== undefined ? `${(props.percent * 100).toFixed(1)}%` : ''}
-                                            >
-                                                {dataMorbilidad.slice(0, 10).map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <RechartsTooltip />
-                                            <Legend layout="horizontal" verticalAlign="bottom" />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            )}
-
-                            {/* Nueva sección de Distribución Etaria para Morbilidad */}
-                            {(chartViews.morbilidad === 'bar' || chartViews.morbilidad === 'pie') && (
-                                <div className="mt-8 pt-8 border-t border-gray-200">
-                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Contexto: Distribución Etaria General</h3>
-                                    <div className="h-[300px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={ageGroups}>
+                        <CardContent className="space-y-4">
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <Label>Filtrar por tipo de patologia</Label>
+                                <Select value={morbilidadTipo} onValueChange={setMorbilidadTipo}>
+                                    <SelectTrigger className="mt-1 max-w-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="todos">Todos los tipos</SelectItem>
+                                        {tiposPatologia.map(tipo => (<SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {datosGraficaMorbilidad.length > 0 && (
+                                <Card className="border border-gray-100">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm text-gray-600">Enfermedades mas frecuentes</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ResponsiveContainer width="100%" height={280}>
+                                            <BarChart data={datosGraficaMorbilidad} layout="vertical" margin={{ left: 10, right: 30 }}>
                                                 <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey="name" />
-                                                <YAxis />
-                                                <RechartsTooltip />
-                                                <Bar dataKey="value" name="Pacientes" fill="#82ca9d" />
+                                                <XAxis type="number" allowDecimals={false} />
+                                                <YAxis dataKey="nombre" type="category" width={120} tick={{ fontSize: 11 }} />
+                                                <Tooltip />
+                                                <Bar dataKey="casos" radius={[0, 6, 6, 0]}>
+                                                    {datosGraficaMorbilidad.map((_, index) => (
+                                                        <Cell key={'cell-' + index} fill={COLORES_GRAFICA[index % COLORES_GRAFICA.length]} />
+                                                    ))}
+                                                </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
-                                    </div>
-                                    <p className="text-sm text-gray-500 text-center mt-2 italic">
-                                        Esta gráfica muestra la distribución de edad de todos los pacientes filtrados para contextualizar los casos de morbilidad.
-                                    </p>
-                                </div>
+                                    </CardContent>
+                                </Card>
                             )}
+                            <DataTable data={morbilidadFiltrada} columns={[
+                                { key: 'nombre_enfermedad', label: 'Nombre Enfermedad', sortable: true },
+                                { key: 'tipo_patologia', label: 'Tipo Patologia', sortable: true },
+                                { key: 'total_casos', label: 'Total Casos', sortable: true },
+                                { key: 'pacientes_afectados', label: 'Pacientes Afectados', sortable: true },
+                                { key: 'porcentaje', label: '% del Total', render: (d: any) => d.porcentaje + '%', sortable: true },
+                                { key: 'ultima_consulta', label: 'Ultima Consulta', render: (d: any) => d.ultima_consulta ? new Date(d.ultima_consulta).toLocaleDateString('es-VE') : '-' },
+                            ]} searchPlaceholder="Buscar enfermedad..." />
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* Reporte Medicamentos */}
-                <TabsContent value="medicamentos" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <Card className="rounded-2xl shadow-sm border-gray-100 overflow-hidden bg-white">
-                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border-b border-gray-50/80 pb-4">
-                            <CardTitle className="text-xl text-gray-800">Reporte de Medicamentos Entregados</CardTitle>
-                            <div className="flex gap-2 items-center">
-                                {renderChartControls('medicamentos')}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('csv', 'Medicamentos', reporteMedicamentos, [
-                                        { key: 'codigo_medicamento', label: 'Código' },
-                                        { key: 'nombre_medicamento', label: 'Medicamento' },
-                                        { key: 'presentacion', label: 'Presentación' },
-                                        { key: 'total_entregado', label: 'Total Entregado' }
-                                    ])}
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    CSV
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleExport('pdf', 'Medicamentos', reporteMedicamentos, [
-                                        { key: 'codigo_medicamento', label: 'Código' },
-                                        { key: 'nombre_medicamento', label: 'Medicamento' },
-                                        { key: 'presentacion', label: 'Presentación' },
-                                        { key: 'total_entregado', label: 'Total Entregado' }
-                                    ])}
-                                >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    PDF
-                                </Button>
+                <TabsContent value="medicamentos">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Reporte de Medicamentos</CardTitle>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => generarCSV('Medicamentos')}><Download className="w-4 h-4 mr-2" /> CSV</Button>
+                                <Button variant="outline" size="sm" onClick={() => generarPDF('Medicamentos')}><FileText className="w-4 h-4 mr-2" /> PDF</Button>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            {chartViews.medicamentos === 'table' && (
-                                <DataTable
-                                    data={reporteMedicamentos}
-                                    columns={[
-                                        { key: 'codigo_medicamento', header: 'Código', sortable: true },
-                                        { key: 'nombre_medicamento', header: 'Nombre Medicamento', sortable: true },
-                                        { key: 'presentacion', header: 'Presentación', sortable: true },
-                                        { key: 'total_entregado', header: 'Total Entregado', sortable: true },
-                                    ]}
-                                    searchPlaceholder="Buscar medicamento..."
-                                />
-                            )}
-                            {chartViews.medicamentos === 'bar' && (
-                                <div className="h-[400px] w-full mt-4">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={reporteMedicamentos.slice(0, 15)} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="nombre_medicamento" angle={-45} textAnchor="end" height={100} />
-                                            <YAxis />
-                                            <RechartsTooltip />
-                                            <Legend verticalAlign="top" />
-                                            <Bar dataKey="total_entregado" name="Cantidad Entregada" fill="#00C49F" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            )}
-                            {chartViews.medicamentos === 'pie' && (
-                                <div className="h-[500px] w-full mt-4 flex flex-col items-center">
-                                    <h3 className="text-gray-700 font-semibold mb-2">
-                                        Distribución de Medicamentos Entregados {reporteMedicamentos.length > 10 ? '(Top 10)' : `(Top ${reporteMedicamentos.length})`}
-                                    </h3>
-                                    <ResponsiveContainer width="100%" height="90%">
-                                        <PieChart>
-                                            <Pie
-                                                data={reporteMedicamentos.slice(0, 10)}
-                                                dataKey="total_entregado"
-                                                nameKey="nombre_medicamento"
-                                                cx="50%"
-                                                cy="50%"
-                                                outerRadius={180}
-                                                label={(props: any) => props.percent !== undefined ? `${(props.percent * 100).toFixed(1)}%` : ''}
-                                            >
-                                                {reporteMedicamentos.slice(0, 10).map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <RechartsTooltip />
-                                            <Legend layout="horizontal" verticalAlign="bottom" />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            )}
+                        <CardContent className="space-y-4">
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <Label>Filtrar por estado de stock</Label>
+                                <Select value={medicamentoStock} onValueChange={setMedicamentoStock}>
+                                    <SelectTrigger className="mt-1 max-w-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="todos">Todos</SelectItem>
+                                        <SelectItem value="critico">Critico (menos de 20)</SelectItem>
+                                        <SelectItem value="medio">Medio (20 a 49)</SelectItem>
+                                        <SelectItem value="optimo">Optimo (50 o mas)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <DataTable data={medicamentosFiltrados} columns={[
+                                { key: 'codigo_medicamento', label: 'Codigo', sortable: true },
+                                { key: 'nombre_medicamento', label: 'Nombre Medicamento', sortable: true },
+                                { key: 'presentacion', label: 'Presentacion', sortable: true },
+                                {
+                                    key: 'existencia', label: 'Existencia', sortable: true,
+                                    render: (m: any) => (
+                                        <span className={m.existencia < 20 ? 'text-red-600 font-bold' : m.existencia < 50 ? 'text-yellow-600 font-bold' : 'text-green-600'}>
+                                            {m.existencia} {m.existencia < 20 ? '⚠️' : ''}
+                                        </span>
+                                    )
+                                },
+                                { key: 'descripcion', label: 'Descripcion' },
+                            ]} searchPlaceholder="Buscar medicamento..." />
                         </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
-        </div>
+        </>
     );
 }

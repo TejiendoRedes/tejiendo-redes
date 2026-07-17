@@ -354,4 +354,3 @@ export function StatisticsStation({ abordaje }: { abordaje: AbordajeWithRelation
         </div>
     );
 }
-

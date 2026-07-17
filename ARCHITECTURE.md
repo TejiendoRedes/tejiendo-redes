@@ -1,5 +1,7 @@
 # Arquitectura — Tejiendo Redes
 
+🌐 **Producción:** [https://tejiendoredes-registro.netlify.app](https://tejiendoredes-registro.netlify.app)
+
 Este documento describe la arquitectura técnica del proyecto para que cualquier desarrollador pueda entender cómo está organizado y por qué.
 
 ---

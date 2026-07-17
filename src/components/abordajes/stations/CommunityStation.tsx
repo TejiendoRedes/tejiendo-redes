@@ -16,6 +16,16 @@ interface CommunityStationProps {
     abordaje: any;
 }
 
+function getTipoComunidadLabel(tipoId?: string | null) {
+    switch (tipoId) {
+        case '1': return 'Urbana';
+        case '2': return 'Rural';
+        case '3': return 'Indígena';
+        case '4': return 'Base de Misiones';
+        default: return null;
+    }
+}
+
 export function CommunityStation({ abordaje }: CommunityStationProps) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
@@ -145,10 +155,34 @@ export function CommunityStation({ abordaje }: CommunityStationProps) {
                                         <h3 className="font-semibold text-gray-900">{com.nombreComunidad}</h3>
                                     </div>
                                     <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                        {getTipoComunidadLabel(com.tipoComunidad) && (
+                                            <p><strong>Tipo:</strong> {getTipoComunidadLabel(com.tipoComunidad)}</p>
+                                        )}
                                         <p><strong>Estado:</strong> {com.estado}</p>
                                         <p><strong>Municipio:</strong> {com.municipio}</p>
                                         {com.parroquia && <p><strong>Parroquia:</strong> {com.parroquia}</p>}
+                                        {com.direccion && <p><strong>Dirección:</strong> {com.direccion}</p>}
+                                        {com.telefonoComunidad && <p><strong>Teléfono:</strong> {com.telefonoComunidad}</p>}
                                         {com.habitantes && <p><strong>Habitantes:</strong> {com.habitantes}</p>}
+
+                                        {(com.cantidadFamilias || com.cantidadNinos || com.cantidadAdolescentes || com.cantidadMayores || com.cantidadMayores60) && (
+                                            <div className="grid grid-cols-2 gap-x-2 pt-2 border-t text-xs">
+                                                {com.cantidadFamilias != null && <span><strong>Familias:</strong> {com.cantidadFamilias}</span>}
+                                                {com.cantidadNinos != null && <span><strong>Niños:</strong> {com.cantidadNinos}</span>}
+                                                {com.cantidadAdolescentes != null && <span><strong>Adolescentes:</strong> {com.cantidadAdolescentes}</span>}
+                                                {com.cantidadMayores != null && <span><strong>Adultos:</strong> {com.cantidadMayores}</span>}
+                                                {com.cantidadMayores60 != null && <span><strong>Mayores de 60:</strong> {com.cantidadMayores60}</span>}
+                                            </div>
+                                        )}
+
+                                        {com.nombreResponsable && (
+                                            <div className="pt-2 border-t">
+                                                <p><strong>Responsable:</strong> {com.nombreResponsable} {com.apellidoResponsable}</p>
+                                                {com.cargoResponsable && <p className="text-xs">{com.cargoResponsable}</p>}
+                                                {com.telefonoResponsable && <p className="text-xs">Tel: {com.telefonoResponsable}</p>}
+                                            </div>
+                                        )}
+
                                         {com.observaciones && (
                                             <p className="text-xs italic mt-2 pt-2 border-t">
                                                 <strong>Observaciones:</strong> {com.observaciones}

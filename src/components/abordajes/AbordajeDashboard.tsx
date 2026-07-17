@@ -11,8 +11,6 @@ import {
     ArrowLeft,
     MapPin,
     Users,
-    Stethoscope,
-    BarChart,
     Truck,
     CheckCircle,
     X,
@@ -29,9 +27,6 @@ import {
 
 import { CommunityStation } from './stations/CommunityStation';
 import { TeamStation } from './stations/TeamStation';
-
-import { HistoryStation } from './stations/HistoryStation';
-import { StatisticsStation } from './stations/StatisticsStation';
 
 import { AbordajeWithRelations } from '@/types/app-types';
 
@@ -206,21 +201,6 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
                             <Users className="w-4 h-4 mr-2" />
                             Equipo
                         </TabsTrigger>
-
-                        <TabsTrigger
-                            value="historial"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none px-4 h-full"
-                        >
-                            <BarChart className="w-4 h-4 mr-2" />
-                            Historial
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="estadisticas"
-                            className="data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-none rounded-none px-4 h-full"
-                        >
-                            <BarChart className="w-4 h-4 mr-2" />
-                            Estadísticas
-                        </TabsTrigger>
                     </TabsList>
                 </div>
 
@@ -232,17 +212,6 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
 
                     <TabsContent value="equipo" className="mt-0">
                         <TeamStation abordaje={abordaje} />
-                    </TabsContent>
-
-
-
-                    <TabsContent value="historial" className="mt-0">
-                        <HistoryStation abordaje={abordaje} />
-                    </TabsContent>
-
-
-                    <TabsContent value="estadisticas" className="mt-0">
-                        <StatisticsStation abordaje={abordaje} />
                     </TabsContent>
                 </div>
             </Tabs>

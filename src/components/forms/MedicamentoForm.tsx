@@ -28,6 +28,7 @@ export function MedicamentoForm({
         presentacion: initialData?.presentacion || '',
         descripcion: initialData?.descripcion || '',
         existencia: initialData?.existencia || 0,
+        precio: initialData?.precio || 0,
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
@@ -85,15 +86,45 @@ export function MedicamentoForm({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="existencia">Existencia Inicial *</Label>
+                <Label htmlFor="precio">Precio *</Label>
                 <Input
                     type="number"
-                    id="existencia"
-                    value={formData.existencia}
-                    onChange={(e) => setFormData({ ...formData, existencia: parseInt(e.target.value) || 0 })}
+                    id="precio"
+                    value={formData.precio}
+                    onChange={(e) => setFormData({ ...formData, precio: parseFloat(e.target.value) || 0 })}
                     required
                     min={0}
+                    step="0.01"
                 />
+            </div>
+
+            <div className="space-y-2">
+                <Label htmlFor="existencia">
+                    {initialData ? 'Existencia' : 'Existencia Inicial *'}
+                </Label>
+                {initialData ? (
+                    <>
+                        <Input
+                            type="number"
+                            id="existencia"
+                            value={formData.existencia}
+                            disabled
+                            className="bg-gray-100"
+                        />
+                        <p className="text-xs text-gray-500">
+                            El stock se ajusta automáticamente con las entregas y cancelaciones registradas en Farmacia.
+                        </p>
+                    </>
+                ) : (
+                    <Input
+                        type="number"
+                        id="existencia"
+                        value={formData.existencia}
+                        onChange={(e) => setFormData({ ...formData, existencia: parseInt(e.target.value) || 0 })}
+                        required
+                        min={0}
+                    />
+                )}
             </div>
 
             <div className="flex gap-2 justify-end pt-4">
