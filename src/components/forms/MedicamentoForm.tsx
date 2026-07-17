@@ -100,9 +100,7 @@ export function MedicamentoForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="existencia">
-                        {initialData ? 'Existencia' : 'Existencia Inicial *'}
-                    </Label>
+                    <Label htmlFor="existencia">Existencia {initialData ? '' : <span className="text-red-500 font-bold">*</span>}</Label>
                     <Input
                         type="number"
                         id="existencia"

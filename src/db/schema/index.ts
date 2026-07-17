@@ -30,3 +30,4 @@ export * from './peticiones';
 export * from './solicitudes-abordajes';
 export * from './abordaje-asistencia';
 export * from './mantenimiento';
+export * from './movimientos_inventario';

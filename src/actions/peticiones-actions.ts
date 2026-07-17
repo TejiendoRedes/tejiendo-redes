@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { peticiones, medicamentos, pacientes, abordaje, type NewPeticion, type Peticion } from '@/db/schema';
+import { peticiones, medicamentos, pacientes, abordaje, movimientosInventario, type NewPeticion, type Peticion } from '@/db/schema';
 import { eq, and, gt, sql, desc, inArray } from 'drizzle-orm';
 import { comunidades } from '@/db/schema/comunidades';
 import { getErrorMessage } from '@/lib/error-handler';
@@ -137,6 +137,17 @@ export async function updatePeticionEstado(id: number, estado: string, cedulaTej
                         existencia: sql`${medicamentos.existencia} - ${peticion.cantidad}`
                     })
                     .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento));
+
+                // Registrar en Kardex
+                await tx.insert(movimientosInventario).values({
+                    codigoMedicamento: peticion.codigoMedicamento,
+                    tipo: 'salida',
+                    cantidad: peticion.cantidad,
+                    motivo: 'Entrega a paciente',
+                    referencia: `Petición ID: ${peticion.id}`,
+                    costoUnitario: medicamento.precio,
+                    cedulaUsuario: cedulaTejedor || null
+                });
             });
         }
         // Si se está cancelando una entrega ya aprobada
@@ -168,6 +179,24 @@ export async function updatePeticionEstado(id: number, estado: string, cedulaTej
                             existencia: sql`${medicamentos.existencia} + ${peticion.cantidad}`
                         })
                         .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento));
+
+                    // Registrar en Kardex como Reversión
+                    const [medicamento] = await tx.select()
+                        .from(medicamentos)
+                        .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento))
+                        .limit(1);
+
+                    if (medicamento && peticion.cedulaTejedor) {
+                        await tx.insert(movimientosInventario).values({
+                            codigoMedicamento: peticion.codigoMedicamento,
+                            tipo: 'entrada',
+                            cantidad: peticion.cantidad,
+                            motivo: 'Reversión de entrega',
+                            referencia: `Petición ID: ${peticion.id}`,
+                            costoUnitario: medicamento.precio,
+                            cedulaUsuario: peticion.cedulaTejedor || null // Who delivered it originally or whoever is cancelling
+                        });
+                    }
                 } else {
                     // Cancelar petición pendiente: solo cambiar estado, sin tocar inventario
                     await tx.update(peticiones)
@@ -241,6 +270,24 @@ export async function deletePeticion(id: number) {
                         existencia: sql`${medicamentos.existencia} + ${peticion.cantidad}`
                     })
                     .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento));
+
+                // Registrar en Kardex como Reversión por Eliminación
+                const [medicamento] = await tx.select()
+                    .from(medicamentos)
+                    .where(eq(medicamentos.codigoMedicamento, peticion.codigoMedicamento))
+                    .limit(1);
+
+                if (medicamento && peticion.cedulaTejedor) {
+                    await tx.insert(movimientosInventario).values({
+                        codigoMedicamento: peticion.codigoMedicamento,
+                        tipo: 'entrada',
+                        cantidad: peticion.cantidad,
+                        motivo: 'Reversión (Petición eliminada)',
+                        referencia: `Petición ID: ${peticion.id}`,
+                        costoUnitario: medicamento.precio,
+                        cedulaUsuario: peticion.cedulaTejedor || null
+                    });
+                }
             }
 
             // Eliminar la petición

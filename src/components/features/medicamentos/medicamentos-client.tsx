@@ -6,7 +6,7 @@ import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, AlertCircle, Plus, Package, Pill } from 'lucide-react';
+import { Edit, Trash2, AlertCircle, Plus, Package, Pill, PackagePlus, FileClock } from 'lucide-react';
 import { Medicamento } from '@/db/schema/medicamentos';
 import { createMedicamento, deleteMedicamento, updateMedicamento } from '@/actions/medicamentos-actions';
 import { getMedicamentosEntregados } from '@/queries/medicamentos';;
@@ -20,6 +20,8 @@ import {
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { MedicamentoForm } from '@/components/forms/MedicamentoForm';
+import { AjusteStockModal } from '@/components/forms/AjusteStockModal';
+import { registrarMovimientoInventario } from '@/actions/inventario-actions';
 
 interface MedicamentosClientProps {
     initialData: Medicamento[];
@@ -30,6 +32,8 @@ export default function MedicamentosClient({ initialData, canEdit = false }: Med
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [editingMedicamento, setEditingMedicamento] = React.useState<Medicamento | null>(null);
+    const [isStockModalOpen, setIsStockModalOpen] = React.useState(false);
+    const [stockMedicamento, setStockMedicamento] = React.useState<Medicamento | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [solicitudesData, setSolicitudesData] = React.useState<any>(null);
 
@@ -63,6 +67,30 @@ export default function MedicamentosClient({ initialData, canEdit = false }: Med
             } else {
                 toast.error(res.error);
             }
+        }
+    };
+
+    const handleStockAdjust = (med: Medicamento) => {
+        setStockMedicamento(med);
+        setIsStockModalOpen(true);
+    };
+
+    const handleStockSubmit = async (data: any) => {
+        setIsLoading(true);
+        try {
+            const res = await registrarMovimientoInventario(data);
+            if (res.success) {
+                toast.success(res.message);
+                setIsStockModalOpen(false);
+                router.refresh();
+            } else {
+                toast.error(res.error);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Ocurrió un error inesperado');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -163,6 +191,24 @@ export default function MedicamentosClient({ initialData, canEdit = false }: Med
             className: 'text-right',
             render: (med: any) => (
                 <div className="flex gap-1 justify-end">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStockAdjust(med)}
+                        className="hover:bg-green-50 hover:text-green-600 text-gray-500"
+                        title="Ajustar Inventario"
+                    >
+                        <PackagePlus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/farmacia/medicamentos/${med.codigoMedicamento}/kardex`)}
+                        className="hover:bg-purple-50 hover:text-purple-600 text-gray-500"
+                        title="Ver Kardex"
+                    >
+                        <FileClock className="w-4 h-4" />
+                    </Button>
                     <Button
                         variant="ghost"
                         size="sm"
@@ -328,6 +374,28 @@ export default function MedicamentosClient({ initialData, canEdit = false }: Med
                             onCancel={() => setIsModalOpen(false)}
                             isLoading={isLoading}
                         />
+                    </DialogContent>
+                </Dialog>
+                <Dialog open={isStockModalOpen} onOpenChange={setIsStockModalOpen}>
+                    <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-gray-900">
+                                <PackagePlus className="w-6 h-6 text-green-600" />
+                                Ajuste de Inventario
+                            </DialogTitle>
+                            <DialogDescription>
+                                Registre una entrada o salida manual para este medicamento.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {stockMedicamento && (
+                            <AjusteStockModal
+                                medicamento={stockMedicamento}
+                                onSubmit={handleStockSubmit}
+                                onCancel={() => setIsStockModalOpen(false)}
+                                isLoading={isLoading}
+                            />
+                        )}
                     </DialogContent>
                 </Dialog>
             </PageShell>
