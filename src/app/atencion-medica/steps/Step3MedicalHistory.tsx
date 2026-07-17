@@ -134,7 +134,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="peso" className="text-xs font-semibold text-gray-700">Peso (kg) *</Label>
+                                <Label htmlFor="peso" className="text-xs font-semibold text-gray-700">Peso (kg) <span className="text-red-500 font-bold">*</span></Label>
                                 <Input
                                     id="peso" type="number" step="0.01" value={formData.peso}
                                     onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
@@ -143,7 +143,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="talla" className="text-xs font-semibold text-gray-700">Talla (m) *</Label>
+                                <Label htmlFor="talla" className="text-xs font-semibold text-gray-700">Talla (m) <span className="text-red-500 font-bold">*</span></Label>
                                 <Input
                                     id="talla" type="number" step="0.01" value={formData.talla}
                                     onChange={(e) => setFormData({ ...formData, talla: e.target.value })}
@@ -152,7 +152,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="temperatura" className="text-xs font-semibold text-gray-700">Temp (°C) *</Label>
+                                <Label htmlFor="temperatura" className="text-xs font-semibold text-gray-700">Temp (°C) <span className="text-red-500 font-bold">*</span></Label>
                                 <Input
                                     id="temperatura" type="number" step="0.1" value={formData.temperatura}
                                     onChange={(e) => setFormData({ ...formData, temperatura: e.target.value })}
@@ -161,7 +161,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="fc" className="text-xs font-semibold text-gray-700">FC (lpm) *</Label>
+                                <Label htmlFor="fc" className="text-xs font-semibold text-gray-700">FC (lpm) <span className="text-red-500 font-bold">*</span></Label>
                                 <Input
                                     id="fc" value={formData.FC}
                                     onChange={(e) => setFormData({ ...formData, FC: e.target.value })}
@@ -192,7 +192,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="enfPrev" className="text-xs font-semibold text-gray-700">Enfermedades Previas *</Label>
+                                <Label htmlFor="enfPrev" className="text-xs font-semibold text-gray-700">Enfermedades Previas <span className="text-red-500 font-bold">*</span></Label>
                                 <Textarea
                                     id="enfPrev" value={formData.enfermedadesPrevias}
                                     onChange={(e) => setFormData({ ...formData, enfermedadesPrevias: e.target.value })}
@@ -201,7 +201,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="alergias" className="text-xs font-semibold text-gray-700">Alergias *</Label>
+                                <Label htmlFor="alergias" className="text-xs font-semibold text-gray-700">Alergias <span className="text-red-500 font-bold">*</span></Label>
                                 <Textarea
                                     id="alergias" value={formData.alergias}
                                     onChange={(e) => setFormData({ ...formData, alergias: e.target.value })}
@@ -210,7 +210,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="enfFam" className="text-xs font-semibold text-gray-700">Enfermedades de Familia *</Label>
+                                <Label htmlFor="enfFam" className="text-xs font-semibold text-gray-700">Enfermedades de Familia <span className="text-red-500 font-bold">*</span></Label>
                                 <Textarea
                                     id="enfFam" value={formData.enfermedadesFamilia}
                                     onChange={(e) => setFormData({ ...formData, enfermedadesFamilia: e.target.value })}

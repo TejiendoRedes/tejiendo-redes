@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -157,7 +158,11 @@ export default function PacienteDetallePage() {
                 {/* Header Simplificado */}
                 <div className="flex items-center justify-between border-b pb-4">
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="icon" onClick={() => router.back()}><ArrowLeft className="w-5 h-5" /></Button>
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/atencion-medica">
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
+                        </Button>
                         <h1 className="text-xl font-bold">Resumen de Historial</h1>
                     </div>
                     <div className="flex gap-2">

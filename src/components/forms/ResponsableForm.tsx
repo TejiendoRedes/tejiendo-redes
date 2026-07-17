@@ -16,6 +16,16 @@ import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/d
 import { User, Briefcase, Phone, Mail, MapPin } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
+const CARGOS_PREDEFINIDOS = [
+    "Alcalde/sa",
+    "Líder Comunitario",
+    "Coordinador/a",
+    "Jefe de Calle",
+    "Director/a Institucional",
+    "Representante de ONG",
+    "Vocero/a de Consejo Comunal"
+];
+
 export interface ResponsableFormProps {
     initialData?: Responsable;
     onSubmit: (data: any) => Promise<void>;
@@ -31,6 +41,9 @@ export function ResponsableForm({
     isLoading = false,
     submitLabel
 }: ResponsableFormProps) {
+    const initialCargo = initialData?.cargo || '';
+    const isCargoPredefinido = initialCargo === '' || CARGOS_PREDEFINIDOS.includes(initialCargo);
+
     const [formData, setFormData] = useState({
         cedulaResponsable: initialData?.cedulaResponsable || '',
         nombreResponsable: initialData?.nombreResponsable || '',
@@ -38,7 +51,8 @@ export function ResponsableForm({
         direccionResponsable: initialData?.direccionResponsable || '',
         telefonoResponsable: initialData?.telefonoResponsable || '',
         correoResponsable: initialData?.correoResponsable || '',
-        cargo: initialData?.cargo || '',
+        cargoSelect: isCargoPredefinido ? (initialCargo || '') : 'Otros',
+        cargoOtro: isCargoPredefinido ? '' : initialCargo,
         estado: (initialData as any)?.estado || '',
         municipio: (initialData as any)?.municipio || '',
         parroquia: (initialData as any)?.parroquia || '',
@@ -86,7 +100,16 @@ export function ResponsableForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSubmit(formData);
+        
+        const finalCargo = formData.cargoSelect === 'Otros' ? formData.cargoOtro : formData.cargoSelect;
+        
+        const { cargoSelect, cargoOtro, ...dataToSubmit } = formData;
+        const payload = {
+            ...dataToSubmit,
+            cargo: finalCargo
+        };
+        
+        await onSubmit(payload);
     };
 
     return (
@@ -95,7 +118,7 @@ export function ResponsableForm({
                 <div className="space-y-2">
                     <Label htmlFor="cedula" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        Cédula *
+                        Cédula <span className="text-red-500 font-bold">*</span>
                     </Label>
                     <Input
                         id="cedula"
@@ -112,21 +135,39 @@ export function ResponsableForm({
                 <div className="space-y-2">
                     <Label htmlFor="cargo" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <Briefcase className="w-4 h-4 text-gray-400" />
-                        Cargo *
+                        Cargo <span className="text-red-500 font-bold">*</span>
                     </Label>
-                    <Input
-                        id="cargo"
-                        value={formData.cargo}
-                        onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
-                        required
-                        maxLength={50}
-                        placeholder="Ej. Presidente de JAC"
-                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
-                    />
+                    <div className="flex gap-2">
+                        <Select
+                            value={formData.cargoSelect}
+                            onValueChange={(val) => setFormData({ ...formData, cargoSelect: val })}
+                            required
+                        >
+                            <SelectTrigger className={`h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg ${formData.cargoSelect === 'Otros' ? 'w-1/2' : 'w-full'}`}>
+                                <SelectValue placeholder="Seleccione cargo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {CARGOS_PREDEFINIDOS.map(c => (
+                                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                                ))}
+                                <SelectItem value="Otros">Otros</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {formData.cargoSelect === 'Otros' && (
+                            <Input
+                                placeholder="Especifique..."
+                                value={formData.cargoOtro}
+                                onChange={(e) => setFormData({ ...formData, cargoOtro: e.target.value })}
+                                required={formData.cargoSelect === 'Otros'}
+                                maxLength={50}
+                                className="flex-1 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all rounded-lg"
+                            />
+                        )}
+                    </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="nombre" className="text-sm font-semibold text-gray-700">Nombres *</Label>
+                    <Label htmlFor="nombre" className="text-sm font-semibold text-gray-700">Nombres <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="nombre"
                         value={formData.nombreResponsable}
@@ -139,7 +180,7 @@ export function ResponsableForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="apellido" className="text-sm font-semibold text-gray-700">Apellidos *</Label>
+                    <Label htmlFor="apellido" className="text-sm font-semibold text-gray-700">Apellidos <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="apellido"
                         value={formData.apellidoResponsable}
@@ -154,7 +195,7 @@ export function ResponsableForm({
                 <div className="space-y-2">
                     <Label htmlFor="telefono" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <Phone className="w-4 h-4 text-gray-400" />
-                        Teléfono *
+                        Teléfono <span className="text-red-500 font-bold">*</span>
                     </Label>
                     <Input
                         id="telefono"
@@ -170,7 +211,7 @@ export function ResponsableForm({
                 <div className="space-y-2">
                     <Label htmlFor="correo" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <Mail className="w-4 h-4 text-gray-400" />
-                        Correo Electrónico *
+                        Correo Electrónico <span className="text-red-500 font-bold">*</span>
                     </Label>
                     <Input
                         id="correo"
@@ -186,7 +227,7 @@ export function ResponsableForm({
 
                 <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="estado" className="text-sm font-semibold text-gray-700">Estado *</Label>
+                        <Label htmlFor="estado" className="text-sm font-semibold text-gray-700">Estado <span className="text-red-500 font-bold">*</span></Label>
                         <Select
                             value={formData.estado}
                             onValueChange={handleEstadoChange}
@@ -205,7 +246,7 @@ export function ResponsableForm({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="municipio" className="text-sm font-semibold text-gray-700">Municipio *</Label>
+                        <Label htmlFor="municipio" className="text-sm font-semibold text-gray-700">Municipio <span className="text-red-500 font-bold">*</span></Label>
                         <Select
                             value={formData.municipio}
                             onValueChange={handleMunicipioChange}
@@ -225,7 +266,7 @@ export function ResponsableForm({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="parroquia" className="text-sm font-semibold text-gray-700">Parroquia *</Label>
+                        <Label htmlFor="parroquia" className="text-sm font-semibold text-gray-700">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                         <Select
                             value={formData.parroquia}
                             onValueChange={handleParroquiaChange}
@@ -248,7 +289,7 @@ export function ResponsableForm({
                 <div className="col-span-full space-y-2">
                     <Label htmlFor="direccion" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-gray-400" />
-                        Dirección de Habitación *
+                        Dirección de Habitación <span className="text-red-500 font-bold">*</span>
                     </Label>
                     <Input
                         id="direccion"

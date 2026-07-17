@@ -13,7 +13,7 @@ import { tejedores } from './tejedores';
  */
 export const abordajeComunidad = mysqlTable('abordaje_comunidad', {
     codigoAbordaje: varchar('codigo_abordaje', { length: 10 }).notNull(),
-    codigoComunidad: varchar('codigo_comunidad', { length: 10 }).notNull(),
+    codigoComunidad: varchar('codigo_comunidad', { length: 20 }).notNull(),
     observaciones: text('observaciones'),
 }, (table) => ({
     pk: primaryKey({ columns: [table.codigoAbordaje, table.codigoComunidad], name: 'ab_com_pk' }),

@@ -27,16 +27,16 @@ export default function DatosBasicosPage() {
 
     const dataCards: DataCard[] = [
         {
-            title: 'Tejedores',
-            icon: <Users className="w-6 h-6" />,
-            path: '/datos-basicos/tejedores',
-            description: 'Voluntarios y colaboradores',
-        },
-        {
             title: 'Aspirantes',
             icon: <Users className="w-6 h-6" />,
             path: '/datos-basicos/aspirantes',
             description: 'Aspirantes a tejedores',
+        },
+        {
+            title: 'Tejedores',
+            icon: <Users className="w-6 h-6" />,
+            path: '/datos-basicos/tejedores',
+            description: 'Voluntarios y colaboradores',
         },
         {
             title: 'Médicos',
@@ -69,16 +69,16 @@ export default function DatosBasicosPage() {
             description: 'Organismos e instituciones',
         },
         {
-            title: 'Pacientes',
-            icon: <Heart className="w-6 h-6" />,
-            path: '/datos-basicos/pacientes',
-            description: 'Registro de pacientes',
-        },
-        {
             title: 'Enfermedades',
             icon: <Activity className="w-6 h-6" />,
             path: '/datos-basicos/enfermedades',
             description: 'Catálogo de enfermedades',
+        },
+        {
+            title: 'Pacientes',
+            icon: <Heart className="w-6 h-6" />,
+            path: '/datos-basicos/pacientes',
+            description: 'Registro de pacientes',
         },
     ];
 

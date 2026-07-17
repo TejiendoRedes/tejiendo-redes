@@ -54,6 +54,8 @@ export function PacienteForm({
         direccionPaciente: initialData?.direccionPaciente || '',
         telefonoPaciente: initialData?.telefonoPaciente || '',
         correoPaciente: initialData?.correoPaciente || '',
+        historialEnfermedades: initialData?.historialEnfermedades || '',
+        consultasMedicasPrevias: initialData?.consultasMedicasPrevias || '',
         nota: initialData?.nota || '',
     });
 
@@ -113,7 +115,7 @@ export function PacienteForm({
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="cedula">Cédula *</Label>
+                    <Label htmlFor="cedula">Cédula <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="cedula"
                         value={formData.cedulaPaciente}
@@ -128,7 +130,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="nombre">Nombre *</Label>
+                    <Label htmlFor="nombre">Nombre <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="nombre"
                         value={formData.nombrePaciente}
@@ -142,7 +144,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="apellido">Apellido *</Label>
+                    <Label htmlFor="apellido">Apellido <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="apellido"
                         value={formData.apellidoPaciente}
@@ -156,7 +158,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="sexo">Sexo *</Label>
+                    <Label htmlFor="sexo">Sexo <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.sexo}
                         onValueChange={(value: 'M' | 'F') =>
@@ -174,7 +176,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento *</Label>
+                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="fechaNacimiento"
                         type="date"
@@ -205,7 +207,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="telefono">Teléfono *</Label>
+                    <Label htmlFor="telefono">Teléfono <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="telefono"
                         value={formData.telefonoPaciente}
@@ -219,7 +221,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="correo">Correo Electrónico *</Label>
+                    <Label htmlFor="correo">Correo Electrónico <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="correo"
                         type="email"
@@ -235,7 +237,7 @@ export function PacienteForm({
 
                 <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="estado">Estado *</Label>
+                        <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
                         <Select
                             value={formData.estado}
                             onValueChange={handleEstadoChange}
@@ -254,7 +256,7 @@ export function PacienteForm({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="municipio">Municipio *</Label>
+                        <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
                         <Select
                             value={formData.municipio}
                             onValueChange={handleMunicipioChange}
@@ -274,7 +276,7 @@ export function PacienteForm({
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="parroquia">Parroquia *</Label>
+                        <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                         <Select
                             value={formData.parroquia}
                             onValueChange={handleParroquiaChange}
@@ -295,7 +297,7 @@ export function PacienteForm({
                 </div>
 
                 <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label htmlFor="direccion">Dirección *</Label>
+                    <Label htmlFor="direccion">Dirección <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="direccion"
                         value={formData.direccionPaciente}
@@ -305,6 +307,32 @@ export function PacienteForm({
                         required
                         maxLength={150}
                         className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                </div>
+
+                <div className="col-span-1 md:col-span-2 space-y-2">
+                    <Label htmlFor="historialEnfermedades">Historial de Enfermedades</Label>
+                    <Textarea
+                        id="historialEnfermedades"
+                        value={formData.historialEnfermedades}
+                        onChange={(e) =>
+                            setFormData({ ...formData, historialEnfermedades: e.target.value })
+                        }
+                        placeholder="Describa el historial de enfermedades del paciente..."
+                        rows={3}
+                    />
+                </div>
+
+                <div className="col-span-1 md:col-span-2 space-y-2">
+                    <Label htmlFor="consultasMedicasPrevias">Consultas Médicas Previas</Label>
+                    <Textarea
+                        id="consultasMedicasPrevias"
+                        value={formData.consultasMedicasPrevias}
+                        onChange={(e) =>
+                            setFormData({ ...formData, consultasMedicasPrevias: e.target.value })
+                        }
+                        placeholder="Describa consultas o intervenciones previas..."
+                        rows={3}
                     />
                 </div>
 

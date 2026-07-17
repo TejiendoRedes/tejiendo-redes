@@ -102,7 +102,7 @@ export function AbordajeForm({
             )}
 
             <div className="space-y-2">
-                <Label htmlFor="descripcion">Descripción / Título *</Label>
+                <Label htmlFor="descripcion">Descripción / Título <span className="text-red-500 font-bold">*</span></Label>
                 <Input
                     id="descripcion"
                     name="descripcion"
@@ -130,7 +130,7 @@ export function AbordajeForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="fechaAbordaje">Fecha *</Label>
+                    <Label htmlFor="fechaAbordaje">Fecha <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="fechaAbordaje"
                         name="fechaAbordaje"
@@ -141,7 +141,7 @@ export function AbordajeForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="estado">Estado *</Label>
+                    <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.estado}
                         onValueChange={(val) => handleSelectChange(val, 'estado')}
@@ -161,7 +161,7 @@ export function AbordajeForm({
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="horaInicio">Hora Inicio *</Label>
+                    <Label htmlFor="horaInicio">Hora Inicio <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="horaInicio"
                         name="horaInicio"
@@ -172,7 +172,7 @@ export function AbordajeForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="horaFin">Hora Fin *</Label>
+                    <Label htmlFor="horaFin">Hora Fin <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="horaFin"
                         name="horaFin"
@@ -212,7 +212,7 @@ export function AbordajeForm({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="recursosAdicionales">Recursos Adicionales</Label>
+                <Label htmlFor="recursosAdicionales">Recursos Necesarios</Label>
                 <Textarea
                     id="recursosAdicionales"
                     name="recursosAdicionales"

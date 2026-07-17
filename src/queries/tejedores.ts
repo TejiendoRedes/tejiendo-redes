@@ -14,6 +14,7 @@ import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
 
 import { users } from '@/db/schema/users';
+import { medicos } from '@/db/schema/medicos';
 
 /**
  * Obtener todos los tejedores
@@ -24,13 +25,18 @@ export async function getTejedores() {
         const data = await db.select({
             tejedor: tejedores,
             systemRole: users.role,
+            medico: medicos,
         })
         .from(tejedores)
-        .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor));
+        .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
+        .leftJoin(medicos, eq(tejedores.cedulaTejedor, medicos.cedulaTejedor));
         
         const mappedData = data.map(row => ({
             ...row.tejedor,
-            systemRole: row.systemRole
+            systemRole: row.systemRole,
+            codigoEspecialidad: row.medico?.codigoEspecialidad || null,
+            matriculaColegioMedico: row.medico?.matriculaColegioMedico || null,
+            matriculaSanidad: row.medico?.matriculaSanidad || null,
         }));
         
         return { success: true, data: mappedData };
@@ -49,9 +55,11 @@ export async function getTejedor(cedula: string) {
         const result = await db.select({
             tejedor: tejedores,
             systemRole: users.role,
+            medico: medicos,
         })
             .from(tejedores)
             .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
+            .leftJoin(medicos, eq(tejedores.cedulaTejedor, medicos.cedulaTejedor))
             .where(eq(tejedores.cedulaTejedor, cedula))
             .limit(1);
 
@@ -61,7 +69,10 @@ export async function getTejedor(cedula: string) {
 
         const mappedData = {
             ...result[0].tejedor,
-            systemRole: result[0].systemRole
+            systemRole: result[0].systemRole,
+            codigoEspecialidad: result[0].medico?.codigoEspecialidad || null,
+            matriculaColegioMedico: result[0].medico?.matriculaColegioMedico || null,
+            matriculaSanidad: result[0].medico?.matriculaSanidad || null,
         };
 
         return { success: true, data: mappedData };

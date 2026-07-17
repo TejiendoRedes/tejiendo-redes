@@ -267,7 +267,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="cedula">Cédula *</Label>
+                                    <Label htmlFor="cedula">Cédula <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="cedula"
                                         value={formData.cedulaPaciente}
@@ -282,7 +282,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="nombre">Nombre *</Label>
+                                    <Label htmlFor="nombre">Nombre <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="nombre"
                                         value={formData.nombrePaciente}
@@ -295,7 +295,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="apellido">Apellido *</Label>
+                                    <Label htmlFor="apellido">Apellido <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="apellido"
                                         value={formData.apellidoPaciente}
@@ -308,7 +308,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="sexo">Sexo *</Label>
+                                    <Label htmlFor="sexo">Sexo <span className="text-red-500 font-bold">*</span></Label>
                                     <Select
                                         value={formData.sexo}
                                         onValueChange={(value: 'M' | 'F') =>
@@ -326,7 +326,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento *</Label>
+                                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="fechaNacimiento"
                                         type="date"
@@ -340,7 +340,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="comunidad">Comunidad *</Label>
+                                    <Label htmlFor="comunidad">Comunidad <span className="text-red-500 font-bold">*</span></Label>
                                     <Select
                                         value={formData.codigoComunidad}
                                         onValueChange={(value) =>
@@ -361,7 +361,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="telefono">Teléfono *</Label>
+                                    <Label htmlFor="telefono">Teléfono <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="telefono"
                                         value={formData.telefonoPaciente}
@@ -374,7 +374,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="correo">Correo Electrónico *</Label>
+                                    <Label htmlFor="correo">Correo Electrónico <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="correo"
                                         type="email"
@@ -388,7 +388,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                 </div>
 
                                 <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="direccion">Dirección *</Label>
+                                    <Label htmlFor="direccion">Dirección <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="direccion"
                                         value={formData.direccionPaciente}

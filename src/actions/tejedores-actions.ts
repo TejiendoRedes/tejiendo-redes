@@ -8,6 +8,7 @@ import { abordaje } from '@/db/schema/abordajes';
 import { consultas } from '@/db/schema/consultas';
 import { pacientes } from '@/db/schema/pacientes';
 import { medicamentos } from '@/db/schema/medicamentos';
+import { medicos } from '@/db/schema/medicos';
 import { eq, desc, sql } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
@@ -17,10 +18,12 @@ import { users } from '@/db/schema/users';
  * Obtener todos los tejedores
  */
 
+import { toTitleCase } from '@/lib/string-utils';
+
 /**
  * Crear un nuevo tejedor
  */
-export async function createTejedor(data: NewTejedor) {
+export async function createTejedor(data: NewTejedor & { codigoEspecialidad?: string, matriculaColegioMedico?: string, matriculaSanidad?: string }) {
     try {
         const session = await requireAuth();
         if (!['admin', 'superuser'].includes(session.role)) {
@@ -38,7 +41,25 @@ export async function createTejedor(data: NewTejedor) {
             return { success: false, error: 'El apellido es requerido' };
         }
 
-        await db.insert(tejedores).values(data);
+        // Formateo de texto
+        data.nombreTejedor = toTitleCase(data.nombreTejedor.trim());
+        data.apellidoTejedor = toTitleCase(data.apellidoTejedor.trim());
+
+        const { codigoEspecialidad, matriculaColegioMedico, matriculaSanidad, ...tejedorData } = data;
+
+        await db.transaction(async (tx) => {
+            await tx.insert(tejedores).values(tejedorData);
+            
+            if (tejedorData.profesionTejedor === 'Médico' && codigoEspecialidad) {
+                await tx.insert(medicos).values({
+                    cedulaTejedor: tejedorData.cedulaTejedor,
+                    codigoEspecialidad: codigoEspecialidad,
+                    matriculaColegioMedico: matriculaColegioMedico || 'N/A',
+                    matriculaSanidad: matriculaSanidad || 'N/A'
+                });
+            }
+        });
+
         revalidatePath('/datos-basicos/tejedores');
         return { success: true, message: 'Tejedor creado correctamente' };
     } catch (error) {
@@ -52,15 +73,15 @@ export async function createTejedor(data: NewTejedor) {
 /**
  * Actualizar un tejedor existente
  */
-export async function updateTejedor(cedula: string, data: Partial<NewTejedor> & { systemRole?: string }) {
+export async function updateTejedor(cedula: string, data: Partial<NewTejedor> & { systemRole?: string, codigoEspecialidad?: string, matriculaColegioMedico?: string, matriculaSanidad?: string }) {
     try {
         const session = await requireAuth();
         if (!['admin', 'superuser'].includes(session.role)) {
             return { success: false, error: 'No autorizado para editar tejedores' };
         }
 
-        // Separar systemRole de los datos del tejedor
-        const { systemRole, ...tejedorData } = data;
+        // Separar data extra
+        const { systemRole, codigoEspecialidad, matriculaColegioMedico, matriculaSanidad, ...tejedorData } = data;
 
         // Verificar que el tejedor existe
         const existing = await db.select()
@@ -73,6 +94,14 @@ export async function updateTejedor(cedula: string, data: Partial<NewTejedor> & 
         }
 
         await db.transaction(async (tx) => {
+            // Formateo de texto
+            if (tejedorData.nombreTejedor) {
+                tejedorData.nombreTejedor = toTitleCase(tejedorData.nombreTejedor.trim());
+            }
+            if (tejedorData.apellidoTejedor) {
+                tejedorData.apellidoTejedor = toTitleCase(tejedorData.apellidoTejedor.trim());
+            }
+
             // Actualizar datos del tejedor
             if (Object.keys(tejedorData).length > 0) {
                 await tx.update(tejedores)
@@ -85,6 +114,28 @@ export async function updateTejedor(cedula: string, data: Partial<NewTejedor> & 
                 await tx.update(users)
                     .set({ role: systemRole as any })
                     .where(eq(users.cedulaTejedor, cedula));
+            }
+
+            // Gestionar la relación con Médicos
+            if (tejedorData.profesionTejedor === 'Médico' && codigoEspecialidad) {
+                const existingMedico = await tx.select().from(medicos).where(eq(medicos.cedulaTejedor, cedula)).limit(1);
+                if (existingMedico && existingMedico.length > 0) {
+                    await tx.update(medicos).set({
+                        codigoEspecialidad: codigoEspecialidad,
+                        matriculaColegioMedico: matriculaColegioMedico || 'N/A',
+                        matriculaSanidad: matriculaSanidad || 'N/A'
+                    }).where(eq(medicos.cedulaTejedor, cedula));
+                } else {
+                    await tx.insert(medicos).values({
+                        cedulaTejedor: cedula,
+                        codigoEspecialidad: codigoEspecialidad,
+                        matriculaColegioMedico: matriculaColegioMedico || 'N/A',
+                        matriculaSanidad: matriculaSanidad || 'N/A'
+                    });
+                }
+            } else if (tejedorData.profesionTejedor && tejedorData.profesionTejedor !== 'Médico') {
+                // Si cambió la profesión y ya no es Médico, eliminamos de la tabla médicos si existe
+                await tx.delete(medicos).where(eq(medicos.cedulaTejedor, cedula));
             }
         });
 

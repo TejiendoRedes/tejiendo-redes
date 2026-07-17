@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -102,7 +103,7 @@ export default function EditarAbordajePage() {
             <MainLayout>
                 <div className="p-8 text-center">
                     <h2 className="text-2xl font-bold text-gray-700">Abordaje no encontrado</h2>
-                    <Button className="mt-4" onClick={() => router.back()}>Volver</Button>
+                    <Button className="mt-4" onClick={() => router.push(`/abordajes/${params.id}`)}>Volver</Button>
                 </div>
             </MainLayout>
         );
@@ -112,8 +113,10 @@ export default function EditarAbordajePage() {
         <MainLayout>
             <div className="max-w-2xl mx-auto space-y-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href={`/abordajes/${params.id}`}>
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
                     </Button>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Editar Abordaje</h1>
@@ -130,7 +133,7 @@ export default function EditarAbordajePage() {
                             initialData={abordaje}
                             comunidades={comunidades}
                             onSubmit={handleSubmit}
-                            onCancel={() => router.back()}
+                            onCancel={() => router.push(`/abordajes/${params.id}`)}
                             isLoading={isSubmitting}
                         />
                     </CardContent>

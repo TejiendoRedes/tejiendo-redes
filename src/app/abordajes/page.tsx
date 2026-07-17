@@ -87,7 +87,7 @@ export default async function AbordajesPage() {
                                                     <MapPin className="h-4 w-4" />
                                                 </div>
                                                 <span className="font-medium text-gray-700 truncate">
-                                                    {comunidad ? `${comunidad.nombreComunidad} (${comunidad.estado})` : 'Sin comunidad asignada'}
+                                                    {comunidad ? `${comunidad.nombreComunidad} (${comunidad.estado} - ${comunidad.municipio})` : 'Sin comunidad asignada'}
                                                 </span>
                                             </div>
 

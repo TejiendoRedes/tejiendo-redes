@@ -27,8 +27,8 @@ export function MedicamentoForm({
         nombreMedicamento: initialData?.nombreMedicamento || '',
         presentacion: initialData?.presentacion || '',
         descripcion: initialData?.descripcion || '',
-        existencia: initialData?.existencia || 0,
-        precio: initialData?.precio || 0,
+        existencia: initialData?.existencia?.toString() || '',
+        precio: initialData?.precio?.toString() || '',
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
@@ -52,7 +52,7 @@ export function MedicamentoForm({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="nombre">Nombre *</Label>
+                <Label htmlFor="nombre">Nombre <span className="text-red-500 font-bold">*</span></Label>
                 <Input
                     id="nombre"
                     value={formData.nombreMedicamento}
@@ -63,7 +63,7 @@ export function MedicamentoForm({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="presentacion">Presentación *</Label>
+                <Label htmlFor="presentacion">Presentación <span className="text-red-500 font-bold">*</span></Label>
                 <Input
                     id="presentacion"
                     value={formData.presentacion}
@@ -75,7 +75,7 @@ export function MedicamentoForm({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="descripcion">Descripción *</Label>
+                <Label htmlFor="descripcion">Descripción <span className="text-red-500 font-bold">*</span></Label>
                 <Textarea
                     id="descripcion"
                     value={formData.descripcion}
@@ -85,46 +85,40 @@ export function MedicamentoForm({
                 />
             </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="precio">Precio *</Label>
-                <Input
-                    type="number"
-                    id="precio"
-                    value={formData.precio}
-                    onChange={(e) => setFormData({ ...formData, precio: parseFloat(e.target.value) || 0 })}
-                    required
-                    min={0}
-                    step="0.01"
-                />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="precio">Precio <span className="text-red-500 font-bold">*</span></Label>
+                    <Input
+                        type="number"
+                        id="precio"
+                        value={formData.precio}
+                        onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
+                        required
+                        min={0}
+                        step="0.01"
+                    />
+                </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="existencia">
-                    {initialData ? 'Existencia' : 'Existencia Inicial *'}
-                </Label>
-                {initialData ? (
-                    <>
-                        <Input
-                            type="number"
-                            id="existencia"
-                            value={formData.existencia}
-                            disabled
-                            className="bg-gray-100"
-                        />
-                        <p className="text-xs text-gray-500">
-                            El stock se ajusta automáticamente con las entregas y cancelaciones registradas en Farmacia.
-                        </p>
-                    </>
-                ) : (
+                <div className="space-y-2">
+                    <Label htmlFor="existencia">
+                        {initialData ? 'Existencia' : 'Existencia Inicial *'}
+                    </Label>
                     <Input
                         type="number"
                         id="existencia"
                         value={formData.existencia}
-                        onChange={(e) => setFormData({ ...formData, existencia: parseInt(e.target.value) || 0 })}
+                        onChange={(e) => setFormData({ ...formData, existencia: e.target.value })}
                         required
                         min={0}
+                        disabled={!!initialData}
+                        className={initialData ? "bg-gray-100" : ""}
                     />
-                )}
+                    {initialData && (
+                        <p className="text-xs text-amber-600 font-medium">
+                            Nota: La existencia se actualiza automáticamente a través de las entregas y reabastecimientos.
+                        </p>
+                    )}
+                </div>
             </div>
 
             <div className="flex gap-2 justify-end pt-4">

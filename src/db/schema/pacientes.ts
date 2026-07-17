@@ -7,7 +7,7 @@ import { comunidades } from './comunidades';
  */
 export const pacientes = mysqlTable('pacientes', {
     cedulaPaciente: varchar('cedula_paciente', { length: 12 }).primaryKey().notNull(),
-    codigoComunidad: varchar('codigo_comunidad', { length: 10 }).notNull().references(() => comunidades.codigoComunidad, {
+    codigoComunidad: varchar('codigo_comunidad', { length: 20 }).notNull().references(() => comunidades.codigoComunidad, {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }),

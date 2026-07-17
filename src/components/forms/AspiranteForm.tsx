@@ -106,7 +106,7 @@ export function AspiranteForm({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* DATOS PERSONALES */}
                 <div className="space-y-2">
-                    <Label htmlFor="cedula">Cédula *</Label>
+                    <Label htmlFor="cedula">Cédula <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="cedula"
                         value={formData.cedulaAspirante}
@@ -118,7 +118,7 @@ export function AspiranteForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="nombre">Nombre *</Label>
+                    <Label htmlFor="nombre">Nombre <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="nombre"
                         value={formData.nombreAspirante}
@@ -129,7 +129,7 @@ export function AspiranteForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="apellido">Apellido *</Label>
+                    <Label htmlFor="apellido">Apellido <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="apellido"
                         value={formData.apellidoAspirante}
@@ -142,7 +142,7 @@ export function AspiranteForm({
 
                 {/* FECHAS */}
                 <div className="space-y-2">
-                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento *</Label>
+                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="fechaNacimiento"
                         type="date"
@@ -153,7 +153,7 @@ export function AspiranteForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="fechaPostulacion">Fecha Postulación *</Label>
+                    <Label htmlFor="fechaPostulacion">Fecha Postulación <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="fechaPostulacion"
                         type="date"
@@ -164,7 +164,7 @@ export function AspiranteForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="profesion">Profesión *</Label>
+                    <Label htmlFor="profesion">Profesión <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="profesion"
                         value={formData.profesionAspirante}
@@ -177,7 +177,7 @@ export function AspiranteForm({
 
                 {/* CONTACTO */}
                 <div className="space-y-2">
-                    <Label htmlFor="telefono">Teléfono *</Label>
+                    <Label htmlFor="telefono">Teléfono <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="telefono"
                         value={formData.telefonoAspirante}
@@ -212,7 +212,7 @@ export function AspiranteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="estado">Estado *</Label>
+                    <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.estadoDireccionAspirante}
                         onValueChange={handleEstadoChange}
@@ -231,7 +231,7 @@ export function AspiranteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="municipio">Municipio *</Label>
+                    <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.municipioAspirante}
                         onValueChange={handleMunicipioChange}
@@ -260,7 +260,7 @@ export function AspiranteForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="parroquia">Parroquia *</Label>
+                    <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.parroquiaAspirante}
                         onValueChange={handleParroquiaChange}

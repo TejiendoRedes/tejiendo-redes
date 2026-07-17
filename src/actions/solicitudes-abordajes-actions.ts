@@ -24,8 +24,8 @@ export async function createSolicitudAbordaje(data: NewSolicitudAbordaje) {
     try {
         await requireAuth();
         // Validar datos requeridos
-        if (!data.codigoComunidad) {
-            return { success: false, error: 'La comunidad es requerida' };
+        if (!data.codigoComunidad && !data.comunidadSugerida) {
+            return { success: false, error: 'Debe especificar una comunidad (existente o sugerida)' };
         }
         if (!data.fechaSugerida) {
             return { success: false, error: 'La fecha sugerida es requerida' };
@@ -75,6 +75,10 @@ export async function confirmarSolicitudAbordaje(id: number) {
 
         if (!solicitud[0]) {
             return { success: false, error: 'Solicitud no encontrada' };
+        }
+        
+        if (!solicitud[0].codigoComunidad) {
+            return { success: false, error: 'No se puede confirmar la solicitud porque no tiene una comunidad asignada. Registre la comunidad sugerida y edite la solicitud primero.' };
         }
 
         // Actualizar estado a confirmado

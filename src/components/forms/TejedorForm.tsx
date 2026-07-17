@@ -27,7 +27,8 @@ const PROFESIONES_PREDEFINIDAS = [
 
 export interface TejedorFormProps {
     initialData?: Tejedor & { systemRole?: string | null };
-    onSubmit: (data: Omit<Tejedor, 'fechaPromocion'> & { systemRole?: string }) => Promise<void>;
+    especialidades?: any[];
+    onSubmit: (data: any) => Promise<void>;
     onCancel: () => void;
     isLoading?: boolean;
     isAdmin?: boolean;
@@ -38,6 +39,7 @@ export function TejedorForm({
     initialData,
     onSubmit,
     onCancel,
+    especialidades = [],
     isLoading = false,
     isAdmin = false,
     submitLabel
@@ -71,6 +73,9 @@ export function TejedorForm({
             : '',
         tipodeVoluntario: initialData?.tipodeVoluntario || '',
         systemRole: initialData?.systemRole || '',
+        matriculaColegioMedico: (initialData as any)?.matriculaColegioMedico || '',
+        matriculaSanidad: (initialData as any)?.matriculaSanidad || '',
+        codigoEspecialidad: (initialData as any)?.codigoEspecialidad || '',
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
@@ -140,6 +145,15 @@ export function TejedorForm({
             newErrors.correoTejedor = "El correo electrónico no tiene un formato válido";
         }
 
+        if (finalProfesion === 'Médico') {
+            if (!formData.codigoEspecialidad) {
+                newErrors.codigoEspecialidad = "La especialidad es requerida";
+            }
+            if (!formData.matriculaColegioMedico?.trim()) {
+                newErrors.matriculaColegioMedico = "La matrícula del Colegio Médico es requerida";
+            }
+        }
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -149,7 +163,7 @@ export function TejedorForm({
 
         const { tipoCedula, profesionSelect, profesionOtra, ...restFormData } = formData;
 
-        const dataToSave: Omit<Tejedor, 'fechaPromocion'> & { systemRole?: string } = {
+        const dataToSave: any = {
             ...restFormData,
             cedulaTejedor: `${tipoCedula}-${formData.cedulaTejedor}`,
             profesionTejedor: finalProfesion,
@@ -165,7 +179,7 @@ export function TejedorForm({
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="cedula" className={errors.cedulaTejedor ? "text-red-500" : ""}>Cédula *</Label>
+                    <Label htmlFor="cedula" className={errors.cedulaTejedor ? "text-red-500" : ""}>Cédula <span className="text-red-500 font-bold">*</span></Label>
                     <div className="flex gap-2">
                         <Select
                             value={formData.tipoCedula}
@@ -201,7 +215,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="nombre" className={errors.nombreTejedor ? "text-red-500" : ""}>Nombre *</Label>
+                    <Label htmlFor="nombre" className={errors.nombreTejedor ? "text-red-500" : ""}>Nombre <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="nombre"
                         value={formData.nombreTejedor}
@@ -220,7 +234,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="apellido" className={errors.apellidoTejedor ? "text-red-500" : ""}>Apellido *</Label>
+                    <Label htmlFor="apellido" className={errors.apellidoTejedor ? "text-red-500" : ""}>Apellido <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="apellido"
                         value={formData.apellidoTejedor}
@@ -239,7 +253,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento *</Label>
+                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="fechaNacimiento"
                         type="date"
@@ -254,7 +268,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="profesion" className={errors.profesionTejedor ? "text-red-500" : ""}>Profesión *</Label>
+                    <Label htmlFor="profesion" className={errors.profesionTejedor ? "text-red-500" : ""}>Profesión <span className="text-red-500 font-bold">*</span></Label>
                     <div className="flex gap-2">
                         <Select
                             value={formData.profesionSelect}
@@ -288,8 +302,59 @@ export function TejedorForm({
                     {errors.profesionTejedor && <p className="text-red-500 text-sm mt-1">{errors.profesionTejedor}</p>}
                 </div>
 
+                {formData.profesionSelect === 'Médico' && (
+                    <>
+                        <div className="space-y-2">
+                            <Label htmlFor="especialidad" className={errors.codigoEspecialidad ? "text-red-500" : ""}>Especialidad <span className="text-red-500 font-bold">*</span></Label>
+                            <Select
+                                value={formData.codigoEspecialidad}
+                                onValueChange={(val) => setFormData({ ...formData, codigoEspecialidad: val })}
+                            >
+                                <SelectTrigger className={`h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500 ${errors.codigoEspecialidad ? 'border-red-500' : ''}`}>
+                                    <SelectValue placeholder="Seleccione especialidad" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {especialidades.map(e => (
+                                        <SelectItem key={e.codigoEspecialidad} value={e.codigoEspecialidad}>{e.nombreEspecialidad}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.codigoEspecialidad && <p className="text-red-500 text-sm mt-1">{errors.codigoEspecialidad}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="matriculaColegio" className={errors.matriculaColegioMedico ? "text-red-500" : ""}>Matrícula C.M. <span className="text-red-500 font-bold">*</span></Label>
+                            <Input
+                                id="matriculaColegio"
+                                value={formData.matriculaColegioMedico}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, matriculaColegioMedico: e.target.value });
+                                    if (errors.matriculaColegioMedico) setErrors({ ...errors, matriculaColegioMedico: '' });
+                                }}
+                                required
+                                maxLength={30}
+                                placeholder="Ej: 12345"
+                                className={`h-11 shadow-sm focus:ring-blue-500 ${errors.matriculaColegioMedico ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'}`}
+                            />
+                            {errors.matriculaColegioMedico && <p className="text-red-500 text-sm mt-1">{errors.matriculaColegioMedico}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="matriculaSanidad">Matrícula Sanidad (Opcional)</Label>
+                            <Input
+                                id="matriculaSanidad"
+                                value={formData.matriculaSanidad}
+                                onChange={(e) => setFormData({ ...formData, matriculaSanidad: e.target.value })}
+                                maxLength={30}
+                                placeholder="Ej: 12345"
+                                className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                            />
+                        </div>
+                    </>
+                )}
+
                 <div className="space-y-2">
-                    <Label htmlFor="tipoVoluntario">Tipo Voluntario *</Label>
+                    <Label htmlFor="tipoVoluntario">Tipo Voluntario <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.tipodeVoluntario}
                         onValueChange={(val) => setFormData({ ...formData, tipodeVoluntario: val })}
@@ -336,7 +401,7 @@ export function TejedorForm({
                 )}
 
                 <div className="space-y-2">
-                    <Label htmlFor="fechaIngreso">Fecha de Ingreso *</Label>
+                    <Label htmlFor="fechaIngreso">Fecha de Ingreso <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="fechaIngreso"
                         type="date"
@@ -350,7 +415,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="telefono" className={errors.telefonoTejedor ? "text-red-500" : ""}>Teléfono *</Label>
+                    <Label htmlFor="telefono" className={errors.telefonoTejedor ? "text-red-500" : ""}>Teléfono <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="telefono"
                         value={formData.telefonoTejedor}
@@ -369,7 +434,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="correo" className={errors.correoTejedor ? "text-red-500" : ""}>Correo Electrónico *</Label>
+                    <Label htmlFor="correo" className={errors.correoTejedor ? "text-red-500" : ""}>Correo Electrónico <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="correo"
                         type="email"
@@ -389,7 +454,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="col-span-full space-y-2">
-                    <Label htmlFor="direccion">Dirección *</Label>
+                    <Label htmlFor="direccion">Dirección <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="direccion"
                         value={formData.direccionTejedor}
@@ -406,7 +471,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="estado">Estado *</Label>
+                    <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.estadoTejedor}
                         onValueChange={handleEstadoChange}
@@ -425,7 +490,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="municipio">Municipio *</Label>
+                    <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.municipioTejedor}
                         onValueChange={handleMunicipioChange}
@@ -445,7 +510,7 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="parroquia">Parroquia *</Label>
+                    <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.parroquiaTejedor}
                         onValueChange={handleParroquiaChange}

@@ -6,6 +6,7 @@ import * as z from 'zod';
 
 import { users } from '@/db/schema/users';
 import { hashPassword } from '@/lib/auth';
+import { toTitleCase } from '@/lib/string-utils';
 
 const registrationSchema = z.object({
     cedulaTejedor: z.string().min(6).max(12),
@@ -50,8 +51,8 @@ export async function POST(request: Request) {
             // 1. Create Tejedor record
             await tx.insert(tejedores).values({
                 cedulaTejedor: validatedData.cedulaTejedor,
-                nombreTejedor: validatedData.nombreTejedor,
-                apellidoTejedor: validatedData.apellidoTejedor,
+                nombreTejedor: toTitleCase(validatedData.nombreTejedor.trim()),
+                apellidoTejedor: toTitleCase(validatedData.apellidoTejedor.trim()),
                 fechaNacimiento: validatedData.fechaNacimiento,
                 direccionTejedor: validatedData.direccionTejedor,
                 municipioTejedor: validatedData.municipioTejedor,

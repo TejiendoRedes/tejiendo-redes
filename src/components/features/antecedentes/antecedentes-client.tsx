@@ -307,7 +307,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="codigo">Código Antecedente *</Label>
+                                    <Label htmlFor="codigo">Código Antecedente <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="codigo"
                                         value={formData.codigoAntecedente}
@@ -320,7 +320,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="paciente">Paciente *</Label>
+                                    <Label htmlFor="paciente">Paciente <span className="text-red-500 font-bold">*</span></Label>
                                     <AsyncSearchableSelect
                                         fetcher={getPacientes}
                                         value={formData.cedulaPaciente}
@@ -336,7 +336,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="peso">Peso (kg) *</Label>
+                                    <Label htmlFor="peso">Peso (kg) <span className="text-red-500 font-bold">*</span></Label>
                                     <NumberInput
                                         id="peso"
                                         suffix="kg"
@@ -347,7 +347,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="talla">Talla (cm) *</Label>
+                                    <Label htmlFor="talla">Talla (cm) <span className="text-red-500 font-bold">*</span></Label>
                                     <NumberInput
                                         id="talla"
                                         suffix="cm"
@@ -358,7 +358,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="temperatura">Temperatura (°C) *</Label>
+                                    <Label htmlFor="temperatura">Temperatura (°C) <span className="text-red-500 font-bold">*</span></Label>
                                     <NumberInput
                                         id="temperatura"
                                         suffix="°C"
@@ -369,7 +369,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="fc">Frecuencia Cardíaca (FC) *</Label>
+                                    <Label htmlFor="fc">Frecuencia Cardíaca (FC) <span className="text-red-500 font-bold">*</span></Label>
                                     <Input
                                         id="fc"
                                         value={formData.FC}
@@ -393,7 +393,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 <h3 className="font-medium text-gray-900">Antecedentes Patológicos</h3>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="enfermedadesPrevias">Enfermedades Previas *</Label>
+                                    <Label htmlFor="enfermedadesPrevias">Enfermedades Previas <span className="text-red-500 font-bold">*</span></Label>
                                     <Textarea
                                         id="enfermedadesPrevias"
                                         value={formData.enfermedadesPrevias}
@@ -404,7 +404,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="alergias">Alergias *</Label>
+                                    <Label htmlFor="alergias">Alergias <span className="text-red-500 font-bold">*</span></Label>
                                     <Textarea
                                         id="alergias"
                                         value={formData.alergias}
@@ -415,7 +415,7 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="enfermedadesFamilia">Enfermedades Familiares *</Label>
+                                    <Label htmlFor="enfermedadesFamilia">Enfermedades Familiares <span className="text-red-500 font-bold">*</span></Label>
                                     <Textarea
                                         id="enfermedadesFamilia"
                                         value={formData.enfermedadesFamilia}

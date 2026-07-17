@@ -45,12 +45,12 @@ export function ComunidadForm({
         direccion: initialData?.direccion || '',
         ubicacionFisica: initialData?.ubicacionFisica || '',
         cedulaResponsable: initialData?.cedulaResponsable || '',
-        cantidadHabitantes: initialData?.cantidadHabitantes || 0,
-        cantidadFamilias: initialData?.cantidadFamilias || 0,
-        cantidadNinos: initialData?.cantidadNinos || 0,
-        cantidadAdolescentes: initialData?.cantidadAdolescentes || 0,
-        cantidadMayores: initialData?.cantidadMayores || 0,
-        cantidadMayores60: initialData?.cantidadMayores60 || 0,
+        cantidadHabitantes: initialData?.cantidadHabitantes?.toString() || '',
+        cantidadFamilias: initialData?.cantidadFamilias?.toString() || '',
+        cantidadNinos: initialData?.cantidadNinos?.toString() || '',
+        cantidadAdolescentes: initialData?.cantidadAdolescentes?.toString() || '',
+        cantidadMayores: initialData?.cantidadMayores?.toString() || '',
+        cantidadMayores60: initialData?.cantidadMayores60?.toString() || '',
         telefonoComunidad: initialData?.telefonoComunidad || '',
     };
 
@@ -110,7 +110,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2 col-span-1 md:col-span-2">
-                    <Label htmlFor="nombre">Nombre de la Comunidad *</Label>
+                    <Label htmlFor="nombre">Nombre de la Comunidad <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="nombre"
                         value={formData.nombreComunidad}
@@ -122,7 +122,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="tipo">Tipo de Comunidad *</Label>
+                    <Label htmlFor="tipo">Tipo de Comunidad <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.tipoComunidad}
                         onValueChange={(value) => setFormData({ ...formData, tipoComunidad: value })}
@@ -161,7 +161,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="telefono">Teléfono *</Label>
+                    <Label htmlFor="telefono">Teléfono <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="telefono"
                         value={formData.telefonoComunidad}
@@ -178,7 +178,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="estado">Estado *</Label>
+                    <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
                     <Select value={formData.estado} onValueChange={handleEstadoChange} required>
                         <SelectTrigger id="estado" className={inputClassName}><SelectValue placeholder="Seleccione estado" /></SelectTrigger>
                         <SelectContent>
@@ -188,7 +188,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="municipio">Municipio *</Label>
+                    <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
                     <Select value={formData.municipio} onValueChange={handleMunicipioChange} disabled={!formData.estado} required>
                         <SelectTrigger id="municipio" className={inputClassName}><SelectValue placeholder="Seleccione municipio" /></SelectTrigger>
                         <SelectContent>
@@ -198,7 +198,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="parroquia">Parroquia *</Label>
+                    <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                     <Select value={formData.parroquia} onValueChange={handleParroquiaChange} disabled={!formData.municipio} required>
                         <SelectTrigger id="parroquia" className={inputClassName}><SelectValue placeholder="Seleccione parroquia" /></SelectTrigger>
                         <SelectContent>
@@ -208,7 +208,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2 col-span-full">
-                    <Label htmlFor="direccion">Dirección Exacta *</Label>
+                    <Label htmlFor="direccion">Dirección Exacta <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="direccion"
                         value={formData.direccion}
@@ -220,7 +220,7 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2 col-span-full">
-                    <Label htmlFor="ubicacionFisica">Ubicación Física / Punto de Referencia *</Label>
+                    <Label htmlFor="ubicacionFisica">Ubicación Física / Punto de Referencia <span className="text-red-500 font-bold">*</span></Label>
                     <Textarea
                         id="ubicacionFisica"
                         value={formData.ubicacionFisica}
@@ -236,28 +236,28 @@ export function ComunidadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="habitantes">Total Habitantes *</Label>
-                    <Input type="number" id="habitantes" value={formData.cantidadHabitantes} onChange={(e) => setFormData({ ...formData, cantidadHabitantes: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
+                    <Label htmlFor="habitantes">Total Habitantes <span className="text-red-500 font-bold">*</span></Label>
+                    <Input type="number" id="habitantes" value={formData.cantidadHabitantes} onChange={(e) => setFormData({ ...formData, cantidadHabitantes: e.target.value })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="familias">Total Familias *</Label>
-                    <Input type="number" id="familias" value={formData.cantidadFamilias} onChange={(e) => setFormData({ ...formData, cantidadFamilias: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
+                    <Label htmlFor="familias">Total Familias <span className="text-red-500 font-bold">*</span></Label>
+                    <Input type="number" id="familias" value={formData.cantidadFamilias} onChange={(e) => setFormData({ ...formData, cantidadFamilias: e.target.value })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="ninos">Niños *</Label>
-                    <Input type="number" id="ninos" value={formData.cantidadNinos} onChange={(e) => setFormData({ ...formData, cantidadNinos: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
+                    <Label htmlFor="ninos">Niños <span className="text-red-500 font-bold">*</span></Label>
+                    <Input type="number" id="ninos" value={formData.cantidadNinos} onChange={(e) => setFormData({ ...formData, cantidadNinos: e.target.value })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="adolescentes">Adolescentes *</Label>
-                    <Input type="number" id="adolescentes" value={formData.cantidadAdolescentes} onChange={(e) => setFormData({ ...formData, cantidadAdolescentes: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
+                    <Label htmlFor="adolescentes">Adolescentes <span className="text-red-500 font-bold">*</span></Label>
+                    <Input type="number" id="adolescentes" value={formData.cantidadAdolescentes} onChange={(e) => setFormData({ ...formData, cantidadAdolescentes: e.target.value })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="mayores">Adultos Mayores *</Label>
-                    <Input type="number" id="mayores" value={formData.cantidadMayores} onChange={(e) => setFormData({ ...formData, cantidadMayores: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
+                    <Label htmlFor="mayores">Adultos Mayores <span className="text-red-500 font-bold">*</span></Label>
+                    <Input type="number" id="mayores" value={formData.cantidadMayores} onChange={(e) => setFormData({ ...formData, cantidadMayores: e.target.value })} required min={0} className={inputClassName} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="mayores60">Mayores de 60 *</Label>
-                    <Input type="number" id="mayores60" value={formData.cantidadMayores60} onChange={(e) => setFormData({ ...formData, cantidadMayores60: parseInt(e.target.value) || 0 })} required min={0} className={inputClassName} />
+                    <Label htmlFor="mayores60">Mayores de 60 <span className="text-red-500 font-bold">*</span></Label>
+                    <Input type="number" id="mayores60" value={formData.cantidadMayores60} onChange={(e) => setFormData({ ...formData, cantidadMayores60: e.target.value })} required min={0} className={inputClassName} />
                 </div>
             </div>
 

@@ -160,11 +160,20 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
 
     const columns: Column<MedicoWithRelations>[] = [
         {
+            key: 'codigoEspecialidad',
+            header: 'Especialidad',
+            render: (m) => (
+                <div className="font-semibold text-[#1e3a8a]">
+                    {m.especialidad ? m.especialidad.nombreEspecialidad : m.codigoEspecialidad}
+                </div>
+            )
+        },
+        {
             key: 'cedulaTejedor',
             header: 'Médico',
             render: (m) => (
                 <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1e3a8a]/10 text-sm font-bold text-[#1e3a8a]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-sm font-bold text-gray-600">
                         {m.tejedor ? `${m.tejedor.nombreTejedor[0]}${m.tejedor.apellidoTejedor[0]}` : '?'}
                     </span>
                     <div>
@@ -175,11 +184,6 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                     </div>
                 </div>
             ),
-        },
-        {
-            key: 'codigoEspecialidad',
-            header: 'Especialidad',
-            render: (m) => m.especialidad ? m.especialidad.nombreEspecialidad : m.codigoEspecialidad
         },
         {
             key: 'telefono', // Virtual column
@@ -476,7 +480,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="m_colegio">Matrícula Colegio Médico *</Label>
+                                                <Label htmlFor="m_colegio">Matrícula Colegio Médico <span className="text-red-500 font-bold">*</span></Label>
                                                 <Input
                                                     id="m_colegio"
                                                     placeholder="Ej. MPPS-123456"
@@ -489,7 +493,7 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="m_sanidad">Matrícula Sanidad *</Label>
+                                                <Label htmlFor="m_sanidad">Matrícula Sanidad <span className="text-red-500 font-bold">*</span></Label>
                                                 <Input
                                                     id="m_sanidad"
                                                     placeholder="Ej. MS-998877"

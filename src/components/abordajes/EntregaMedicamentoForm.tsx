@@ -103,7 +103,7 @@ export function EntregaMedicamentoForm({
         <form onSubmit={handleSubmit} className="space-y-4">
             {/* Paciente */}
             <div>
-                <Label htmlFor="paciente">Paciente *</Label>
+                <Label htmlFor="paciente">Paciente <span className="text-red-500 font-bold">*</span></Label>
                 <AsyncSearchableSelect
                     fetcher={getPacientes}
                     value={formData.cedulaPaciente}
@@ -118,7 +118,7 @@ export function EntregaMedicamentoForm({
 
             {/* Medicamento */}
             <div>
-                <Label htmlFor="medicamento">Medicamento *</Label>
+                <Label htmlFor="medicamento">Medicamento <span className="text-red-500 font-bold">*</span></Label>
                 <AsyncSearchableSelect
                     fetcher={getMedicamentos}
                     value={formData.codigoMedicamento}
@@ -133,7 +133,7 @@ export function EntregaMedicamentoForm({
 
             {/* Cantidad */}
             <div>
-                <Label htmlFor="cantidad">Cantidad Entregada *</Label>
+                <Label htmlFor="cantidad">Cantidad Entregada <span className="text-red-500 font-bold">*</span></Label>
                 <Input
                     id="cantidad"
                     type="number"
@@ -147,7 +147,7 @@ export function EntregaMedicamentoForm({
 
             {/* Médico */}
             <div>
-                <Label htmlFor="medico">Médico/Tejedor Responsable *</Label>
+                <Label htmlFor="medico">Médico/Tejedor Responsable <span className="text-red-500 font-bold">*</span></Label>
                 <AsyncSearchableSelect
                     fetcher={getMedicos}
                     value={formData.cedulaMedico}

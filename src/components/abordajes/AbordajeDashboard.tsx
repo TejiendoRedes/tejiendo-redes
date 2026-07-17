@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -109,8 +110,10 @@ export function AbordajeDashboard({ abordaje }: AbordajeDashboardProps) {
             {/* HEADER GLOBAL STICKY */}
             <div className="bg-white border-b sticky top-0 z-10 -mx-6 px-6 py-4 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="w-5 h-5 text-gray-500" />
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/dashboard">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
                     </Button>
                     <div>
                         <div className="flex items-center gap-2">

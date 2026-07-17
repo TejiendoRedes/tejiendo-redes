@@ -247,15 +247,6 @@ export default function ComunidadesClient({ initialData, responsables, canManage
                             <Download className="w-4 h-4 mr-2" />
                             Exportar
                         </Button>
-                        {canManage && (
-                            <Button 
-                                onClick={handleAdd} 
-                                className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
-                            >
-                                <Home className="w-4 h-4 mr-2" />
-                                Agregar Comunidad
-                            </Button>
-                        )}
                     </div>
                 }
             >

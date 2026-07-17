@@ -202,7 +202,7 @@ export function ConsultaForm({
                 <Button
                     type="button"
                     variant="outline"
-                    onClick={() => onCancel ? onCancel() : router.back()}
+                    onClick={() => onCancel ? onCancel() : router.push('/atencion-medica')}
                     disabled={loading}
                 >
                     Cancelar

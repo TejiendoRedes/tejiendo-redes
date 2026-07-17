@@ -238,7 +238,7 @@ export default function EspecialidadesClient({ initialData, isAdmin = false }: E
                                     <div className="space-y-2">
                                         <Label htmlFor="codigo" className="flex items-center gap-2 text-gray-700">
                                             <Hash className="w-4 h-4 text-gray-400" />
-                                            Código de Especialidad *
+                                            Código de Especialidad <span className="text-red-500 font-bold">*</span>
                                         </Label>
                                         <Input
                                             id="codigo"
@@ -259,7 +259,7 @@ export default function EspecialidadesClient({ initialData, isAdmin = false }: E
                                     <div className="space-y-2">
                                         <Label htmlFor="nombre" className="flex items-center gap-2 text-gray-700">
                                             <GraduationCap className="w-4 h-4 text-gray-400" />
-                                            Nombre de la Especialidad *
+                                            Nombre de la Especialidad <span className="text-red-500 font-bold">*</span>
                                         </Label>
                                         <Input
                                             id="nombre"

@@ -44,7 +44,7 @@ export function EnfermedadForm({
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label htmlFor="codigo" className="text-gray-700">Código *</Label>
+                    <Label htmlFor="codigo" className="text-gray-700">Código <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="codigo"
                         value={formData.codigoEnfermedad}
@@ -58,7 +58,7 @@ export function EnfermedadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="nombre" className="text-gray-700">Nombre *</Label>
+                    <Label htmlFor="nombre" className="text-gray-700">Nombre <span className="text-red-500 font-bold">*</span></Label>
                     <Input
                         id="nombre"
                         value={formData.nombreEnfermedad}
@@ -70,7 +70,7 @@ export function EnfermedadForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="tipo" className="text-gray-700">Tipo de Patología *</Label>
+                    <Label htmlFor="tipo" className="text-gray-700">Tipo de Patología <span className="text-red-500 font-bold">*</span></Label>
                     <SearchableSelect
                         items={getPathologyTypes()}
                         value={formData.tipoPatologia}

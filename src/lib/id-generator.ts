@@ -15,24 +15,25 @@ export async function getNextCode(
 ): Promise<string> {
     // Use MAX() in SQL + transaction for atomicity under concurrent requests
     return await db.transaction(async (tx) => {
-        // BUG-05 FIX: Use raw SQL to ensure FOR UPDATE is at the end of the SELECT,
-        // not embedded inside the WHERE clause
+        // Extraemos solo el número para calcular el MAX correctamente.
+        // SUBSTRING en SQL es 1-indexed. Si prefix="SAB-", length=4, el número arranca en 5.
+        const startIdx = prefix.length + 1;
+        
         const result = await tx.execute(
-            sql`SELECT MAX(${column}) as maxCode FROM ${table} FOR UPDATE`
+            sql`SELECT MAX(CAST(SUBSTRING(${column}, ${startIdx}) AS UNSIGNED)) as maxNum FROM ${table} FOR UPDATE`
         );
 
-        const rows = result[0] as unknown as Array<{ maxCode: string | null }>;
-        const lastCode = rows[0]?.maxCode;
+        const rows = result[0] as unknown as Array<{ maxNum: number | null }>;
+        const maxNum = rows[0]?.maxNum;
 
-        if (!lastCode) {
+        if (maxNum === null || maxNum === undefined) {
             return `${prefix}${'1'.padStart(digitCount, '0')}`;
         }
 
-        const numericPart = lastCode.substring(prefix.length);
-        const nextNumber = parseInt(numericPart, 10) + 1;
+        const nextNumber = maxNum + 1;
 
         if (isNaN(nextNumber)) {
-            console.warn(`Formato de código inválido detectado: ${lastCode}. Empezando desde 001.`);
+            console.warn(`Formato numérico inválido detectado. Empezando desde 001.`);
             return `${prefix}${'1'.padStart(digitCount, '0')}`;
         }
 

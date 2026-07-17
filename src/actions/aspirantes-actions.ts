@@ -18,6 +18,8 @@ import { requireAuth } from '@/lib/auth';
  */
 
 
+import { toTitleCase } from '@/lib/string-utils';
+
 /**
  * Crear un nuevo aspirante (Postulación)
  */
@@ -34,6 +36,10 @@ export async function createAspirante(data: NewAspirante) {
         if (!data.apellidoAspirante?.trim()) {
             return { success: false, error: 'El apellido es requerido' };
         }
+
+        // Formateo de texto
+        data.nombreAspirante = toTitleCase(data.nombreAspirante.trim());
+        data.apellidoAspirante = toTitleCase(data.apellidoAspirante.trim());
 
         await db.insert(aspirantes).values(data);
         revalidatePath('/datos-basicos/aspirantes');
@@ -60,6 +66,14 @@ export async function updateAspirante(cedula: string, data: Partial<NewAspirante
 
         if (!existing || existing.length === 0) {
             return { success: false, error: 'El aspirante no fue encontrado' };
+        }
+
+        // Formateo de texto
+        if (data.nombreAspirante) {
+            data.nombreAspirante = toTitleCase(data.nombreAspirante.trim());
+        }
+        if (data.apellidoAspirante) {
+            data.apellidoAspirante = toTitleCase(data.apellidoAspirante.trim());
         }
 
         await db.update(aspirantes)

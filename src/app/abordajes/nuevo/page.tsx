@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -80,8 +81,10 @@ export default function NuevoAbordajePage() {
         <MainLayout>
             <div className="max-w-2xl mx-auto space-y-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" asChild>
+                        <Link href="/abordajes">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
                     </Button>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Nuevo Abordaje</h1>
@@ -97,7 +100,7 @@ export default function NuevoAbordajePage() {
                         <AbordajeForm
                             comunidades={comunidades}
                             onSubmit={handleSubmit}
-                            onCancel={() => router.back()}
+                            onCancel={() => router.push('/abordajes')}
                             isLoading={isSubmitting}
                         />
                     </CardContent>

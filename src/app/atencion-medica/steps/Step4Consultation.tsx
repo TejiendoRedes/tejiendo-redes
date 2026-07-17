@@ -149,7 +149,7 @@ export function Step4Consultation({
                                     </div>
 
                                     <div className="space-y-2 pt-2">
-                                        <Label htmlFor="motivo" className="text-xs font-semibold text-gray-700">Motivo de Consulta *</Label>
+                                        <Label htmlFor="motivo" className="text-xs font-semibold text-gray-700">Motivo de Consulta <span className="text-red-500 font-bold">*</span></Label>
                                         <Textarea
                                             id="motivo"
                                             value={formData.motivoConsulta}
@@ -176,7 +176,7 @@ export function Step4Consultation({
 
                                 <div className="grid grid-cols-1 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="diagnostico" className="text-xs font-semibold text-gray-700">Diagnóstico (Texto) *</Label>
+                                        <Label htmlFor="diagnostico" className="text-xs font-semibold text-gray-700">Diagnóstico (Texto) <span className="text-red-500 font-bold">*</span></Label>
                                         <Textarea
                                             id="diagnostico"
                                             value={formData.diagnosticoTexto}
@@ -188,7 +188,7 @@ export function Step4Consultation({
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <Label htmlFor="tratamiento" className="text-xs font-semibold text-gray-700">Tratamiento *</Label>
+                                            <Label htmlFor="tratamiento" className="text-xs font-semibold text-gray-700">Tratamiento <span className="text-red-500 font-bold">*</span></Label>
                                             <Textarea
                                                 id="tratamiento"
                                                 value={formData.tratamiento}
@@ -199,7 +199,7 @@ export function Step4Consultation({
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="recomendaciones" className="text-xs font-semibold text-gray-700">Indicaciones y Recomendaciones *</Label>
+                                            <Label htmlFor="recomendaciones" className="text-xs font-semibold text-gray-700">Indicaciones y Recomendaciones <span className="text-red-500 font-bold">*</span></Label>
                                             <Textarea
                                                 id="recomendaciones"
                                                 value={formData.recomendaciones}

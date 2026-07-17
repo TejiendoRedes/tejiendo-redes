@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -41,8 +42,10 @@ export default function MedicamentoDetallePage() {
             <div className="space-y-6 animate-in fade-in-50 duration-500">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                            <ArrowLeft className="w-5 h-5" />
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/farmacia/medicamentos">
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
                         </Button>
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900">

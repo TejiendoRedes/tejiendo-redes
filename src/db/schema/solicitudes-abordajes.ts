@@ -8,7 +8,8 @@ import { comunidades } from './comunidades';
 export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     id: int('id').primaryKey().autoincrement(),
     codigoSolicitud: varchar('codigo_solicitud', { length: 10 }).notNull(), // SAB-001...
-    codigoComunidad: varchar('codigo_comunidad', { length: 10 }).notNull(),
+    codigoComunidad: varchar('codigo_comunidad', { length: 20 }), // Made nullable for manual entry
+    comunidadSugerida: varchar('comunidad_sugerida', { length: 255 }), // If not in list
     fechaSugerida: varchar('fecha_sugerida', { length: 20 }).notNull(), // Formato flexible para fecha sugerida
     horaInicioSugerida: varchar('hora_inicio_sugerida', { length: 10 }).notNull(), // Formato flexible para hora
     descripcionActividad: text('descripcion_actividad').notNull(),

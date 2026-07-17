@@ -8,6 +8,24 @@ import { eq } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { requireAuth } from '@/lib/auth';
+import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+
+/**
+ * Obtener prefijo mnemotécnico (ej: LAR-IRI-CON-)
+ */
+function getMnemonicPrefix(estadoId: string, municipioId: string, parroquiaId: string) {
+    const normalize = (str: string) => {
+        // Remove accents and special chars, uppercase, get first 3 letters
+        const clean = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
+        return clean.substring(0, 3).padEnd(3, 'X'); // Pad with X if shorter than 3
+    };
+
+    const estadoNombre = getEstadoNombre(estadoId);
+    const municipioNombre = getMunicipioNombre(estadoId, municipioId);
+    const parroquiaNombre = getParroquiaNombre(estadoId, municipioId, parroquiaId);
+
+    return `${normalize(estadoNombre)}-${normalize(municipioNombre)}-${normalize(parroquiaNombre)}-`;
+}
 
 /**
  * Obtener todas las comunidades con sus responsables
@@ -24,8 +42,9 @@ export async function createComunidad(data: NewComunidad) {
             return { success: false, error: 'El nombre de la comunidad es requerido' };
         }
 
-        // Generación automática del código de comunidad (COM-001...)
-        const newCode = await getNextCode(comunidades, comunidades.codigoComunidad, 'COM-');
+        // Generación automática del código de comunidad (EST-MUN-PAR-001...)
+        const prefix = getMnemonicPrefix(data.estado, data.municipio, data.parroquia);
+        const newCode = await getNextCode(comunidades, comunidades.codigoComunidad, prefix);
 
         const finalData = {
             ...data,

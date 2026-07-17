@@ -23,10 +23,11 @@ import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/
 
 interface TejedoresClientProps {
     initialData: (Tejedor & { systemRole?: string | null })[];
+    especialidades?: any[];
     isAdmin?: boolean;
 }
 
-export default function TejedoresClient({ initialData, isAdmin = false }: TejedoresClientProps) {
+export default function TejedoresClient({ initialData, especialidades = [], isAdmin = false }: TejedoresClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [viewingTejedor, setViewingTejedor] = React.useState<Tejedor | null>(null);
@@ -317,6 +318,7 @@ export default function TejedoresClient({ initialData, isAdmin = false }: Tejedo
 
                         <TejedorForm
                             initialData={editingTejedor || undefined}
+                            especialidades={especialidades}
                             onSubmit={handleSubmit}
                             onCancel={() => setIsModalOpen(false)}
                             isLoading={isLoading}

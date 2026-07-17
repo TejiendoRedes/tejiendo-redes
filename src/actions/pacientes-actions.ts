@@ -13,6 +13,8 @@ import { PacienteSchema } from '@/schemas/pacientes';
  * Obtener todos los pacientes con su comunidad (con búsqueda opcional)
  */
 
+import { toTitleCase } from '@/lib/string-utils';
+
 /**
  * Crear un nuevo paciente
  */
@@ -24,6 +26,10 @@ export async function createPaciente(data: typeof pacientes.$inferInsert) {
         if (!validation.success) {
             return { success: false, error: validation.error.errors[0].message };
         }
+
+        // Formatear nombres
+        validation.data.nombrePaciente = toTitleCase(validation.data.nombrePaciente.trim());
+        validation.data.apellidoPaciente = toTitleCase(validation.data.apellidoPaciente.trim());
 
         // Verificar si la comunidad existe
         if (validation.data.codigoComunidad) {
@@ -59,6 +65,14 @@ export async function updatePaciente(cedula: string, data: Partial<typeof pacien
         const validation = PacienteSchema.partial().safeParse(data);
         if (!validation.success) {
             return { success: false, error: validation.error.errors[0].message };
+        }
+
+        // Formatear nombres si se están actualizando
+        if (validation.data.nombrePaciente) {
+            validation.data.nombrePaciente = toTitleCase(validation.data.nombrePaciente.trim());
+        }
+        if (validation.data.apellidoPaciente) {
+            validation.data.apellidoPaciente = toTitleCase(validation.data.apellidoPaciente.trim());
         }
 
         const existing = await db.select({ cedula: pacientes.cedulaPaciente })

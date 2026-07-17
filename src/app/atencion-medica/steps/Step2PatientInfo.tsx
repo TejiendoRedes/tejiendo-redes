@@ -57,7 +57,7 @@ export function Step2PatientInfo({ patient, comunidades, fechaConsulta: initialF
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                         <div className="space-y-2">
                             <Label htmlFor="fechaConsulta" className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                                Fecha de Consulta *
+                                Fecha de Consulta <span className="text-red-500 font-bold">*</span>
                             </Label>
                             <Input
                                 id="fechaConsulta"

@@ -6,6 +6,8 @@ import { responsable as responsables, type NewResponsable, type Responsable } fr
 import { eq, like, or } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 
+import { toTitleCase } from '@/lib/string-utils';
+
 /**
  * Manejar errores de base de datos de forma específica
  */
@@ -42,6 +44,14 @@ const handleDatabaseError = (error: any) => {
 export async function createResponsable(data: NewResponsable) {
     try {
         await requireAuth();
+
+        if (data.nombreResponsable) {
+            data.nombreResponsable = toTitleCase(data.nombreResponsable.trim());
+        }
+        if (data.apellidoResponsable) {
+            data.apellidoResponsable = toTitleCase(data.apellidoResponsable.trim());
+        }
+
         await db.insert(responsables).values(data);
         revalidatePath('/datos-basicos/responsables');
         return { success: true, message: 'Responsable creado correctamente' };
@@ -57,6 +67,14 @@ export async function createResponsable(data: NewResponsable) {
 export async function updateResponsable(cedula: string, data: Partial<NewResponsable>) {
     try {
         await requireAuth();
+
+        if (data.nombreResponsable) {
+            data.nombreResponsable = toTitleCase(data.nombreResponsable.trim());
+        }
+        if (data.apellidoResponsable) {
+            data.apellidoResponsable = toTitleCase(data.apellidoResponsable.trim());
+        }
+
         await db.update(responsables)
             .set(data)
             .where(eq(responsables.cedulaResponsable, cedula));

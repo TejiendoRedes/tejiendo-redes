@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -73,8 +74,10 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                            <ArrowLeft className="w-5 h-5" />
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/abordajes">
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
                         </Button>
                         <div>
                             <h1 className="text-3xl text-gray-900">{abordajeData.descripcion}</h1>

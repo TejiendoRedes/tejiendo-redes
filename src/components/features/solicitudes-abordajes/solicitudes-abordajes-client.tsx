@@ -25,10 +25,10 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
-interface SolicitudAbordaje {
+export interface SolicitudAbordaje {
     id: number;
     codigoSolicitud: string;
-    codigoComunidad: string;
+    codigoComunidad?: string | null;
     fechaSugerida: string;
     horaInicioSugerida: string;
     descripcionActividad: string;
@@ -42,6 +42,7 @@ interface SolicitudAbordaje {
     logisticaTransporte: boolean;
     fechaSolicitud: Date;
     notas?: string | null;
+    comunidadSugerida?: string | null;
     comunidad?: Comunidad | null;
 }
 
@@ -78,7 +79,10 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
         tipoAbordaje: '',
         participantesEstimados: 1,
         recursosAdicionales: '',
+        comunidadSugerida: '',
     });
+    
+    const [isNuevaComunidad, setIsNuevaComunidad] = React.useState(false);
 
     const tiposSeleccionados = formData.tipoAbordaje ? formData.tipoAbordaje.split(',').filter(Boolean) : [];
 
@@ -107,7 +111,9 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
             tipoAbordaje: '',
             participantesEstimados: 1,
             recursosAdicionales: '',
+            comunidadSugerida: '',
         });
+        setIsNuevaComunidad(false);
         setIsModalOpen(true);
     };
 
@@ -116,6 +122,16 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
 
         if (!formData.tipoAbordaje) {
             toast.error('Debe seleccionar al menos un tipo de abordaje');
+            return;
+        }
+        
+        if (isNuevaComunidad && !formData.comunidadSugerida) {
+            toast.error('Debe indicar el nombre de la comunidad sugerida');
+            return;
+        }
+        
+        if (!isNuevaComunidad && !formData.codigoComunidad) {
+            toast.error('Debe seleccionar una comunidad de la lista');
             return;
         }
 
@@ -259,9 +275,14 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
             header: 'Comunidad',
             render: (row) => (
                 <div>
-                    <div className="font-medium text-gray-900">{row.comunidad?.nombreComunidad || 'N/A'}</div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span>{row.comunidad?.codigoComunidad || 'N/A'}</span>
+                    <div className="font-medium text-gray-900">
+                        {row.comunidad?.nombreComunidad || row.comunidadSugerida || 'N/A'}
+                        {!row.comunidad && row.comunidadSugerida && (
+                            <Badge variant="outline" className="ml-2 text-[10px] text-amber-600 border-amber-200 bg-amber-50">Sugerida</Badge>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                        <span>{row.comunidad?.codigoComunidad || 'Pendiente de registro'}</span>
                         <span className="text-gray-300">|</span>
                         <span>Sol. #{row.codigoSolicitud}</span>
                     </div>
@@ -454,23 +475,45 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2 col-span-2">
-                                    <SearchableSelect
-                                        label="Comunidad"
-                                        items={comunidades.map(c => ({ id: c.codigoComunidad, label: c.nombreComunidad, secondaryLabel: c.codigoComunidad }))}
-                                        value={formData.codigoComunidad}
-                                        onValueChange={(value) => setFormData(prev => ({ ...prev, codigoComunidad: value }))}
-                                        placeholder="Busque y seleccione la comunidad"
-                                        searchPlaceholder="Buscar por nombre..."
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleSolicitarNuevaComunidad}
-                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 hover:text-green-800 hover:underline"
-                                    >
-                                        <MessageCircle className="w-3.5 h-3.5" />
-                                        ¿No encuentra la comunidad? Solicitar su registro al administrador
-                                    </button>
+                                <div className="space-y-4 col-span-2">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox 
+                                            id="nuevaComunidad" 
+                                            checked={isNuevaComunidad}
+                                            onCheckedChange={(checked) => setIsNuevaComunidad(checked as boolean)}
+                                        />
+                                        <label
+                                            htmlFor="nuevaComunidad"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            ¿La comunidad no está en la lista?
+                                        </label>
+                                    </div>
+                                    
+                                    {!isNuevaComunidad ? (
+                                        <div className="space-y-2">
+                                            <SearchableSelect
+                                                label="Comunidad"
+                                                items={comunidades.map(c => ({ id: c.codigoComunidad, label: c.nombreComunidad, secondaryLabel: c.codigoComunidad }))}
+                                                value={formData.codigoComunidad}
+                                                onValueChange={(value) => setFormData(prev => ({ ...prev, codigoComunidad: value }))}
+                                                placeholder="Busque y seleccione la comunidad"
+                                                searchPlaceholder="Buscar por nombre..."
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="comunidadSugerida">Nombre de la Comunidad Sugerida</Label>
+                                            <Input
+                                                id="comunidadSugerida"
+                                                placeholder="Ingrese el nombre de la nueva comunidad"
+                                                value={formData.comunidadSugerida}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, comunidadSugerida: e.target.value, codigoComunidad: '' }))}
+                                                required={isNuevaComunidad}
+                                            />
+                                            <p className="text-xs text-amber-600 mt-1">El administrador deberá registrar esta comunidad antes de aprobar el abordaje.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -540,7 +583,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="recursos">Recursos Adicionales Necesarios</Label>
+                                <Label htmlFor="recursos">Recursos Necesarios</Label>
                                 <Textarea
                                     id="recursos"
                                     value={formData.recursosAdicionales}
@@ -581,7 +624,13 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                 <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Comunidad</h4>
-                                        <p>{selectedSolicitud.comunidad?.nombreComunidad} ({selectedSolicitud.codigoComunidad})</p>
+                                        <p>
+                                            {selectedSolicitud.comunidad?.nombreComunidad || selectedSolicitud.comunidadSugerida} 
+                                            {!selectedSolicitud.comunidad && selectedSolicitud.comunidadSugerida && (
+                                                <Badge variant="outline" className="ml-2 text-amber-600 bg-amber-50">Sugerida (Requiere Registro)</Badge>
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">{selectedSolicitud.codigoComunidad || 'Sin código asignado'}</p>
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Estado</h4>
@@ -608,7 +657,7 @@ export default function SolicitudesAbordajesClient({ initialData, comunidades }:
                                         <p>{selectedSolicitud.participantesEstimados} personas</p>
                                     </div>
                                     <div className="col-span-2">
-                                        <h4 className="text-sm font-medium text-gray-500">Recursos Adicionales Necesarios</h4>
+                                        <h4 className="text-sm font-medium text-gray-500">Recursos Necesarios</h4>
                                         <p>{selectedSolicitud.recursosAdicionales || 'Sin especificar'}</p>
                                     </div>
                                 </div>
