@@ -3,10 +3,11 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { DataTable, type Column } from '@/components/shared/DataTable';
+import { PageShell } from '@/components/layout/PageShell';
+import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Heart, UserPlus } from 'lucide-react';
+import { Edit, Trash2, Eye, Heart, Plus, Users } from 'lucide-react';
 import { Paciente } from '@/db/schema/pacientes';
 import { Comunidad } from '@/db/schema/comunidades';
 import { createPaciente, deletePaciente, updatePaciente } from '@/actions/pacientes-actions';
@@ -17,17 +18,9 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { PacienteForm } from '@/components/forms/PacienteForm';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 interface PacienteWithComunidad extends Paciente {
     comunidad: Comunidad | null;
@@ -41,20 +34,10 @@ interface PacientesClientProps {
 export default function PacientesClient({ initialData, comunidades }: PacientesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [viewingPaciente, setViewingPaciente] = React.useState<PacienteWithComunidad | null>(null);
     const [editingPaciente, setEditingPaciente] = React.useState<PacienteWithComunidad | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
-
-    const [formData, setFormData] = React.useState({
-        cedulaPaciente: '',
-        nombrePaciente: '',
-        apellidoPaciente: '',
-        sexo: 'M' as 'M' | 'F',
-        fechaNacimiento: '',
-        codigoComunidad: '',
-        direccionPaciente: '',
-        telefonoPaciente: '',
-        correoPaciente: '',
-    });
+    const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
 
     const calcularEdad = (fecha: string | Date | null) => {
         if (!fecha) return 0;
@@ -70,68 +53,33 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
     const handleAdd = () => {
         setEditingPaciente(null);
-        setFormData({
-            cedulaPaciente: '',
-            nombrePaciente: '',
-            apellidoPaciente: '',
-            sexo: 'M',
-            fechaNacimiento: '',
-            codigoComunidad: '',
-            direccionPaciente: '',
-            telefonoPaciente: '',
-            correoPaciente: '',
-        });
         setIsModalOpen(true);
     };
 
     const handleEdit = (paciente: PacienteWithComunidad) => {
         setEditingPaciente(paciente);
-        setFormData({
-            cedulaPaciente: paciente.cedulaPaciente,
-            nombrePaciente: paciente.nombrePaciente,
-            apellidoPaciente: paciente.apellidoPaciente,
-            sexo: paciente.sexo as 'M' | 'F',
-            fechaNacimiento: paciente.fechaNacimiento instanceof Date
-                ? paciente.fechaNacimiento.toISOString().split('T')[0]
-                : typeof paciente.fechaNacimiento === 'string' ? paciente.fechaNacimiento : '',
-            codigoComunidad: paciente.codigoComunidad,
-            direccionPaciente: paciente.direccionPaciente,
-            telefonoPaciente: paciente.telefonoPaciente,
-            correoPaciente: paciente.correoPaciente,
-        });
         setIsModalOpen(true);
     };
 
     const handleDelete = async (cedula: string) => {
-        if (confirm('¿Está seguro de eliminar este paciente?')) {
-            const res = await deletePaciente(cedula);
-            if (res.success) {
-                toast.success(res.message);
-                router.refresh();
-            } else {
-                toast.error(res.error);
-            }
+        const res = await deletePaciente(cedula);
+        if (res.success) {
+            toast.success(res.message);
+            router.refresh();
+        } else {
+            toast.error(res.error);
         }
+        setDeleteTarget(null);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (data: any) => {
         setIsLoading(true);
-
         try {
-            // Ensure date is purely YYYY-MM-DD for saving if needed, or Date object.
-            // Server action expects Date or string? schema says date mode: 'date', so Date object or string usually works.
-            // Drizzle 'date' mode usually expects Date object or YYYY-MM-DD string.
-            const dataToSubmit = {
-                ...formData,
-                fechaNacimiento: new Date(formData.fechaNacimiento)
-            };
-
             let res;
             if (editingPaciente) {
-                res = await updatePaciente(editingPaciente.cedulaPaciente, dataToSubmit);
+                res = await updatePaciente(editingPaciente.cedulaPaciente, data);
             } else {
-                res = await createPaciente(dataToSubmit);
+                res = await createPaciente(data);
             }
 
             if (res.success) {
@@ -152,53 +100,49 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
     const columns: Column<PacienteWithComunidad>[] = [
         {
             key: 'cedulaPaciente',
-            label: 'Cédula',
-            sortable: true,
+            header: 'Cédula',
         },
         {
             key: 'nombrePaciente',
-            label: 'Nombre completo',
+            header: 'Nombre completo',
             render: (p) => `${p.nombrePaciente} ${p.apellidoPaciente}`,
-            sortable: true,
         },
         {
             key: 'fechaNacimiento',
-            label: 'Edad',
+            header: 'Edad',
             render: (p) => `${calcularEdad(p.fechaNacimiento)} años`,
-            sortable: true,
         },
         {
             key: 'sexo',
-            label: 'Sexo',
+            header: 'Sexo',
             render: (p) => (
                 <Badge variant="outline">
                     {p.sexo === 'M' ? 'Masculino' : p.sexo === 'F' ? 'Femenino' : 'N/A'}
                 </Badge>
             ),
-            sortable: true,
         },
         {
             key: 'comunidad',
-            label: 'Comunidad',
+            header: 'Comunidad',
             render: (p) => p.comunidad?.nombreComunidad || p.codigoComunidad || '-',
-            sortable: true,
         },
         {
             key: 'telefonoPaciente',
-            label: 'Teléfono',
+            header: 'Teléfono',
         },
         {
             key: 'acciones',
-            label: 'Acciones',
+            header: '',
+            className: 'text-right',
             render: (p) => {
                 return (
-                    <div className="flex gap-2">
+                    <div className="flex justify-end gap-1">
                         <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => setViewingPaciente(p)}
+                            className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
                             title="Ver detalles"
-                            // onClick={() => router.push(`/datos-basicos/pacientes/${p.cedulaPaciente}`)} // Page details not implemented yet
-                            onClick={() => toast.info('Detalle de paciente en construcción')}
                         >
                             <Eye className="w-4 h-4" />
                         </Button>
@@ -206,6 +150,7 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(p)}
+                            className="hover:bg-blue-50 hover:text-blue-600 text-gray-500"
                             title="Editar"
                         >
                             <Edit className="w-4 h-4" />
@@ -213,10 +158,11 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(p.cedulaPaciente)}
+                            onClick={() => setDeleteTarget(p.cedulaPaciente)}
+                            className="hover:bg-red-50 hover:text-red-600 text-gray-500"
                             title="Eliminar"
                         >
-                            <Trash2 className="w-4 h-4 text-red-600" />
+                            <Trash2 className="w-4 h-4" />
                         </Button>
                     </div>
                 );
@@ -226,28 +172,78 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
 
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl text-gray-900 mb-2">Pacientes</h1>
-                    <p className="text-gray-600">
-                        Gestión del registro de pacientes del sistema
-                    </p>
+            <PageShell 
+                title="Pacientes" 
+                subtitle="Gestión del registro de pacientes del sistema"
+                actions={
+                    <Button 
+                        onClick={handleAdd} 
+                        className="bg-[#1e3a8a] hover:bg-blue-800 text-white shadow-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Nuevo Paciente
+                    </Button>
+                }
+            >
+                {/* Métricas Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Pacientes</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-[#1e3a8a] transition-colors group-hover:bg-[#1e3a8a]/10">
+                                <Users className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Hombres</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.filter(p => p.sexo === 'M').length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-600 transition-colors group-hover:bg-sky-100">
+                                <Users className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="group flex flex-col bg-white border border-gray-100 shadow-sm rounded-2xl p-6 transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Mujeres</p>
+                                <p className="text-3xl font-bold text-gray-900">
+                                    {initialData.filter(p => p.sexo === 'F').length}
+                                </p>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-50 text-pink-600 transition-colors group-hover:bg-pink-100">
+                                <Heart className="w-5 h-5" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <DataTable
+                    title="Listado de pacientes"
+                    description="Busca por nombre, cédula o teléfono"
                     data={initialData}
                     columns={columns}
+                    searchKeys={['nombrePaciente', 'apellidoPaciente', 'cedulaPaciente', 'telefonoPaciente']}
                     searchPlaceholder="Buscar por cédula, nombre, teléfono..."
-                    onAdd={handleAdd}
-                    addLabel="Agregar Paciente"
-                    onExport={(format) => toast.info(`Exportando ${format.toUpperCase()}...`)}
                 />
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-2xl flex items-center gap-2">
-                                <Heart className="w-6 h-6 text-blue-600" />
+                                <Heart className="w-6 h-6 text-[#1e3a8a]" />
                                 {editingPaciente ? 'Editar Paciente' : 'Nuevo Paciente'}
                             </DialogTitle>
                             <DialogDescription>
@@ -255,164 +251,81 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="cedula">Cédula <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="cedula"
-                                        value={formData.cedulaPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, cedulaPaciente: e.target.value })
-                                        }
-                                        required
-                                        disabled={!!editingPaciente}
-                                        maxLength={12}
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="nombre">Nombre <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="nombre"
-                                        value={formData.nombrePaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, nombrePaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="apellido">Apellido <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="apellido"
-                                        value={formData.apellidoPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, apellidoPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="sexo">Sexo <span className="text-red-500 font-bold">*</span></Label>
-                                    <Select
-                                        value={formData.sexo}
-                                        onValueChange={(value: 'M' | 'F') =>
-                                            setFormData({ ...formData, sexo: value })
-                                        }
-                                    >
-                                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                            <SelectValue placeholder="Seleccione sexo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="M">Masculino</SelectItem>
-                                            <SelectItem value="F">Femenino</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="fechaNacimiento">Fecha de Nacimiento <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="fechaNacimiento"
-                                        type="date"
-                                        value={formData.fechaNacimiento}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, fechaNacimiento: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="comunidad">Comunidad <span className="text-red-500 font-bold">*</span></Label>
-                                    <Select
-                                        value={formData.codigoComunidad}
-                                        onValueChange={(value) =>
-                                            setFormData({ ...formData, codigoComunidad: value })
-                                        }
-                                    >
-                                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                            <SelectValue placeholder="Seleccione comunidad" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {comunidades.map((c) => (
-                                                <SelectItem key={c.codigoComunidad} value={c.codigoComunidad}>
-                                                    {c.nombreComunidad}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="telefono">Teléfono <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="telefono"
-                                        value={formData.telefonoPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, telefonoPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="correo">Correo Electrónico <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="correo"
-                                        type="email"
-                                        value={formData.correoPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, correoPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="direccion">Dirección <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="direccion"
-                                        value={formData.direccionPaciente}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, direccionPaciente: e.target.value })
-                                        }
-                                        required
-                                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 justify-end pt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
-                                    disabled={isLoading}
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    className="px-8 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? 'Guardando...' : (editingPaciente ? 'Actualizar Paciente' : 'Guardar Paciente')}
-                                </Button>
-                            </div>
-                        </form>
+                        <PacienteForm
+                            initialData={editingPaciente || undefined}
+                            comunidades={comunidades}
+                            onSubmit={handleSubmit}
+                            onCancel={() => setIsModalOpen(false)}
+                            isLoading={isLoading}
+                        />
                     </DialogContent>
                 </Dialog>
-            </div>
+
+                <Dialog open={!!viewingPaciente} onOpenChange={(open) => !open && setViewingPaciente(null)}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl text-blue-900">
+                                Detalles del Paciente
+                            </DialogTitle>
+                            <DialogDescription className="hidden">Ver detalles completos del paciente</DialogDescription>
+                        </DialogHeader>
+                        {viewingPaciente && (
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-4">
+                                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-[#1e3a8a]">
+                                        {viewingPaciente.nombrePaciente[0]}{viewingPaciente.apellidoPaciente[0]}
+                                    </span>
+                                    <div>
+                                        <p className="text-lg font-bold text-gray-900">{viewingPaciente.nombrePaciente} {viewingPaciente.apellidoPaciente}</p>
+                                        <p className="text-sm text-gray-500">C.I. {viewingPaciente.cedulaPaciente}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Edad</p>
+                                        <p className="font-medium">{calcularEdad(viewingPaciente.fechaNacimiento)} años</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Sexo</p>
+                                        <p className="font-medium">{viewingPaciente.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Teléfono</p>
+                                        <p className="font-medium">{viewingPaciente.telefonoPaciente || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 mb-0.5">Correo</p>
+                                        <p className="font-medium">{viewingPaciente.correoPaciente || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 mb-0.5">Comunidad</p>
+                                        <p className="font-medium">{viewingPaciente.comunidad?.nombreComunidad || viewingPaciente.codigoComunidad || '-'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <p className="text-gray-500 mb-0.5">Dirección Detallada</p>
+                                        <p className="font-medium">{viewingPaciente.direccionPaciente}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t flex justify-end">
+                                    <Button onClick={() => setViewingPaciente(null)} variant="outline">
+                                        Cerrar
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                <ConfirmDialog
+                    open={!!deleteTarget}
+                    onOpenChange={(open) => !open && setDeleteTarget(null)}
+                    title="Eliminar paciente"
+                    description="¿Está seguro de eliminar este paciente? Esta acción no se puede deshacer."
+                    confirmLabel="Eliminar"
+                    onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+                />
+            </PageShell>
         </MainLayout>
     );
 }
