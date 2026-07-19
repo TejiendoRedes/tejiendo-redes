@@ -10,7 +10,6 @@ import { requireAuth } from '@/lib/auth';
  */
 export async function getEstadosAction() {
     try {
-        await requireAuth();
         const result = await db.select().from(estados).orderBy(estados.nombre);
         return { success: true, data: result };
     } catch (error) {
@@ -24,7 +23,6 @@ export async function getEstadosAction() {
  */
 export async function getMunicipiosByEstadoAction(estadoId: number) {
     try {
-        await requireAuth();
         if (!estadoId) return { success: true, data: [] };
         const result = await db
             .select()
@@ -43,7 +41,6 @@ export async function getMunicipiosByEstadoAction(estadoId: number) {
  */
 export async function getParroquiasByMunicipioAction(municipioId: number) {
     try {
-        await requireAuth();
         if (!municipioId) return { success: true, data: [] };
         const result = await db
             .select()
