@@ -6,7 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { PageShell } from '@/components/layout/PageShell';
 import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Home, MapPin, Eye, Download, Building2, Trees, Map, CheckCircle2, Navigation } from 'lucide-react';
+import { Edit, Trash2, Home, MapPin, Eye, Download, Building2, Trees, Map, CheckCircle2, Navigation, Plus } from 'lucide-react';
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { createComunidad, deleteComunidad, updateComunidad } from '@/actions/comunidades-actions';
@@ -18,12 +18,18 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { ComunidadForm } from '@/components/forms/ComunidadForm';
 import { Badge } from '@/components/ui/badge';
 
+type ComunidadWithGeo = Comunidad & {
+    estadoNombre?: string | null;
+    municipioNombre?: string | null;
+    parroquiaNombre?: string | null;
+    responsable?: Responsable | null;
+};
+
 interface ComunidadesClientProps {
-    initialData: Comunidad[];
+    initialData: ComunidadWithGeo[];
     responsables: Responsable[];
     canManage?: boolean;
 }
@@ -31,8 +37,8 @@ interface ComunidadesClientProps {
 export default function ComunidadesClient({ initialData, responsables, canManage = false }: ComunidadesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [editingComunidad, setEditingComunidad] = React.useState<Comunidad | null>(null);
-    const [viewingComunidad, setViewingComunidad] = React.useState<Comunidad | null>(null);
+    const [editingComunidad, setEditingComunidad] = React.useState<ComunidadWithGeo | null>(null);
+    const [viewingComunidad, setViewingComunidad] = React.useState<ComunidadWithGeo | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
     const handleAdd = () => {
@@ -83,21 +89,10 @@ export default function ComunidadesClient({ initialData, responsables, canManage
     };
 
     // Función para obtener nombres de ubicación
-    const getLocationNames = (comunidad: Comunidad) => {
-        const estado = comunidad.estado;
-        const municipio = comunidad.municipio;
-        const parroquia = comunidad.parroquia;
-
-        if (!estado || !municipio || !parroquia) return '-';
-
-        const estadoNombre = getEstadoNombre(estado);
-        const municipioNombre = getMunicipioNombre(estado, municipio);
-        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
-
-        if (parroquia) {
-            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
-        }
-        return `${estadoNombre}, ${municipioNombre}`;
+    const getLocationNames = (comunidad: ComunidadWithGeo) => {
+        const { estadoNombre, municipioNombre, parroquiaNombre } = comunidad;
+        if (!estadoNombre || !municipioNombre || !parroquiaNombre) return '-';
+        return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
     };
     
     const getTipoComunidadConfig = (tipoId: string) => {
@@ -239,6 +234,15 @@ export default function ComunidadesClient({ initialData, responsables, canManage
                 subtitle="Gestión de las comunidades atendidas"
                 actions={
                     <div className="flex gap-2">
+                        {canManage && (
+                            <Button 
+                                onClick={handleAdd}
+                                className="bg-[#1e3a8a] text-white hover:bg-blue-800"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nueva Comunidad
+                            </Button>
+                        )}
                         <Button 
                             variant="outline" 
                             onClick={() => handleExport('pdf')} 

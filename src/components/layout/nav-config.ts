@@ -48,7 +48,7 @@ export const navGroups: NavGroup[] = [
     roles: ["admin", "superuser", "operador", "medico", "tejedor"],
     items: [
       { label: "Abordajes", to: "/abordajes", icon: CalendarHeart, roles: ["admin", "superuser", "operador", "tejedor"] },
-      { label: "Farmacia", to: "/farmacia/peticiones", icon: Pill, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
+      { label: "Farmacia", to: "/farmacia/entregas", icon: Pill, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
       { label: "Inventario", to: "/farmacia/medicamentos", icon: Boxes, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
     ],
   },

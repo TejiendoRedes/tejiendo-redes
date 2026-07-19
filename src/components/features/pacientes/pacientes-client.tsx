@@ -54,9 +54,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
         direccionPaciente: '',
         telefonoPaciente: '',
         correoPaciente: '',
-        historialEnfermedades: '',
-        consultasMedicasPrevias: '',
-        nota: '',
     });
 
     const calcularEdad = (fecha: string | Date | null) => {
@@ -83,9 +80,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             direccionPaciente: '',
             telefonoPaciente: '',
             correoPaciente: '',
-            historialEnfermedades: '',
-            consultasMedicasPrevias: '',
-            nota: '',
         });
         setIsModalOpen(true);
     };
@@ -104,9 +98,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
             direccionPaciente: paciente.direccionPaciente,
             telefonoPaciente: paciente.telefonoPaciente,
             correoPaciente: paciente.correoPaciente,
-            historialEnfermedades: paciente.historialEnfermedades || '',
-            consultasMedicasPrevias: paciente.consultasMedicasPrevias || '',
-            nota: paciente.nota || '',
         });
         setIsModalOpen(true);
     };
@@ -397,56 +388,6 @@ export default function PacientesClient({ initialData, comunidades }: PacientesC
                                         }
                                         required
                                         className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="historialEnfermedades">
-                                        Historial de enfermedades
-                                    </Label>
-
-                                    <Textarea
-                                        id="historialEnfermedades"
-                                        value={formData.historialEnfermedades}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                historialEnfermedades: e.target.value
-                                            })
-                                        }
-                                        rows={4}
-                                        placeholder="Describa el historial de enfermedades del paciente..."
-                                    />
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="consultasMedicasPrevias">
-                                        Consultas médicas previas
-                                    </Label>
-
-                                    <Textarea
-                                        id="consultasMedicasPrevias"
-                                        value={formData.consultasMedicasPrevias}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                consultasMedicasPrevias: e.target.value
-                                            })
-                                        }
-                                        rows={4}
-                                        placeholder="Describa las consultas médicas previas del paciente..."
-                                    />
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <Label htmlFor="nota">Notas / Observaciones</Label>
-                                    <Textarea
-                                        id="nota"
-                                        value={formData.nota}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, nota: e.target.value })
-                                        }
-                                        rows={3}
                                     />
                                 </div>
                             </div>

@@ -9,9 +9,7 @@ import { abordaje } from '@/db/schema/abordajes';
 import { tejedores } from '@/db/schema/tejedores';
 import { responsable } from '@/db/schema/responsable';
 import { aspirantes } from '@/db/schema/aspirantes';
-import { consultas } from '@/db/schema/consultas';
-import { medicamentosPacientes } from '@/db/schema/relations';
-import { abordajeComunidad } from '@/db/schema/relations';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { like, or, eq, desc } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 
@@ -94,9 +92,11 @@ export async function searchGlobal(query: string): Promise<GroupedSearchResults>
         db.select({
             id: comunidades.codigoComunidad,
             nombre: comunidades.nombreComunidad,
-            municipio: comunidades.municipio,
+            municipio: municipios.nombre,
         })
             .from(comunidades)
+            .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+            .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
             .where(like(comunidades.nombreComunidad, searchPattern))
             .limit(5),
 
@@ -197,7 +197,7 @@ export async function searchGlobal(query: string): Promise<GroupedSearchResults>
         comunidades: comunidadesResults.map(c => ({
             id: c.id,
             title: c.nombre,
-            subtitle: c.municipio,
+            subtitle: c.municipio || '',
             type: 'comunidad',
             url: `/datos-basicos/comunidades/${c.id}`
         })),

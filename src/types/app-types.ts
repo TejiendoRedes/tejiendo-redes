@@ -43,6 +43,10 @@ export interface AbordajeConsultaData {
     motivoConsulta: string;
     diagnosticoTexto: string | null;
     tensionArterial?: string | null; // Optional property inferred from usage in client
+    peso?: string | number | null;
+    talla?: string | number | null;
+    temperatura?: string | number | null;
+    frecuenciaCardiaca?: string | null;
     fechaConsulta: string; // Added based on usage
     horaConsulta?: string | null; // Added based on usage
 }
@@ -75,7 +79,7 @@ export interface AbordajeWithRelations {
     espacioCubierto?: boolean;
 
     // Relations
-    comunidades: AbordajeComunidadData[];
+    comunidad: AbordajeComunidadData | null;
     tejedores: AbordajeTejedorData[];
     consultas: AbordajeConsultaData[];
     medicamentos_entregados: AbordajeMedicamentoData[];
@@ -118,7 +122,7 @@ export type EntityHistoryItem = {
 
 export type EntityDetails =
     | { type: 'paciente'; data: Paciente; history: EntityHistoryItem[] }
-    | { type: 'comunidad'; data: Comunidad; related?: Responsable | null; history: EntityHistoryItem[] }
+    | { type: 'comunidad'; data: Comunidad & { estado?: string | null, municipio?: string | null, parroquia?: string | null }; related?: Responsable | null; history: EntityHistoryItem[] }
     | { type: 'medicamento'; data: Medicamento; history: EntityHistoryItem[] }
     | { type: 'abordaje'; data: AbordajeWithRelations; related?: AbordajeWithRelations; history: never[] }
     | { type: 'tejedor'; data: Tejedor; history: EntityHistoryItem[] }
@@ -134,7 +138,7 @@ export interface ReporteAbordajeItem {
     codigo_abordaje: string;
     fecha_abordaje: Date | string; // Dates often come as strings from JSON API
     descripcion: string;
-    comunidades: string;
+    comunidad: string;
     pacientes_atendidos: number;
     hora_inicio: string;
     hora_fin: string;

@@ -1,4 +1,5 @@
-import { mysqlTable, varchar, date, datetime } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, date, datetime, int } from 'drizzle-orm/mysql-core';
+import { parroquias } from './geografia';
 
 /**
  * Tabla: tejedores
@@ -6,19 +7,16 @@ import { mysqlTable, varchar, date, datetime } from 'drizzle-orm/mysql-core';
  */
 export const tejedores = mysqlTable('tejedores', {
     cedulaTejedor: varchar('cedula_tejedor', { length: 12 }).primaryKey().notNull(),
-    nombreTejedor: varchar('nombre_tejedor', { length: 50 }).notNull(),
-    apellidoTejedor: varchar('apellido_tejedor', { length: 50 }).notNull(),
+    nombreTejedor: varchar('nombre_tejedor', { length: 30 }).notNull(),
+    apellidoTejedor: varchar('apellido_tejedor', { length: 30 }).notNull(),
     fechaNacimiento: date('fecha_nacimiento', { mode: 'date' }).notNull(),
     direccionTejedor: varchar('direccion_tejedor', { length: 150 }).notNull(),
-    municipioTejedor: varchar('municipio_tejedor', { length: 100 }).notNull(),
-    estadoTejedor: varchar('estado_tejedor', { length: 100 }).notNull(),
-    parroquiaTejedor: varchar('parroquia_tejedor', { length: 100 }).notNull(),
+    parroquiaId: int('parroquia_id').notNull().references(() => parroquias.id),
     telefonoTejedor: varchar('telefono_tejedor', { length: 15 }).notNull(),
     correoTejedor: varchar('correo_tejedor', { length: 100 }).notNull(),
     profesionTejedor: varchar('profesion_tejedor', { length: 50 }).notNull(),
     fechaIngreso: date('fecha_ingreso', { mode: 'date' }).notNull(),
-    fechaPromocion: datetime('fecha_promocion'), // Fecha en que fue promovido de aspirante a tejedor
-    tipodeVoluntario: varchar('tipo_voluntario', { length: 50 }).notNull(),
+    tipodeVoluntario: varchar('tipo_voluntario', { length: 30 }).notNull(),
 });
 
 export type Tejedor = typeof tejedores.$inferSelect;

@@ -98,7 +98,7 @@ export default function KardexClient({ medicamento, movimientos }: KardexClientP
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600">
-                                            {mov.referencia || '-'}
+                                            {mov.notas || '-'}
                                         </td>
                                         <td className="px-6 py-4">
                                             {formatCurrency(mov.costoUnitario)}

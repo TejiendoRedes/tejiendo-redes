@@ -57,11 +57,6 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
     const [formData, setFormData] = React.useState({
         codigoAntecedente: '',
         cedulaPaciente: '',
-        peso: '',
-        talla: '',
-        temperatura: '',
-        FC: '',
-        TA: '',
         enfermedadesPrevias: '',
         alergias: '',
         enfermedadesFamilia: '',
@@ -80,11 +75,6 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
         setFormData({
             codigoAntecedente: nextCodigo,
             cedulaPaciente: '',
-            peso: '',
-            talla: '',
-            temperatura: '',
-            FC: '',
-            TA: '',
             enfermedadesPrevias: '',
             alergias: '',
             enfermedadesFamilia: '',
@@ -103,11 +93,6 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
         setFormData({
             codigoAntecedente: antecedente.codigoAntecedente,
             cedulaPaciente: antecedente.cedulaPaciente,
-            peso: antecedente.peso.toString(),
-            talla: (parseFloat(antecedente.talla.toString()) * 100).toString(), // Convert m to cm for form
-            temperatura: antecedente.temperatura.toString(),
-            FC: antecedente.FC,
-            TA: antecedente.TA,
             enfermedadesPrevias: antecedente.enfermedadesPrevias,
             alergias: antecedente.alergias,
             enfermedadesFamilia: antecedente.enfermedadesFamilia,
@@ -132,18 +117,8 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
         setIsLoading(true);
 
         try {
-            // Validate numeric inputs
-            if (isNaN(parseFloat(formData.peso)) || isNaN(parseFloat(formData.talla)) || isNaN(parseFloat(formData.temperatura))) {
-                toast.error('Peso, Talla y Temperatura deben ser valores numéricos válidos');
-                setIsLoading(false);
-                return;
-            }
-
             const dataToSubmit = {
                 ...formData,
-                peso: formData.peso,
-                talla: (parseFloat(formData.talla) / 100).toString(), // Convert cm to m for DB decimal(3,2)
-                temperatura: formData.temperatura,
             };
 
             let res;
@@ -188,31 +163,6 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
             sortable: true,
         },
         {
-            key: 'peso',
-            label: 'Peso (kg)',
-            sortable: true,
-        },
-        {
-            key: 'talla',
-            label: 'Talla (m)',
-            sortable: true,
-        },
-        {
-            key: 'temperatura',
-            label: 'Temp (°C)',
-            sortable: true,
-        },
-        {
-            key: 'FC',
-            label: 'F.C.',
-            sortable: true,
-        },
-        {
-            key: 'TA',
-            label: 'T.A.',
-            sortable: true,
-        },
-        {
             key: 'acciones',
             label: 'Acciones',
             render: (row) => (
@@ -242,25 +192,15 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
         const exportData = initialData.map(row => ({
             codigo: row.codigoAntecedente,
             paciente: `${row.paciente?.nombrePaciente} ${row.paciente?.apellidoPaciente} (${row.cedulaPaciente})`,
-            peso: `${row.peso} kg`,
-            talla: `${row.talla} m`,
-            temp: `${row.temperatura} °C`,
-            fc: row.FC,
-            ta: row.TA,
             previas: row.enfermedadesPrevias,
             alergias: row.alergias,
             familia: row.enfermedadesFamilia,
         }));
 
-        const headers = ['codigo', 'paciente', 'peso', 'talla', 'temp', 'fc', 'ta', 'previas', 'alergias', 'familia'];
+        const headers = ['codigo', 'paciente', 'previas', 'alergias', 'familia'];
         const columnsData = [
             { header: 'Código', dataKey: 'codigo' as const },
             { header: 'Paciente', dataKey: 'paciente' as const },
-            { header: 'Peso', dataKey: 'peso' as const },
-            { header: 'Talla', dataKey: 'talla' as const },
-            { header: 'Temp', dataKey: 'temp' as const },
-            { header: 'F.C.', dataKey: 'fc' as const },
-            { header: 'T.A.', dataKey: 'ta' as const },
             { header: 'Previas', dataKey: 'previas' as const },
             { header: 'Alergias', dataKey: 'alergias' as const },
             { header: 'Familia', dataKey: 'familia' as const },
@@ -332,59 +272,6 @@ export default function AntecedentesClient({ initialData, pacientes }: Anteceden
                                         secondaryLabelField="cedulaPaciente"
                                         disabled={!!editingAntecedente}
                                         initialLabel={getInitialPatientName()}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="peso">Peso (kg) <span className="text-red-500 font-bold">*</span></Label>
-                                    <NumberInput
-                                        id="peso"
-                                        suffix="kg"
-                                        value={formData.peso}
-                                        onChange={(val) => setFormData({ ...formData, peso: val })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="talla">Talla (cm) <span className="text-red-500 font-bold">*</span></Label>
-                                    <NumberInput
-                                        id="talla"
-                                        suffix="cm"
-                                        value={formData.talla}
-                                        onChange={(val) => setFormData({ ...formData, talla: val })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="temperatura">Temperatura (°C) <span className="text-red-500 font-bold">*</span></Label>
-                                    <NumberInput
-                                        id="temperatura"
-                                        suffix="°C"
-                                        value={formData.temperatura}
-                                        onChange={(val) => setFormData({ ...formData, temperatura: val })}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="fc">Frecuencia Cardíaca (FC) <span className="text-red-500 font-bold">*</span></Label>
-                                    <Input
-                                        id="fc"
-                                        value={formData.FC}
-                                        onChange={(e) => setFormData({ ...formData, FC: e.target.value })}
-                                        required
-                                        maxLength={10}
-                                    />
-                                </div>
-
-                                <div className="space-y-4 pt-2">
-                                    <BloodPressureInput
-                                        value={formData.TA}
-                                        onChange={(val) => setFormData({ ...formData, TA: val })}
-                                        label="Tensión Arterial (TA) *"
-                                        required
                                     />
                                 </div>
                             </div>

@@ -22,7 +22,13 @@ import { Info, MapPin, Mail, Phone } from 'lucide-react';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { Organismo } from '@/db/schema/organismos';
 import { Tejedor } from '@/db/schema/tejedores';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstadosAction, getMunicipiosByEstadoAction, getParroquiasByMunicipioAction } from '@/queries/geografia';
+import { Loader2 } from 'lucide-react';
+
+interface LocationItem {
+    id: number;
+    nombre: string;
+}
 
 export interface OrganismoFormProps {
     initialData?: Organismo;
@@ -48,34 +54,57 @@ export function OrganismoForm({
         nombreOrganismo: initialData?.nombreOrganismo || '',
         tipoInstitucion: initialData?.tipoInstitucion || '',
         paisOrganismo: initialData?.paisOrganismo || 'Venezuela',
-        estadoOrganismo: initialData?.estadoOrganismo || '',
-        municipioOrganismo: initialData?.municipioOrganismo || '',
-        parroquiaOrganismo: (initialData as any)?.parroquiaOrganismo || '',
+        parroquiaId: (initialData as any)?.parroquiaId || 0,
         direccionOrganismo: initialData?.direccionOrganismo || '',
-        ubicacionFisica: initialData?.ubicacionFisica || '',
         correoOrganismo: initialData?.correoOrganismo || '',
         telefonoOrganismo: initialData?.telefonoOrganismo || '',
     });
 
-    const [estados] = React.useState(getEstados());
-    const [municipios, setMunicipios] = React.useState<any[]>(
-        initialData?.estadoOrganismo ? getMunicipiosByEstado(initialData.estadoOrganismo) : []
-    );
-    const [parroquias, setParroquias] = React.useState<any[]>(
-        initialData?.estadoOrganismo && initialData?.municipioOrganismo 
-            ? getParroquiasByMunicipio(initialData.estadoOrganismo, initialData.municipioOrganismo) 
-            : []
-    );
+    const [estados, setEstados] = React.useState<LocationItem[]>([]);
+    const [municipios, setMunicipios] = React.useState<LocationItem[]>([]);
+    const [parroquias, setParroquias] = React.useState<LocationItem[]>([]);
+    const [selectedEstado, setSelectedEstado] = React.useState<string>('');
+    const [selectedMunicipio, setSelectedMunicipio] = React.useState<string>('');
 
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData({ ...formData, estadoOrganismo: estadoId, municipioOrganismo: '', parroquiaOrganismo: '' });
-        setMunicipios(getMunicipiosByEstado(estadoId));
+    React.useEffect(() => {
+        const fetchEstados = async () => {
+            const res = await getEstadosAction();
+            if (res.success && res.data) {
+                setEstados(res.data);
+            }
+        };
+        fetchEstados();
+    }, []);
+
+    const handleEstadoChange = async (estadoIdStr: string) => {
+        const estadoId = parseInt(estadoIdStr, 10);
+        setSelectedEstado(estadoIdStr);
+        setSelectedMunicipio('');
+        setFormData(prev => ({ ...prev, parroquiaId: 0 }));
+        
+        const res = await getMunicipiosByEstadoAction(estadoId);
+        if (res.success && res.data) {
+            setMunicipios(res.data);
+        }
         setParroquias([]);
     };
 
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData({ ...formData, municipioOrganismo: municipioId, parroquiaOrganismo: '' });
-        setParroquias(getParroquiasByMunicipio(formData.estadoOrganismo, municipioId));
+    const handleMunicipioChange = async (municipioIdStr: string) => {
+        const municipioId = parseInt(municipioIdStr, 10);
+        setSelectedMunicipio(municipioIdStr);
+        setFormData(prev => ({ ...prev, parroquiaId: 0 }));
+
+        const res = await getParroquiasByMunicipioAction(municipioId);
+        if (res.success && res.data) {
+            setParroquias(res.data);
+        }
+    };
+
+    const handleParroquiaChange = (parroquiaIdStr: string) => {
+        setFormData(prev => ({
+            ...prev,
+            parroquiaId: parseInt(parroquiaIdStr, 10)
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -179,7 +208,7 @@ export function OrganismoForm({
                     <div className="space-y-2">
                         <Label htmlFor="estado" className="text-gray-700">Estado <span className="text-red-500 font-bold">*</span></Label>
                         <Select
-                            value={formData.estadoOrganismo}
+                            value={selectedEstado}
                             onValueChange={handleEstadoChange}
                         >
                             <SelectTrigger id="estado" className={inputClass}>
@@ -187,7 +216,7 @@ export function OrganismoForm({
                             </SelectTrigger>
                             <SelectContent>
                                 {estados.map(estado => (
-                                    <SelectItem key={estado.id} value={estado.id}>
+                                    <SelectItem key={estado.id} value={estado.id.toString()}>
                                         {estado.nombre}
                                     </SelectItem>
                                 ))}
@@ -197,16 +226,16 @@ export function OrganismoForm({
                     <div className="space-y-2">
                         <Label htmlFor="municipio" className="text-gray-700">Municipio <span className="text-red-500 font-bold">*</span></Label>
                         <Select
-                            value={formData.municipioOrganismo}
+                            value={selectedMunicipio}
                             onValueChange={handleMunicipioChange}
-                            disabled={!formData.estadoOrganismo}
+                            disabled={!selectedEstado}
                         >
                             <SelectTrigger id="municipio" className={inputClass}>
-                                <SelectValue placeholder={formData.estadoOrganismo ? "Seleccione un municipio" : "Seleccione primero el estado"} />
+                                <SelectValue placeholder={selectedEstado ? "Seleccione un municipio" : "Seleccione primero el estado"} />
                             </SelectTrigger>
                             <SelectContent>
                                 {municipios.map(municipio => (
-                                    <SelectItem key={municipio.id} value={municipio.id}>
+                                    <SelectItem key={municipio.id} value={municipio.id.toString()}>
                                         {municipio.nombre}
                                     </SelectItem>
                                 ))}
@@ -216,16 +245,16 @@ export function OrganismoForm({
                     <div className="space-y-2">
                         <Label htmlFor="parroquia" className="text-gray-700">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                         <Select
-                            value={formData.parroquiaOrganismo}
-                            onValueChange={(val) => setFormData({ ...formData, parroquiaOrganismo: val })}
-                            disabled={!formData.municipioOrganismo}
+                            value={formData.parroquiaId ? formData.parroquiaId.toString() : ''}
+                            onValueChange={handleParroquiaChange}
+                            disabled={!selectedMunicipio}
                         >
                             <SelectTrigger id="parroquia" className={inputClass}>
-                                <SelectValue placeholder={formData.municipioOrganismo ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
+                                <SelectValue placeholder={selectedMunicipio ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
                             </SelectTrigger>
                             <SelectContent>
                                 {parroquias.map(parroquia => (
-                                    <SelectItem key={parroquia.id} value={parroquia.id}>
+                                    <SelectItem key={parroquia.id} value={parroquia.id.toString()}>
                                         {parroquia.nombre}
                                     </SelectItem>
                                 ))}
@@ -242,16 +271,6 @@ export function OrganismoForm({
                         onChange={(e) => setFormData({ ...formData, direccionOrganismo: e.target.value })}
                         maxLength={150}
                         className={inputClass}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="fisica" className="text-gray-700">Ubicación Física (Piso/Oficina)</Label>
-                    <Textarea
-                        id="fisica"
-                        placeholder="Ej. Piso 5, Oficina 502..."
-                        value={formData.ubicacionFisica || ''}
-                        onChange={(e) => setFormData({ ...formData, ubicacionFisica: e.target.value })}
-                        className="min-h-[80px] resize-none border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all py-3"
                     />
                 </div>
             </div>

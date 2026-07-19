@@ -18,7 +18,7 @@ interface HistoryStationProps {
 }
 
 export function HistoryStation({ abordaje }: { abordaje: AbordajeWithRelations }) {
-    const totalComunidades = abordaje.comunidades?.length || 0;
+    const totalComunidades = abordaje.comunidad ? 1 : 0;
     const totalTejedores = abordaje.tejedores?.length || 0;
     const totalConsultas = abordaje.consultas?.length || 0;
     const totalEntregas = abordaje.medicamentos_entregados?.length || 0;

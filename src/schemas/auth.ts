@@ -22,7 +22,7 @@ export const loginSchema = z.object({
  * Esquema de validación para el Registro de Aspirantes (Unirse)
  */
 export const registerSchema = z.object({
-    cedulaAspirante: z.string().min(6, 'Cédula debe tener al menos 6 caracteres').max(12),
+    cedulaAspirante: z.string().regex(/^[VE]-\d{6,9}$/, 'La cédula debe empezar por V- o E- seguido de 6 a 9 números'),
     nombreAspirante: z.string().min(2, 'Nombre es requerido').max(50),
     apellidoAspirante: z.string().min(2, 'Apellido es requerido').max(50),
     fechaNacimiento: z.string().refine((date) => {
@@ -32,9 +32,7 @@ export const registerSchema = z.object({
         return year >= 1900 && year <= new Date().getFullYear();
     }, 'Fecha inválida o fuera de rango (debe ser entre 1900 y el año actual)'),
     direccionAspirante: z.string().min(5, 'Dirección es muy corta').max(150),
-    municipioAspirante: z.string().min(2, 'Municipio es requerido').max(100),
-    estadoDireccionAspirante: z.string().min(2, 'Estado es requerido').max(100),
-    parroquiaAspirante: z.string().min(2, 'Parroquia es requerida').max(100),
+    parroquiaId: z.coerce.number({ invalid_type_error: 'Parroquia es requerida' }),
     telefonoAspirante: z.string().min(10, 'Teléfono debe tener al menos 10 dígitos').max(15),
     correoAspirante: z.string().email('Correo electrónico inválido').max(100),
     profesionAspirante: z.string().min(2, 'Profesión es requerida').max(50),

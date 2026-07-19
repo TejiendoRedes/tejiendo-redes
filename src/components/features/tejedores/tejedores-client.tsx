@@ -19,10 +19,15 @@ import {
 import { toast } from 'sonner';
 import { TejedorForm } from '@/components/forms/TejedorForm';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+
+interface TejedorWithGeo extends Tejedor {
+    estadoNombre?: string | null;
+    municipioNombre?: string | null;
+    parroquiaNombre?: string | null;
+}
 
 interface TejedoresClientProps {
-    initialData: (Tejedor & { systemRole?: string | null })[];
+    initialData: (TejedorWithGeo & { systemRole?: string | null })[];
     especialidades?: any[];
     isAdmin?: boolean;
 }
@@ -30,8 +35,8 @@ interface TejedoresClientProps {
 export default function TejedoresClient({ initialData, especialidades = [], isAdmin = false }: TejedoresClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [viewingTejedor, setViewingTejedor] = React.useState<Tejedor | null>(null);
-    const [editingTejedor, setEditingTejedor] = React.useState<Tejedor | null>(null);
+    const [viewingTejedor, setViewingTejedor] = React.useState<TejedorWithGeo | null>(null);
+    const [editingTejedor, setEditingTejedor] = React.useState<TejedorWithGeo | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
 
@@ -47,21 +52,12 @@ export default function TejedoresClient({ initialData, especialidades = [], isAd
         return edad;
     };
 
-    const getLocationNames = (t: Tejedor) => {
-        const estado = (t as any).estadoTejedor;
-        const municipio = (t as any).municipioTejedor;
-        const parroquia = (t as any).parroquiaTejedor;
-
-        if (!estado || !municipio || !parroquia) return '-';
-
-        const estadoNombre = getEstadoNombre(estado);
-        const municipioNombre = getMunicipioNombre(estado, municipio);
-        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
-
-        if (parroquia) {
-            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
+    const getLocationNames = (t: TejedorWithGeo) => {
+        if (!t.estadoNombre || !t.municipioNombre) return '-';
+        if (t.parroquiaNombre) {
+            return `${t.estadoNombre}, ${t.municipioNombre}, ${t.parroquiaNombre}`;
         }
-        return `${estadoNombre}, ${municipioNombre}`;
+        return `${t.estadoNombre}, ${t.municipioNombre}`;
     };
 
     const handleAdd = () => {
@@ -69,7 +65,7 @@ export default function TejedoresClient({ initialData, especialidades = [], isAd
         setIsModalOpen(true);
     };
 
-    const handleEdit = (tejedor: Tejedor) => {
+    const handleEdit = (tejedor: TejedorWithGeo) => {
         setEditingTejedor(tejedor);
         setIsModalOpen(true);
     };
@@ -110,7 +106,7 @@ export default function TejedoresClient({ initialData, especialidades = [], isAd
         }
     };
 
-    const columns: Column<Tejedor>[] = [
+    const columns: Column<TejedorWithGeo>[] = [
         {
             key: 'nombreTejedor',
             header: 'Tejedor',

@@ -4,7 +4,6 @@ import { db } from '@/db';
 import {
     abordaje,
     pacientes,
-    medicamentosPacientes,
     consultas,
     consultasEnfermedades,
     medicamentos,

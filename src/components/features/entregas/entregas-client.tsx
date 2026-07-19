@@ -7,8 +7,8 @@ import { DataTable, type Column } from '@/components/ui-kit/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Plus, CheckCircle, Clock, XCircle, User, Pill, Calendar, ClipboardList, Eye } from 'lucide-react';
-import { createPeticion, deletePeticion, marcarComoEntregada, updatePeticionEstado } from '@/actions/peticiones-actions';
-import { getPacientesForSelect, getMedicamentosForSelect, getPeticiones, getAbordajesForSelect } from '@/queries/peticiones';;
+import { createEntrega, deleteEntrega, cancelEntrega } from '@/actions/entregas-actions';
+import { getPacientesForSelect, getMedicamentosForSelect, getEntregas, getAbordajesForSelect } from '@/queries/entregas';
 import { getTejedores } from '@/queries/tejedores';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -26,8 +26,9 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 
-interface Peticion {
-    codigoPeticion: string;
+interface Entrega {
+    id: number;
+    codigoPeticion: string; // Compatibilidad para UI
     codigoPaciente: string;
     codigoMedicamento: string;
     cantidad: number;
@@ -74,22 +75,22 @@ interface Abordaje {
     fechaAbordaje: Date;
 }
 
-interface PeticionesClientProps {
-    initialData: Peticion[];
+interface EntregasClientProps {
+    initialData: Entrega[];
     canEdit?: boolean;
 }
 
-export default function PeticionesClient({ initialData, canEdit = false }: PeticionesClientProps) {
+export default function EntregasClient({ initialData, canEdit = false }: EntregasClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
-    const [selectedPeticion, setSelectedPeticion] = React.useState<Peticion | null>(null);
+    const [selectedEntrega, setSelectedEntrega] = React.useState<Entrega | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
-    const [peticiones, setPeticiones] = React.useState<Peticion[]>(initialData);
+    const [entregas, setEntregas] = React.useState<Entrega[]>(initialData);
 
     // Sincronizar estado local cuando los datos del servidor cambian (router.refresh())
     React.useEffect(() => {
-        setPeticiones(initialData);
+        setEntregas(initialData);
     }, [initialData]);
 
     const [pacientes, setPacientes] = React.useState<Paciente[]>([]);
@@ -99,17 +100,15 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
     const [selectedPaciente, setSelectedPaciente] = React.useState<string>('');
     const [selectedMedicamento, setSelectedMedicamento] = React.useState<string>('');
     const [selectedAbordaje, setSelectedAbordaje] = React.useState<string>('');
+    const [selectedTejedor, setSelectedTejedor] = React.useState<string>('');
     const [isAbordaje, setIsAbordaje] = React.useState(false);
-
-    // Confirmación de responsable al marcar una entrega como completada
-    const [showEntregaConfirm, setShowEntregaConfirm] = React.useState(false);
-    const [selectedTejedorEntrega, setSelectedTejedorEntrega] = React.useState('');
 
     const [formData, setFormData] = React.useState({
         codigoPaciente: '',
         codigoMedicamento: '',
         cantidad: 1,
         notas: '',
+        cedulaTejedor: '',
     });
 
     // Cargar pacientes y medicamentos al montar el componente
@@ -154,83 +153,42 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             codigoMedicamento: '',
             cantidad: 1,
             notas: '',
+            cedulaTejedor: '',
         });
         setSelectedPaciente('');
         setSelectedMedicamento('');
         setSelectedAbordaje('');
+        setSelectedTejedor('');
         setIsAbordaje(false);
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (codigo: string) => {
-        if (confirm('¿Está seguro de eliminar esta petición? La existencia será devuelta al medicamento.')) {
-            // Extraer el ID numérico del código de petición
-            const id = parseInt(codigo);
-            const res = await deletePeticion(id);
+    const handleDelete = async (id: number) => {
+        if (confirm('¿Está seguro de eliminar esta entrega? La existencia será devuelta al medicamento.')) {
+            const res = await deleteEntrega(id);
             if (res.success) {
                 toast.success(res.message);
                 setIsDetailsModalOpen(false);
                 router.refresh();
-                // Actualizar la lista local
-                setPeticiones(prev => prev.filter(p => p.codigoPeticion !== codigo));
+                setEntregas(prev => prev.filter(p => p.id !== id));
             } else {
                 toast.error(res.error);
             }
         }
     };
 
-    const handleMarcarEntregada = async (codigo: string) => {
-        if (!selectedTejedorEntrega) {
-            toast.error('Debe seleccionar el tejedor responsable de la entrega');
-            return;
-        }
-
-        const tejedor = tejedores.find(t => t.cedulaTejedor === selectedTejedorEntrega);
-
-        const res = await marcarComoEntregada(codigo, selectedTejedorEntrega);
-        if (res.success) {
-            toast.success(res.message);
-            setIsDetailsModalOpen(false);
-            setShowEntregaConfirm(false);
-            setSelectedTejedorEntrega('');
-            router.refresh();
-            // Actualizar la lista local con estado, fecha y hora de entrega
-            const ahora = new Date();
-            const horaActual = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}:${String(ahora.getSeconds()).padStart(2, '0')}`;
-            setPeticiones(prev =>
-                prev.map(p =>
-                    p.codigoPeticion === codigo
-                        ? {
-                            ...p,
-                            estado: 'entregado',
-                            fechaEntrega: ahora,
-                            horaEntrega: horaActual,
-                            cedulaTejedor: selectedTejedorEntrega,
-                            nombreTejedor: tejedor?.nombreTejedor || null,
-                            apellidoTejedor: tejedor?.apellidoTejedor || null,
-                        }
-                        : p
-                )
-            );
-        } else {
-            toast.error(res.error);
-        }
-    };
-
-    const handleCancelarEntrega = async (codigo: string) => {
+    const handleCancelarEntrega = async (id: number) => {
         if (confirm('¿Está seguro de cancelar esta entrega? Los medicamentos serán devueltos al inventario.')) {
-            // Extraer el ID numérico del código de petición
-            const id = parseInt(codigo);
-            const res = await updatePeticionEstado(id, 'cancelado');
+            const res = await cancelEntrega(id);
             if (res.success) {
                 toast.success(res.message);
                 setIsDetailsModalOpen(false);
                 router.refresh();
-                // Actualizar la lista local limpiando fecha y hora de entrega
-                setPeticiones(prev =>
+                // Actualizar la lista local
+                setEntregas(prev =>
                     prev.map(p =>
-                        p.codigoPeticion === codigo
-                            ? { ...p, estado: 'cancelado', fechaEntrega: null, horaEntrega: null }
+                        p.id === id
+                            ? { ...p, estado: 'cancelado' }
                             : p
                     )
                 );
@@ -259,7 +217,12 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                 return;
             }
 
-            const res = await createPeticion({
+            if (!formData.cedulaTejedor) {
+                toast.error('Debe seleccionar un responsable para la entrega');
+                return;
+            }
+
+            const res = await createEntrega({
                 ...formData,
                 codigoAbordaje: isAbordaje ? selectedAbordaje : null
             });
@@ -268,14 +231,14 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                 toast.success(res.message);
                 setIsModalOpen(false);
                 router.refresh();
-                // Recargar la lista de peticiones y medicamentos
-                const [peticionesRes, medicamentosRes] = await Promise.all([
-                    getPeticiones(),
+                // Recargar la lista de entregas y medicamentos
+                const [entregasRes, medicamentosRes] = await Promise.all([
+                    getEntregas(),
                     getMedicamentosForSelect()
                 ]);
 
-                if (peticionesRes.success) {
-                    setPeticiones(peticionesRes.data || []);
+                if (entregasRes.success) {
+                    setEntregas(entregasRes.data || []);
                 }
                 if (medicamentosRes.success) {
                     setMedicamentos(medicamentosRes.data || []);
@@ -303,6 +266,12 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
         setFormData(prev => ({ ...prev, codigoMedicamento: codigo }));
     };
 
+    // Manejar selección de tejedor
+    const handleTejedorChange = (cedula: string) => {
+        setSelectedTejedor(cedula);
+        setFormData(prev => ({ ...prev, cedulaTejedor: cedula }));
+    };
+
     // Obtener nombre completo del paciente
     const getPacienteNombre = (cedula: string) => {
         const paciente = pacientes.find(p => p.cedulaPaciente === cedula);
@@ -317,8 +286,6 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
 
     const getEstadoBadge = (estado: string) => {
         switch (estado) {
-            case 'pendiente':
-                return <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Pendiente</Badge>;
             case 'entregado':
                 return <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5" /> Entregado</Badge>;
             case 'cancelado':
@@ -328,18 +295,18 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
         }
     };
 
-    const columns: Column<Peticion>[] = [
+    const columns: Column<Entrega>[] = [
         {
             key: 'codigoPeticion',
             header: 'Código',
             className: 'w-[1%] whitespace-nowrap',
-            render: (row: Peticion) => <span className="font-medium text-gray-900">{row.codigoPeticion}</span>
+            render: (row: Entrega) => <span className="font-medium text-gray-900">ENT-{row.id}</span>
         },
         {
             key: 'paciente',
             header: 'Paciente',
             className: 'min-w-[150px]',
-            render: (row: Peticion) => (
+            render: (row: Entrega) => (
                 <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-500" />
                     <div>
@@ -353,7 +320,7 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             key: 'medicamento',
             header: 'Medicamento',
             className: 'min-w-[150px]',
-            render: (row: Peticion) => (
+            render: (row: Entrega) => (
                 <div className="flex items-center gap-2">
                     <Pill className="w-4 h-4 text-gray-500" />
                     <div>
@@ -367,19 +334,13 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             key: 'cantidad',
             header: 'Cantidad',
             className: 'w-[1%] whitespace-nowrap text-center',
-            render: (row: Peticion) => row.cantidad,
-        },
-        {
-            key: 'fechaPeticion',
-            header: 'Fecha Solicitud',
-            className: 'w-[1%] whitespace-nowrap',
-            render: (row: Peticion) => new Date(row.fechaPeticion).toLocaleDateString(),
+            render: (row: Entrega) => row.cantidad,
         },
         {
             key: 'fechaEntrega',
             header: 'Fecha y Hora Entrega',
             className: 'w-[1%] whitespace-nowrap',
-            render: (row: Peticion) => (
+            render: (row: Entrega) => (
                 row.fechaEntrega && row.horaEntrega ? (
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1">
@@ -411,7 +372,7 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             key: 'abordaje',
             header: 'Abordaje',
             className: 'w-[1%] whitespace-nowrap',
-            render: (row: Peticion) => (
+            render: (row: Entrega) => (
                 row.codigoAbordaje ? (
                     <div className="flex items-center gap-2">
                         <ClipboardList className="w-4 h-4 text-purple-500" />
@@ -429,34 +390,32 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             key: 'estado',
             header: 'Estado',
             className: 'w-[1%] whitespace-nowrap',
-            render: (row: Peticion) => getEstadoBadge(row.estado),
+            render: (row: Entrega) => getEstadoBadge(row.estado),
         },
         {
             key: 'acciones',
             header: '',
             className: 'w-[1%] whitespace-nowrap text-right pr-6',
-            render: (row: Peticion) => (
+            render: (row: Entrega) => (
                 <div className="flex items-center justify-end gap-1">
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                            setSelectedPeticion(row);
-                            setShowEntregaConfirm(false);
-                            setSelectedTejedorEntrega('');
+                            setSelectedEntrega(row);
                             setIsDetailsModalOpen(true);
                         }}
                         className="hover:bg-[#1e3a8a]/10 hover:text-[#1e3a8a] text-gray-600 font-medium px-2 py-1 h-8"
                     >
                         <Eye className="w-4 h-4 mr-1.5" /> Revisar
                     </Button>
-                    {canEdit && row.estado === 'pendiente' && (
+                    {canEdit && (
                         <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleDelete(row.codigoPeticion)}
+                            onClick={() => handleDelete(row.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            title="Eliminar petición"
+                            title="Eliminar entrega"
                         >
                             <Trash2 className="w-4 h-4" />
                         </Button>
@@ -482,17 +441,16 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
             >
                 <DataTable
                     title="Listado de entregas"
-                    description="Busca por código de petición, paciente o medicamento"
-                    data={peticiones}
+                    description="Busca por código, paciente o medicamento"
+                    data={entregas}
                     columns={columns}
                     searchKeys={['codigoPeticion', 'nombrePaciente', 'apellidoPaciente', 'codigoPaciente', 'nombreMedicamento']}
-                    searchPlaceholder="Buscar peticiones..."
+                    searchPlaceholder="Buscar entregas..."
                     filters={[
                         {
                             key: 'estado',
                             label: 'Estado',
                             options: [
-                                { label: 'Pendiente', value: 'pendiente' },
                                 { label: 'Entregado', value: 'entregado' },
                                 { label: 'Cancelado', value: 'cancelado' }
                             ]
@@ -503,7 +461,7 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogContent className="sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle>Nueva Entrega/Petición de Medicamento</DialogTitle>
+                            <DialogTitle>Nueva Entrega de Medicamento</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -561,6 +519,20 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                                 </div>
                             )}
 
+                            <div className="space-y-1 pb-4 border-b">
+                                <SearchableSelect
+                                    label="Tejedor Responsable"
+                                    items={tejedores}
+                                    value={selectedTejedor}
+                                    onValueChange={handleTejedorChange}
+                                    placeholder="Seleccionar responsable..."
+                                    searchPlaceholder="Buscar por nombre..."
+                                    idField="cedulaTejedor"
+                                    labelField="nombreTejedor"
+                                    secondaryLabelField="profesionTejedor"
+                                />
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="cantidad">Cantidad Solicitada</Label>
@@ -612,75 +584,59 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                 <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
                     <DialogContent className="sm:max-w-[600px]">
                         <DialogHeader>
-                            <DialogTitle>Detalles de la Petición</DialogTitle>
+                            <DialogTitle>Detalles de la Entrega</DialogTitle>
                             <DialogDescription>
                                 Revise los datos de la entrega y gestione su estado.
                             </DialogDescription>
                         </DialogHeader>
 
-                        {selectedPeticion && (
+                        {selectedEntrega && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Paciente</h4>
-                                        <p className="font-medium text-gray-900">{selectedPeticion.nombrePaciente} {selectedPeticion.apellidoPaciente}</p>
-                                        <p className="text-xs text-gray-500">CI: {selectedPeticion.codigoPaciente}</p>
+                                        <p className="font-medium text-gray-900">{selectedEntrega.nombrePaciente} {selectedEntrega.apellidoPaciente}</p>
+                                        <p className="text-xs text-gray-500">CI: {selectedEntrega.codigoPaciente}</p>
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Estado</h4>
-                                        <div className="mt-1">{getEstadoBadge(selectedPeticion.estado)}</div>
+                                        <div className="mt-1">{getEstadoBadge(selectedEntrega.estado)}</div>
                                     </div>
                                     <div className="col-span-2">
                                         <h4 className="text-sm font-medium text-gray-500">Medicamento</h4>
                                         <div className="flex items-center gap-2">
                                             <Pill className="w-4 h-4 text-blue-500" />
-                                            <p className="font-medium text-gray-900">{selectedPeticion.nombreMedicamento} ({selectedPeticion.presentacion})</p>
-                                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">x{selectedPeticion.cantidad}</Badge>
+                                            <p className="font-medium text-gray-900">{selectedEntrega.nombreMedicamento} ({selectedEntrega.presentacion})</p>
+                                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">x{selectedEntrega.cantidad}</Badge>
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-medium text-gray-500">Fecha de Solicitud</h4>
-                                        <p>{new Date(selectedPeticion.fechaPeticion).toLocaleDateString()}</p>
+                                        <h4 className="text-sm font-medium text-gray-500">Fecha de Entrega</h4>
+                                        <p>{selectedEntrega.fechaEntrega ? new Date(selectedEntrega.fechaEntrega).toLocaleDateString() : '-'}</p>
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-500">Abordaje (Opcional)</h4>
-                                        {selectedPeticion.codigoAbordaje ? (
-                                            <p className="text-sm">{selectedPeticion.descripcionAbordaje} <span className="text-gray-400">({selectedPeticion.codigoAbordaje})</span></p>
+                                        {selectedEntrega.codigoAbordaje ? (
+                                            <p className="text-sm">{selectedEntrega.descripcionAbordaje} <span className="text-gray-400">({selectedEntrega.codigoAbordaje})</span></p>
                                         ) : (
                                             <p className="text-gray-400">-</p>
                                         )}
                                     </div>
-                                    {selectedPeticion.estado === 'entregado' && selectedPeticion.nombreTejedor && (
+                                    {selectedEntrega.estado === 'entregado' && selectedEntrega.nombreTejedor && (
                                         <div className="col-span-2">
                                             <h4 className="text-sm font-medium text-gray-500">Entregado por</h4>
                                             <p className="text-sm font-medium text-gray-900">
-                                                {selectedPeticion.nombreTejedor} {selectedPeticion.apellidoTejedor}
+                                                {selectedEntrega.nombreTejedor} {selectedEntrega.apellidoTejedor}
                                             </p>
                                         </div>
                                     )}
-                                    {selectedPeticion.notas && (
+                                    {selectedEntrega.notas && (
                                         <div className="col-span-2">
                                             <h4 className="text-sm font-medium text-gray-500">Notas Adicionales</h4>
-                                            <p className="text-sm italic text-gray-600 bg-white p-2 rounded border border-gray-100">{selectedPeticion.notas}</p>
+                                            <p className="text-sm italic text-gray-600 bg-white p-2 rounded border border-gray-100">{selectedEntrega.notas}</p>
                                         </div>
                                     )}
                                 </div>
-
-                                {selectedPeticion.estado === 'pendiente' && showEntregaConfirm && (
-                                    <div className="space-y-2 border border-green-200 bg-green-50 p-4 rounded-lg">
-                                        <Label>Tejedor Responsable de la Entrega</Label>
-                                        <SearchableSelect
-                                            items={tejedores}
-                                            value={selectedTejedorEntrega}
-                                            onValueChange={setSelectedTejedorEntrega}
-                                            placeholder="Seleccionar responsable..."
-                                            searchPlaceholder="Buscar por nombre..."
-                                            idField="cedulaTejedor"
-                                            labelField="nombreTejedor"
-                                            secondaryLabelField="profesionTejedor"
-                                        />
-                                    </div>
-                                )}
 
                                 <div className="flex justify-end gap-2 pt-4">
                                     <Button
@@ -691,30 +647,10 @@ export default function PeticionesClient({ initialData, canEdit = false }: Petic
                                         Cerrar
                                     </Button>
 
-                                    {selectedPeticion.estado === 'pendiente' && !showEntregaConfirm && (
-                                        <Button
-                                            className="bg-green-600 hover:bg-green-700 text-white"
-                                            onClick={() => setShowEntregaConfirm(true)}
-                                        >
-                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                            Marcar como Entregado
-                                        </Button>
-                                    )}
-
-                                    {selectedPeticion.estado === 'pendiente' && showEntregaConfirm && (
-                                        <Button
-                                            className="bg-green-600 hover:bg-green-700 text-white"
-                                            onClick={() => handleMarcarEntregada(selectedPeticion.codigoPeticion)}
-                                        >
-                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                            Confirmar Entrega
-                                        </Button>
-                                    )}
-
-                                    {selectedPeticion.estado === 'entregado' && (
+                                    {selectedEntrega.estado === 'entregado' && (
                                         <Button
                                             variant="destructive"
-                                            onClick={() => handleCancelarEntrega(selectedPeticion.codigoPeticion)}
+                                            onClick={() => handleCancelarEntrega(selectedEntrega.id)}
                                         >
                                             <XCircle className="w-4 h-4 mr-2" />
                                             Cancelar Entrega

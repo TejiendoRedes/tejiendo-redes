@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db';
-import { medicamentos, movimientosInventario, peticiones } from '@/db/schema';
+import { medicamentos, movimientosInventario } from '@/db/schema';
 import { sql, eq, desc } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import { getErrorMessage } from '@/lib/error-handler';
@@ -39,14 +39,8 @@ export async function getFarmaciaDashboardMetrics() {
             .orderBy(desc(movimientosInventario.fechaMovimiento))
             .limit(10);
 
-        // Obtener peticiones pendientes
-        const [pendientesResult] = await db.select({
-            count: sql<number>`count(*)`
-        })
-        .from(peticiones)
-        .where(eq(peticiones.estado, 'pendiente'));
-        
-        const peticionesPendientes = Number(pendientesResult?.count || 0);
+        // Obtener peticiones pendientes (eliminado en refactor a entregas directas)
+        const peticionesPendientes = 0;
 
         return {
             success: true,

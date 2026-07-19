@@ -12,7 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Aspirante, NewAspirante } from '@/db/schema/aspirantes';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstadosAction, getMunicipiosByEstadoAction, getParroquiasByMunicipioAction } from '@/queries/geografia';
 import { Loader2 } from 'lucide-react';
 
 interface AspiranteFormData extends Omit<NewAspirante, 'fechaNacimiento' | 'fechaPostulacion'> {
@@ -21,7 +21,7 @@ interface AspiranteFormData extends Omit<NewAspirante, 'fechaNacimiento' | 'fech
 }
 
 interface LocationItem {
-    id: string;
+    id: number;
     nombre: string;
 }
 
@@ -46,9 +46,7 @@ export function AspiranteForm({
         apellidoAspirante: initialData?.apellidoAspirante || '',
         fechaNacimiento: initialData?.fechaNacimiento ? new Date(initialData.fechaNacimiento).toISOString().split('T')[0] : '',
         direccionAspirante: initialData?.direccionAspirante || '',
-        municipioAspirante: initialData?.municipioAspirante || '',
-        estadoDireccionAspirante: initialData?.estadoDireccionAspirante || '',
-        parroquiaAspirante: initialData?.parroquiaAspirante || '',
+        parroquiaId: initialData?.parroquiaId || 0,
         telefonoAspirante: initialData?.telefonoAspirante || '',
         correoAspirante: initialData?.correoAspirante || '',
         profesionAspirante: initialData?.profesionAspirante || '',
@@ -56,43 +54,50 @@ export function AspiranteForm({
         estadoAspirante: initialData?.estadoAspirante || 'Pendiente',
     });
 
+    const [estados, setEstados] = useState<LocationItem[]>([]);
     const [municipios, setMunicipios] = useState<LocationItem[]>([]);
     const [parroquias, setParroquias] = useState<LocationItem[]>([]);
-    const estados = getEstados();
+    const [selectedEstado, setSelectedEstado] = useState<string>('');
+    const [selectedMunicipio, setSelectedMunicipio] = useState<string>('');
 
     useEffect(() => {
-        if (formData.estadoDireccionAspirante) {
-            setMunicipios(getMunicipiosByEstado(formData.estadoDireccionAspirante));
-            if (formData.municipioAspirante) {
-                setParroquias(getParroquiasByMunicipio(formData.estadoDireccionAspirante, formData.municipioAspirante));
+        const fetchEstados = async () => {
+            const res = await getEstadosAction();
+            if (res.success && res.data) {
+                setEstados(res.data);
             }
-        }
-    }, [formData.estadoDireccionAspirante, formData.municipioAspirante]);
+        };
+        fetchEstados();
+    }, []);
 
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            estadoDireccionAspirante: estadoId,
-            municipioAspirante: '',
-            parroquiaAspirante: ''
-        }));
-        setMunicipios(getMunicipiosByEstado(estadoId));
+    const handleEstadoChange = async (estadoIdStr: string) => {
+        const estadoId = parseInt(estadoIdStr, 10);
+        setSelectedEstado(estadoIdStr);
+        setSelectedMunicipio('');
+        setFormData(prev => ({ ...prev, parroquiaId: 0 }));
+        
+        const res = await getMunicipiosByEstadoAction(estadoId);
+        if (res.success && res.data) {
+            setMunicipios(res.data);
+        }
         setParroquias([]);
     };
 
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            municipioAspirante: municipioId,
-            parroquiaAspirante: ''
-        }));
-        setParroquias(getParroquiasByMunicipio(formData.estadoDireccionAspirante, municipioId));
+    const handleMunicipioChange = async (municipioIdStr: string) => {
+        const municipioId = parseInt(municipioIdStr, 10);
+        setSelectedMunicipio(municipioIdStr);
+        setFormData(prev => ({ ...prev, parroquiaId: 0 }));
+
+        const res = await getParroquiasByMunicipioAction(municipioId);
+        if (res.success && res.data) {
+            setParroquias(res.data);
+        }
     };
 
-    const handleParroquiaChange = (parroquiaId: string) => {
+    const handleParroquiaChange = (parroquiaIdStr: string) => {
         setFormData(prev => ({
             ...prev,
-            parroquiaAspirante: parroquiaId
+            parroquiaId: parseInt(parroquiaIdStr, 10)
         }));
     };
 
@@ -214,7 +219,7 @@ export function AspiranteForm({
                 <div className="space-y-2">
                     <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
                     <Select
-                        value={formData.estadoDireccionAspirante}
+                        value={selectedEstado}
                         onValueChange={handleEstadoChange}
                     >
                         <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
@@ -222,7 +227,7 @@ export function AspiranteForm({
                         </SelectTrigger>
                         <SelectContent>
                             {estados.map((estado) => (
-                                <SelectItem key={estado.id} value={estado.id}>
+                                <SelectItem key={estado.id} value={estado.id.toString()}>
                                     {estado.nombre}
                                 </SelectItem>
                             ))}
@@ -233,9 +238,9 @@ export function AspiranteForm({
                 <div className="space-y-2">
                     <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
                     <Select
-                        value={formData.municipioAspirante}
+                        value={selectedMunicipio}
                         onValueChange={handleMunicipioChange}
-                        disabled={!formData.estadoDireccionAspirante}
+                        disabled={!selectedEstado}
                     >
                         <SelectTrigger
                             id="municipio"
@@ -243,7 +248,7 @@ export function AspiranteForm({
                         >
                             <SelectValue
                                 placeholder={
-                                    formData.estadoDireccionAspirante
+                                    selectedEstado
                                         ? "Seleccione un municipio"
                                         : "Seleccione primero el estado"
                                 }
@@ -251,7 +256,7 @@ export function AspiranteForm({
                         </SelectTrigger>
                         <SelectContent>
                             {municipios.map((municipio) => (
-                                <SelectItem key={municipio.id} value={municipio.id}>
+                                <SelectItem key={municipio.id} value={municipio.id.toString()}>
                                     {municipio.nombre}
                                 </SelectItem>
                             ))}
@@ -262,9 +267,9 @@ export function AspiranteForm({
                 <div className="space-y-2">
                     <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                     <Select
-                        value={formData.parroquiaAspirante}
+                        value={formData.parroquiaId > 0 ? formData.parroquiaId.toString() : ''}
                         onValueChange={handleParroquiaChange}
-                        disabled={!formData.municipioAspirante}
+                        disabled={!selectedMunicipio}
                     >
                         <SelectTrigger
                             id="parroquia"
@@ -272,7 +277,7 @@ export function AspiranteForm({
                         >
                             <SelectValue
                                 placeholder={
-                                    formData.municipioAspirante
+                                    selectedMunicipio
                                         ? "Seleccione una parroquia"
                                         : "Seleccione primero el municipio"
                                 }
@@ -280,7 +285,7 @@ export function AspiranteForm({
                         </SelectTrigger>
                         <SelectContent>
                             {parroquias.map((parroquia) => (
-                                <SelectItem key={parroquia.id} value={parroquia.id}>
+                                <SelectItem key={parroquia.id} value={parroquia.id.toString()}>
                                     {parroquia.nombre}
                                 </SelectItem>
                             ))}

@@ -1,5 +1,6 @@
 import { mysqlTable, varchar, text, int, mediumint, index, boolean } from 'drizzle-orm/mysql-core';
 import { responsable } from './responsable';
+import { parroquias } from './geografia';
 
 /**
  * Tabla: comunidades
@@ -8,12 +9,9 @@ import { responsable } from './responsable';
 export const comunidades = mysqlTable('comunidades', {
     codigoComunidad: varchar('codigo_comunidad', { length: 20 }).primaryKey().notNull(), // EST-MUN-PAR-001...
     nombreComunidad: varchar('nombre_comunidad', { length: 150 }).notNull(),
-    tipoComunidad: varchar('tipo_comunidad', { length: 2 }).notNull(), // '1': Urbana, '2': Rural, '3': Indígena, '4': Base de Misiones
-    estado: varchar('estado', { length: 25 }).notNull(),
-    municipio: varchar('municipio', { length: 50 }).notNull(),
-    parroquia: varchar('parroquia', { length: 50 }).notNull(),
+    tipoComunidad: varchar('tipo_comunidad', { length: 50 }).notNull(),
+    parroquiaId: int('parroquia_id').notNull().references(() => parroquias.id),
     direccion: varchar('direccion', { length: 150 }).notNull(),
-    ubicacionFisica: text('ubicacion_fisica').notNull(),
     cedulaResponsable: varchar('cedula_responsable', { length: 12 }).notNull().references(() => responsable.cedulaResponsable, {
         onDelete: 'restrict',
         onUpdate: 'cascade'

@@ -10,6 +10,7 @@
  */
 
 // Export all schema tables
+export * from './geografia';
 export * from './responsable';
 export * from './users';
 export * from './audit_logs';
@@ -21,13 +22,13 @@ export * from './organismos';
 export * from './pacientes';
 export * from './antecedentes';
 export * from './medicamentos';
+export * from './entregas_medicamentos';
 export * from './abordajes';
 export * from './medicos';
 export * from './consultas';
 export * from './relations';
-export * from './aspirantes';
-export * from './peticiones';
 export * from './solicitudes-abordajes';
+export * from './aspirantes';
 export * from './abordaje-asistencia';
 export * from './mantenimiento';
 export * from './movimientos_inventario';

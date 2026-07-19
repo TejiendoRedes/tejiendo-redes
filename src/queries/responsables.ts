@@ -4,6 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { responsable as responsables, type NewResponsable, type Responsable } from '@/db/schema/responsable';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { eq, like, or } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 
@@ -39,8 +40,16 @@ const handleDatabaseError = (error: any) => {
 export async function getResponsables(query?: string, limit: number = 50) {
     try {
         await requireAuth();
-        let queryBuilder = db.select()
+        let queryBuilder = db.select({
+            responsable: responsables,
+            estadoNombre: estados.nombre,
+            municipioNombre: municipios.nombre,
+            parroquiaNombre: parroquias.nombre
+        })
             .from(responsables)
+            .leftJoin(parroquias, eq(responsables.parroquiaId, parroquias.id))
+            .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+            .leftJoin(estados, eq(municipios.estadoId, estados.id))
             .$dynamic();
 
         if (query) {
@@ -53,7 +62,14 @@ export async function getResponsables(query?: string, limit: number = 50) {
             );
         }
 
-        const data = await queryBuilder.limit(limit);
+        const results = await queryBuilder.limit(limit);
+        const data = results.map(row => ({
+            ...row.responsable,
+            estadoNombre: row.estadoNombre,
+            municipioNombre: row.municipioNombre,
+            parroquiaNombre: row.parroquiaNombre
+        }));
+        
         return { success: true, data };
     } catch (error) {
         console.error('Error fetching responsables:', error);

@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { abordaje } from '@/db/schema/abordajes';
-import { abordajeComunidad, tejedoresAbordaje, medicamentosPacientes } from '@/db/schema/relations';
+import { tejedoresAbordaje } from '@/db/schema/relations';
 import { comunidades } from '@/db/schema/comunidades';
 import { tejedores } from '@/db/schema/tejedores';
 import { consultas } from '@/db/schema/consultas';
@@ -10,7 +10,8 @@ import { eq, and, sql, lt } from 'drizzle-orm';
 import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
 import { pacientes } from '@/db/schema/pacientes';
 import { medicos } from '@/db/schema/medicos';
-import { peticiones } from '@/db/schema/peticiones';
+import { entregasMedicamentos } from '@/db/schema/entregas_medicamentos';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 
 export class AbordajesService {
     /**
@@ -61,7 +62,7 @@ export class AbordajesService {
         await this.syncStatusesIfNeeded();
 
         // Execute all queries in parallel with Promise.all
-        const [abordajeData, comunidadesData, tejedoresData, consultasData, medsPacientesData, peticionesMedsData] =
+        const [abordajeData, comunidadesData, tejedoresData, consultasData, entregasMedsData] =
             await Promise.all([
                 db.query.abordaje.findFirst({
                     where: eq(abordaje.codigoAbordaje, id),
@@ -69,11 +70,11 @@ export class AbordajesService {
                 db.select({
                     codigoComunidad: comunidades.codigoComunidad,
                     nombreComunidad: comunidades.nombreComunidad,
-                    municipio: comunidades.municipio,
-                    parroquia: comunidades.parroquia,
-                    estado: comunidades.estado,
+                    municipio: sql<string>`COALESCE(${municipios.nombre}, 'Desconocido')`,
+                    parroquia: sql<string>`COALESCE(${parroquias.nombre}, 'Desconocido')`,
+                    estado: sql<string>`COALESCE(${estados.nombre}, 'Desconocido')`,
                     habitantes: comunidades.cantidadHabitantes,
-                    observaciones: abordajeComunidad.observaciones,
+                    observaciones: abordaje.observacionesComunidad,
                     tipoComunidad: comunidades.tipoComunidad,
                     direccion: comunidades.direccion,
                     telefonoComunidad: comunidades.telefonoComunidad,
@@ -87,10 +88,13 @@ export class AbordajesService {
                     cargoResponsable: responsable.cargo,
                     telefonoResponsable: responsable.telefonoResponsable,
                 })
-                    .from(abordajeComunidad)
-                    .innerJoin(comunidades, eq(abordajeComunidad.codigoComunidad, comunidades.codigoComunidad))
+                    .from(comunidades)
+                    .innerJoin(abordaje, eq(abordaje.codigoComunidad, comunidades.codigoComunidad))
+                    .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+                    .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+                    .leftJoin(estados, eq(municipios.estadoId, estados.id))
                     .leftJoin(responsable, eq(comunidades.cedulaResponsable, responsable.cedulaResponsable))
-                    .where(eq(abordajeComunidad.codigoAbordaje, id)),
+                    .where(eq(abordaje.codigoAbordaje, id)),
                 db.select({
                     cedulaTejedor: tejedores.cedulaTejedor,
                     nombreTejedor: tejedores.nombreTejedor,
@@ -120,32 +124,20 @@ export class AbordajesService {
                     .where(eq(consultas.codigoAbordaje, id)),
                 db.select({
                     codigoMedicamento: medicamentos.codigoMedicamento,
-                    cedulaPaciente: medicamentosPacientes.cedulaPaciente,
+                    cedulaPaciente: entregasMedicamentos.codigoPaciente,
                     nombrePaciente: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
-                    cantidadEntregada: medicamentosPacientes.cantidadEntregada,
-                    indicaciones: medicamentos.descripcion,
+                    cantidadEntregada: entregasMedicamentos.cantidad,
+                    indicaciones: entregasMedicamentos.notas,
                     nombreMedicamento: medicamentos.nombreMedicamento,
+                    fechaEntrega: entregasMedicamentos.fechaEntrega,
                 })
-                    .from(medicamentosPacientes)
-                    .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
-                    .leftJoin(pacientes, eq(medicamentosPacientes.cedulaPaciente, pacientes.cedulaPaciente))
-                    .where(eq(medicamentosPacientes.codigoAbordaje, id)),
-                db.select({
-                    codigoMedicamento: medicamentos.codigoMedicamento,
-                    cedulaPaciente: peticiones.codigoPaciente,
-                    nombrePaciente: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
-                    cantidadEntregada: peticiones.cantidad,
-                    indicaciones: peticiones.notas,
-                    nombreMedicamento: medicamentos.nombreMedicamento,
-                    fechaEntrega: peticiones.fechaEntrega,
-                })
-                    .from(peticiones)
-                    .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
-                    .leftJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
+                    .from(entregasMedicamentos)
+                    .innerJoin(medicamentos, eq(entregasMedicamentos.codigoMedicamento, medicamentos.codigoMedicamento))
+                    .leftJoin(pacientes, eq(entregasMedicamentos.codigoPaciente, pacientes.cedulaPaciente))
                     .where(
                         and(
-                            eq(peticiones.codigoAbordaje, id),
-                            eq(peticiones.estado, 'entregado')
+                            eq(entregasMedicamentos.codigoAbordaje, id),
+                            eq(entregasMedicamentos.estado, 'entregado')
                         )
                     ),
             ]);
@@ -161,32 +153,19 @@ export class AbordajesService {
 
         return {
             ...abordajeData,
-            comunidades: comunidadesData,
+            comunidad: comunidadesData[0] || null,
             tejedores: tejedoresData,
             consultas: consultasWithDate,
-            medicamentos_entregados: [...medsPacientesData, ...peticionesMedsData],
+            medicamentos_entregados: entregasMedsData,
             total_consultas: consultasData.length,
             pacientes_unicos: new Set(consultasData.map(c => c.cedulaPaciente)).size,
         };
     }
 
-    /**
-     * Crear un nuevo abordaje
-     * Incluye la asociación automática con la comunidad en la tabla puente
-     */
     static async create(data: typeof abordaje.$inferInsert) {
         return await db.transaction(async (tx) => {
             // 1. Insertar el abordaje
             const result = await tx.insert(abordaje).values(data);
-
-            // 2. Si hay un código de comunidad, asociarlo en la tabla puente automáticamente
-            if (data.codigoComunidad) {
-                await tx.insert(abordajeComunidad).values({
-                    codigoAbordaje: data.codigoAbordaje,
-                    codigoComunidad: data.codigoComunidad,
-                });
-            }
-
             return result;
         });
     }
@@ -198,37 +177,6 @@ export class AbordajesService {
         return await db.update(abordaje)
             .set(data)
             .where(eq(abordaje.codigoAbordaje, id));
-    }
-
-    /**
-     * Agregar comunidad a abordaje
-     */
-    static async addComunidad(codigoAbordaje: string, codigoComunidad: string) {
-        // Check existing
-        const existing = await db.select()
-            .from(abordajeComunidad)
-            .where(and(
-                eq(abordajeComunidad.codigoAbordaje, codigoAbordaje),
-                eq(abordajeComunidad.codigoComunidad, codigoComunidad)
-            ));
-
-        if (existing.length > 0) throw new Error('La comunidad ya está asignada a este abordaje');
-
-        return await db.insert(abordajeComunidad).values({
-            codigoAbordaje,
-            codigoComunidad,
-        });
-    }
-
-    /**
-     * Remover comunidad de abordaje
-     */
-    static async removeComunidad(codigoAbordaje: string, codigoComunidad: string) {
-        return await db.delete(abordajeComunidad)
-            .where(and(
-                eq(abordajeComunidad.codigoAbordaje, codigoAbordaje),
-                eq(abordajeComunidad.codigoComunidad, codigoComunidad)
-            ));
     }
 
     // ... similar methods for Tejedores and Medicamentos ...
@@ -259,40 +207,24 @@ export class AbordajesService {
 
     static async delete(id: string) {
         return await db.transaction(async (tx) => {
-            // 0. Devolver stock de peticiones entregadas antes de borrarlas
+            // 1. Devolver stock de entregas antes de borrarlas
             const entregadas = await tx.select()
-                .from(peticiones)
+                .from(entregasMedicamentos)
                 .where(and(
-                    eq(peticiones.codigoAbordaje, id),
-                    eq(peticiones.estado, 'entregado')
+                    eq(entregasMedicamentos.codigoAbordaje, id),
+                    eq(entregasMedicamentos.estado, 'entregado')
                 ));
 
-            for (const pet of entregadas) {
+            for (const ent of entregadas) {
                 await tx.update(medicamentos)
                     .set({
-                        existencia: sql`${medicamentos.existencia} + ${pet.cantidad}`
+                        existencia: sql`${medicamentos.existencia} + ${ent.cantidad}`
                     })
-                    .where(eq(medicamentos.codigoMedicamento, pet.codigoMedicamento));
+                    .where(eq(medicamentos.codigoMedicamento, ent.codigoMedicamento));
             }
 
-            // 1. Eliminar peticiones asociadas (BUG-12 FIX: faltaba esta línea, FK restrict impedía borrar)
-            await tx.delete(peticiones).where(eq(peticiones.codigoAbordaje, id));
-
-            // 1.5 Devolver stock de medicamentos entregados en campo (tabla puente legacy)
-            const entregadosLegacy = await tx.select()
-                .from(medicamentosPacientes)
-                .where(eq(medicamentosPacientes.codigoAbordaje, id));
-
-            for (const med of entregadosLegacy) {
-                await tx.update(medicamentos)
-                    .set({
-                        existencia: sql`${medicamentos.existencia} + ${med.cantidadEntregada}`
-                    })
-                    .where(eq(medicamentos.codigoMedicamento, med.codigoMedicamento));
-            }
-
-            // 2. Eliminar medicamentos entregados (tabla puente legacy)
-            await tx.delete(medicamentosPacientes).where(eq(medicamentosPacientes.codigoAbordaje, id));
+            // 2. Eliminar entregas asociadas
+            await tx.delete(entregasMedicamentos).where(eq(entregasMedicamentos.codigoAbordaje, id));
 
             // 3. Eliminar consultas asociadas
             await tx.delete(consultas).where(eq(consultas.codigoAbordaje, id));
@@ -303,43 +235,8 @@ export class AbordajesService {
             // 5. Eliminar tejedores asociados
             await tx.delete(tejedoresAbordaje).where(eq(tejedoresAbordaje.codigoAbordaje, id));
 
-            // 6. Eliminar comunidades asociadas
-            await tx.delete(abordajeComunidad).where(eq(abordajeComunidad.codigoAbordaje, id));
-
-            // 7. Finalmente eliminar el abordaje
+            // 6. Finalmente eliminar el abordaje
             return await tx.delete(abordaje).where(eq(abordaje.codigoAbordaje, id));
-        });
-    }
-
-    static async registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
-        return await db.transaction(async (tx) => {
-            // 0. Verificar existencia actual
-            const [medicamento] = await tx.select({
-                existencia: medicamentos.existencia,
-                nombreMedicamento: medicamentos.nombreMedicamento
-            })
-                .from(medicamentos)
-                .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento));
-
-            if (!medicamento) {
-                throw new Error('Medicamento no encontrado');
-            }
-
-            if (medicamento.existencia < data.cantidadEntregada) {
-                throw new Error(`Inventario insuficiente para ${medicamento.nombreMedicamento}. Disponible: ${medicamento.existencia}, Solicitado: ${data.cantidadEntregada}`);
-            }
-
-            // 1. Registrar la entrega en la tabla puente
-            const result = await tx.insert(medicamentosPacientes).values(data);
-
-            // 2. Decrementar la existencia en la tabla de medicamentos de forma atómica
-            await tx.update(medicamentos)
-                .set({
-                    existencia: sql`${medicamentos.existencia} - ${data.cantidadEntregada}`
-                })
-                .where(eq(medicamentos.codigoMedicamento, data.codigoMedicamento));
-
-            return result;
         });
     }
 

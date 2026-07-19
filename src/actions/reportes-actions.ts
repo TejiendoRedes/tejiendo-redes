@@ -2,13 +2,12 @@
 
 import { db } from '@/db';
 import { abordaje } from '@/db/schema/abordajes';
-import { abordajeComunidad, consultasEnfermedades } from '@/db/schema/relations';
-import { comunidades } from '@/db/schema/comunidades';
+import { consultasEnfermedades } from '@/db/schema/relations';
 import { pacientes } from '@/db/schema/pacientes';
 import { consultas } from '@/db/schema/consultas';
 import { enfermedades } from '@/db/schema/enfermedades';
 import { medicamentos } from '@/db/schema/medicamentos';
-import { peticiones } from '@/db/schema/peticiones';
+import { entregasMedicamentos } from '@/db/schema/entregas_medicamentos';
 import { eq, sql, and, gte, lte, count, desc, like } from 'drizzle-orm';
 import { reportesFilterSchema } from '@/schemas/reportes';
 import { requireAuth } from '@/lib/auth';

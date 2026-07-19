@@ -22,6 +22,7 @@ export const abordaje = mysqlTable('abordaje', {
     transporte: boolean('transporte').notNull().default(false),
     estado: varchar('estado', { length: 20 }).notNull().default('Pendiente'),
     notas: text('notas'),
+    observacionesComunidad: text('observaciones_comunidad'),
 });
 
 export type Abordaje = typeof abordaje.$inferSelect;

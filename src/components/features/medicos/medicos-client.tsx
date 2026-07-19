@@ -9,7 +9,6 @@ import { Edit, Trash2, Stethoscope, User, ClipboardList, Phone, MapPin, Eye, Dow
 import { Tejedor } from '@/db/schema/tejedores';
 import { Especialidad } from '@/db/schema/especialidades';
 import { createMedico, deleteMedico, updateMedico } from '@/actions/medicos-actions';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio, getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import {
     Dialog,
     DialogContent,
@@ -24,18 +23,28 @@ import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
+interface ConfirmDialogProps {
+    // just dummy if not needed or assume it's imported
+}
+
+type TejedorWithGeo = Tejedor & {
+    estadoNombre?: string | null;
+    municipioNombre?: string | null;
+    parroquiaNombre?: string | null;
+};
+
 interface MedicoWithRelations {
     cedulaTejedor: string;
     codigoEspecialidad: string;
     matriculaColegioMedico: string;
     matriculaSanidad: string;
-    tejedor: Tejedor | null;
+    tejedor: TejedorWithGeo | null;
     especialidad: Especialidad | null;
 }
 
 interface MedicosClientProps {
     initialMedicos: MedicoWithRelations[];
-    tejedores: Tejedor[];
+    tejedores: TejedorWithGeo[];
     especialidades: Especialidad[];
     isAdmin?: boolean;
 }
@@ -60,22 +69,11 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
         return edad;
     };
 
-    const getLocationNames = (t: Tejedor | null) => {
+    const getLocationNames = (t: TejedorWithGeo | null) => {
         if (!t) return '-';
-        const estado = (t as any).estadoTejedor;
-        const municipio = (t as any).municipioTejedor;
-        const parroquia = (t as any).parroquiaTejedor;
-
-        if (!estado || !municipio || !parroquia) return '-';
-
-        const estadoNombre = getEstadoNombre(estado);
-        const municipioNombre = getMunicipioNombre(estado, municipio);
-        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
-
-        if (parroquia) {
-            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
-        }
-        return `${estadoNombre}, ${municipioNombre}`;
+        const { estadoNombre, municipioNombre, parroquiaNombre } = t;
+        if (!estadoNombre || !municipioNombre || !parroquiaNombre) return '-';
+        return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
     };
 
     const [formData, setFormData] = React.useState({
@@ -206,16 +204,12 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
             header: 'Ubicación',
             render: (m) => m.tejedor ? (
                 (() => {
-                    const estadoNombre = getEstadoNombre(m.tejedor.estadoTejedor);
-                    const municipioNombre = getMunicipioNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor);
-                    const parroquiaNombre = getParroquiaNombre(m.tejedor.estadoTejedor, m.tejedor.municipioTejedor, m.tejedor.parroquiaTejedor);
-
                     return (
                         <div className="flex items-start gap-1.5">
                             <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                             <div className="text-sm">
-                                <div className="font-medium">{estadoNombre || '-'}</div>
-                                <div className="text-xs text-muted-foreground">{municipioNombre || '-'}</div>
+                                <div className="font-medium">{m.tejedor.estadoNombre || '-'}</div>
+                                <div className="text-xs text-muted-foreground">{m.tejedor.municipioNombre || '-'}</div>
                             </div>
                         </div>
                     );
@@ -280,9 +274,9 @@ export default function MedicosClient({ initialMedicos, tejedores, especialidade
     const handleExport = (format: 'csv' | 'pdf') => {
         const exportData = initialMedicos.map(m => {
             const tejedor = m.tejedor;
-            const estadoNombre = tejedor ? getEstadoNombre(tejedor.estadoTejedor) : '-';
-            const municipioNombre = tejedor ? getMunicipioNombre(tejedor.estadoTejedor, tejedor.municipioTejedor) : '-';
-            const parroquiaNombre = tejedor ? getParroquiaNombre(tejedor.estadoTejedor, tejedor.municipioTejedor, tejedor.parroquiaTejedor) : '-';
+            const estadoNombre = tejedor?.estadoNombre || '-';
+            const municipioNombre = tejedor?.municipioNombre || '-';
+            const parroquiaNombre = tejedor?.parroquiaNombre || '-';
 
             return {
                 cedula: m.cedulaTejedor,

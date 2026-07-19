@@ -8,7 +8,7 @@ export const enfermedades = mysqlTable('enfermedades', {
     codigoEnfermedad: varchar('codigo_enfermedad', { length: 10 }).primaryKey().notNull(), // ENF-001...
     nombreEnfermedad: varchar('nombre_enfermedad', { length: 100 }).notNull(),
     tipoPatologia: varchar('tipo_patologia', { length: 50 }).notNull(), // Ej: Respiratoria, Cardiaca, Viral...
-    descripcion: text('descripcion'),
+    descripcion: varchar('descripcion', { length: 150 }),
 });
 
 export type Enfermedad = typeof enfermedades.$inferSelect;

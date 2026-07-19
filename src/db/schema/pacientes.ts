@@ -11,8 +11,8 @@ export const pacientes = mysqlTable('pacientes', {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }),
-    nombrePaciente: varchar('nombre_paciente', { length: 50 }).notNull(),
-    apellidoPaciente: varchar('apellido_paciente', { length: 50 }).notNull(),
+    nombrePaciente: varchar('nombre_paciente', { length: 30 }).notNull(),
+    apellidoPaciente: varchar('apellido_paciente', { length: 30 }).notNull(),
     sexo: char('sexo', { length: 1 }).notNull(), // M=Masculino, F=Femenino
     fechaNacimiento: date('fecha_nacimiento', { mode: 'date' }).notNull(),
     direccionPaciente: varchar('direccion_paciente', { length: 150 }).notNull(),

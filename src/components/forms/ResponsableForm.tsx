@@ -12,7 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Responsable } from '@/db/schema/responsable';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstadosAction, getMunicipiosByEstadoAction, getParroquiasByMunicipioAction, getLocationHierarchy } from '@/queries/geografia';
 import { User, Briefcase, Phone, Mail, MapPin } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
@@ -58,37 +58,70 @@ export function ResponsableForm({
         parroquia: (initialData as any)?.parroquia || '',
     });
 
+    const [estados, setEstados] = useState<any[]>([]);
     const [municipios, setMunicipios] = useState<any[]>([]);
     const [parroquias, setParroquias] = useState<any[]>([]);
-    const estados = getEstados();
+    const [isLoadingGeografia, setIsLoadingGeografia] = useState(false);
 
     useEffect(() => {
-        if (formData.estado) {
-            setMunicipios(getMunicipiosByEstado(formData.estado));
-            if (formData.municipio) {
-                setParroquias(getParroquiasByMunicipio(formData.estado, formData.municipio));
-            }
-        }
-    }, [formData.estado, formData.municipio]); // Initialize dependent dropdowns
+        const fetchEstados = async () => {
+            const res = await getEstadosAction();
+            if (res.success) setEstados(res.data);
+        };
+        fetchEstados();
+    }, []);
 
-    const handleEstadoChange = (estadoId: string) => {
+    // Effect to initialize location hierarchy if editing
+    useEffect(() => {
+        const initializeLocation = async () => {
+            if (initialData?.parroquiaId && !formData.estado) {
+                setIsLoadingGeografia(true);
+                const hierarchyRes = await getLocationHierarchy(initialData.parroquiaId);
+                if (hierarchyRes.success && hierarchyRes.data) {
+                    const { estadoId, municipioId } = hierarchyRes.data;
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        estado: estadoId.toString(), 
+                        municipio: municipioId.toString(),
+                        parroquiaId: initialData.parroquiaId.toString()
+                    }));
+                    
+                    const munRes = await getMunicipiosByEstadoAction(estadoId);
+                    if (munRes.success) setMunicipios(munRes.data);
+                    
+                    const parrRes = await getParroquiasByMunicipioAction(municipioId);
+                    if (parrRes.success) setParroquias(parrRes.data);
+                }
+                setIsLoadingGeografia(false);
+            }
+        };
+        initializeLocation();
+    }, [initialData?.parroquiaId]);
+
+
+
+    const handleEstadoChange = async (estadoIdStr: string) => {
+        const estadoId = parseInt(estadoIdStr, 10);
         setFormData(prev => ({
             ...prev,
-            estado: estadoId,
+            estado: estadoIdStr,
             municipio: '',
             parroquia: ''
         }));
-        setMunicipios(getMunicipiosByEstado(estadoId));
+        const res = await getMunicipiosByEstadoAction(estadoId);
+        if (res.success) setMunicipios(res.data);
         setParroquias([]);
     };
 
-    const handleMunicipioChange = (municipioId: string) => {
+    const handleMunicipioChange = async (municipioIdStr: string) => {
+        const municipioId = parseInt(municipioIdStr, 10);
         setFormData(prev => ({
             ...prev,
-            municipio: municipioId,
+            municipio: municipioIdStr,
             parroquia: ''
         }));
-        setParroquias(getParroquiasByMunicipio(formData.estado, municipioId));
+        const res = await getParroquiasByMunicipioAction(municipioId);
+        if (res.success) setParroquias(res.data);
     };
 
     const handleParroquiaChange = (parroquiaId: string) => {
@@ -103,10 +136,11 @@ export function ResponsableForm({
         
         const finalCargo = formData.cargoSelect === 'Otros' ? formData.cargoOtro : formData.cargoSelect;
         
-        const { cargoSelect, cargoOtro, ...dataToSubmit } = formData;
+        const { cargoSelect, cargoOtro, estado, municipio, parroquia, ...dataToSubmit } = formData;
         const payload = {
             ...dataToSubmit,
-            cargo: finalCargo
+            cargo: finalCargo,
+            parroquiaId: parseInt(parroquia, 10)
         };
         
         await onSubmit(payload);
@@ -237,7 +271,7 @@ export function ResponsableForm({
                             </SelectTrigger>
                             <SelectContent>
                                 {estados.map(estado => (
-                                    <SelectItem key={estado.id} value={estado.id}>
+                                    <SelectItem key={estado.id} value={estado.id.toString()}>
                                         {estado.nombre}
                                     </SelectItem>
                                 ))}
@@ -257,7 +291,7 @@ export function ResponsableForm({
                             </SelectTrigger>
                             <SelectContent>
                                 {municipios.map(municipio => (
-                                    <SelectItem key={municipio.id} value={municipio.id}>
+                                    <SelectItem key={municipio.id} value={municipio.id.toString()}>
                                         {municipio.nombre}
                                     </SelectItem>
                                 ))}
@@ -277,7 +311,7 @@ export function ResponsableForm({
                             </SelectTrigger>
                             <SelectContent>
                                 {parroquias.map(parroquia => (
-                                    <SelectItem key={parroquia.id} value={parroquia.id}>
+                                    <SelectItem key={parroquia.id} value={parroquia.id.toString()}>
                                         {parroquia.nombre}
                                     </SelectItem>
                                 ))}

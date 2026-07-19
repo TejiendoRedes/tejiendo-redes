@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tejedores, type NewTejedor, type Tejedor } from '@/db/schema/tejedores';
-import { tejedoresAbordaje, medicamentosPacientes } from '@/db/schema/relations';
+import { tejedoresAbordaje } from '@/db/schema/relations';
 import { abordaje } from '@/db/schema/abordajes';
 import { consultas } from '@/db/schema/consultas';
 import { pacientes } from '@/db/schema/pacientes';
@@ -12,7 +12,7 @@ import { medicamentos } from '@/db/schema/medicamentos';
 import { eq, desc, sql } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
-
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { users } from '@/db/schema/users';
 import { medicos } from '@/db/schema/medicos';
 
@@ -26,10 +26,16 @@ export async function getTejedores() {
             tejedor: tejedores,
             systemRole: users.role,
             medico: medicos,
+            estadoNombre: estados.nombre,
+            municipioNombre: municipios.nombre,
+            parroquiaNombre: parroquias.nombre
         })
         .from(tejedores)
         .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
-        .leftJoin(medicos, eq(tejedores.cedulaTejedor, medicos.cedulaTejedor));
+        .leftJoin(medicos, eq(tejedores.cedulaTejedor, medicos.cedulaTejedor))
+        .leftJoin(parroquias, eq(tejedores.parroquiaId, parroquias.id))
+        .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+        .leftJoin(estados, eq(municipios.estadoId, estados.id));
         
         const mappedData = data.map(row => ({
             ...row.tejedor,
@@ -37,6 +43,9 @@ export async function getTejedores() {
             codigoEspecialidad: row.medico?.codigoEspecialidad || null,
             matriculaColegioMedico: row.medico?.matriculaColegioMedico || null,
             matriculaSanidad: row.medico?.matriculaSanidad || null,
+            estadoNombre: row.estadoNombre,
+            municipioNombre: row.municipioNombre,
+            parroquiaNombre: row.parroquiaNombre
         }));
         
         return { success: true, data: mappedData };
@@ -56,10 +65,16 @@ export async function getTejedor(cedula: string) {
             tejedor: tejedores,
             systemRole: users.role,
             medico: medicos,
+            estadoNombre: estados.nombre,
+            municipioNombre: municipios.nombre,
+            parroquiaNombre: parroquias.nombre
         })
             .from(tejedores)
             .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
             .leftJoin(medicos, eq(tejedores.cedulaTejedor, medicos.cedulaTejedor))
+            .leftJoin(parroquias, eq(tejedores.parroquiaId, parroquias.id))
+            .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+            .leftJoin(estados, eq(municipios.estadoId, estados.id))
             .where(eq(tejedores.cedulaTejedor, cedula))
             .limit(1);
 
@@ -73,6 +88,9 @@ export async function getTejedor(cedula: string) {
             codigoEspecialidad: result[0].medico?.codigoEspecialidad || null,
             matriculaColegioMedico: result[0].medico?.matriculaColegioMedico || null,
             matriculaSanidad: result[0].medico?.matriculaSanidad || null,
+            estadoNombre: result[0].estadoNombre,
+            municipioNombre: result[0].municipioNombre,
+            parroquiaNombre: result[0].parroquiaNombre
         };
 
         return { success: true, data: mappedData };
@@ -118,19 +136,20 @@ export async function getTejedorHistory(cedula: string) {
             .where(eq(consultas.cedulaMedico, cedula));
 
         // 3. Medicamentos entregados
+        const { entregasMedicamentos } = await import('@/db/schema/entregas_medicamentos');
         const entregasRealizadas = await db.select({
-            id: sql<string>`concat('ENT-', ${medicamentosPacientes.codigoMedicamento}, '-', ${medicamentosPacientes.cedulaPaciente})`,
-            date: medicamentosPacientes.fechaEntrega,
+            id: sql<string>`concat('ENT-', ${entregasMedicamentos.id})`,
+            date: entregasMedicamentos.fechaEntrega,
             title: sql<string>`'ENTREGA DE MEDICAMENTO'`,
             subtitle: medicamentos.nombreMedicamento,
             type: sql<string>`'entrega'`,
             details: sql<string>`concat(${pacientes.nombrePaciente}, ' ', ${pacientes.apellidoPaciente})`,
-            extra: sql<string>`concat(${medicamentosPacientes.cantidadEntregada}, ' ', ${medicamentos.presentacion})`
+            extra: sql<string>`concat(${entregasMedicamentos.cantidad}, ' ', ${medicamentos.presentacion})`
         })
-            .from(medicamentosPacientes)
-            .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
-            .innerJoin(pacientes, eq(medicamentosPacientes.cedulaPaciente, pacientes.cedulaPaciente))
-            .where(eq(medicamentosPacientes.cedulaTejedor, cedula));
+            .from(entregasMedicamentos)
+            .innerJoin(medicamentos, eq(entregasMedicamentos.codigoMedicamento, medicamentos.codigoMedicamento))
+            .innerJoin(pacientes, eq(entregasMedicamentos.codigoPaciente, pacientes.cedulaPaciente))
+            .where(eq(entregasMedicamentos.cedulaTejedor, cedula));
 
         // Combinar todo
         const allInteractions = [

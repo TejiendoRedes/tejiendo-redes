@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/UIComponents';
 import {
     EditAbordajeModal,
-    AddComunidadModal,
     AddTejedorModal,
     RegisterMedicamentoModal
 } from './AbordajeModals';
@@ -44,7 +43,6 @@ interface AbordajeDetailClientProps {
 export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps) {
     const router = useRouter();
     const [showEdit, setShowEdit] = useState(false);
-    const [showAddComunidad, setShowAddComunidad] = useState(false);
     const [showAddTejedor, setShowAddTejedor] = useState(false);
     const [showRegisterMeds, setShowRegisterMeds] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -222,7 +220,7 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                 <Tabs defaultValue="comunidades" className="w-full">
                     <TabsList>
                         <TabsTrigger value="comunidades">
-                            Comunidades ({abordajeData.comunidades?.length || 0})
+                            Comunidad
                         </TabsTrigger>
                         <TabsTrigger value="tejedores">
                             Tejedores ({abordajeData.tejedores?.length || 0})
@@ -240,8 +238,7 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
 
                     <TabsContent value="comunidades">
                         <ComunidadesTab
-                            comunidades={abordajeData.comunidades}
-                            onAdd={() => setShowAddComunidad(true)}
+                            comunidad={abordajeData.comunidad || null}
                         />
                     </TabsContent>
 
@@ -278,12 +275,6 @@ export function AbordajeDetailClient({ abordajeData }: AbordajeDetailClientProps
                     abordaje={abordajeData}
                 />
 
-                <AddComunidadModal
-                    open={showAddComunidad}
-                    onOpenChange={setShowAddComunidad}
-                    abordajeId={abordajeData.codigoAbordaje}
-                    existingIds={abordajeData.comunidades?.map((c) => c.codigoComunidad) || []}
-                />
 
                 <AddTejedorModal
                     open={showAddTejedor}

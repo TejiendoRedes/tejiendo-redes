@@ -3,51 +3,50 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { peticiones, medicamentos, pacientes, abordaje, tejedores, type NewPeticion, type Peticion } from '@/db/schema';
-import { eq, and, gt, sql, desc, inArray } from 'drizzle-orm';
+import { entregasMedicamentos, medicamentos, pacientes, abordaje, tejedores } from '@/db/schema';
+import { eq, gt, sql, desc, inArray } from 'drizzle-orm';
 import { comunidades } from '@/db/schema/comunidades';
 import { getErrorMessage } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
-import { PeticionSchema } from '@/schemas/peticiones';
 
 /**
- * Obtener todas las peticiones con información de paciente y medicamento
+ * Obtener todas las entregas con información de paciente y medicamento
  */
-export async function getPeticiones() {
+export async function getEntregas() {
     try {
         await requireAuth();
         const result = await db.select({
-            id: peticiones.id,
-            codigoPeticion: sql<string>`CAST(${peticiones.id} AS CHAR)`, // Convertir a string para compatibilidad
-            codigoPaciente: peticiones.codigoPaciente,
-            codigoMedicamento: peticiones.codigoMedicamento,
-            cantidad: peticiones.cantidad, // Mapear cantidad correctamente
-            fechaPeticion: peticiones.fechaPeticion,
-            fechaEntrega: peticiones.fechaEntrega, // Agregar fecha de entrega
-            horaEntrega: peticiones.horaEntrega, // Agregar hora de entrega
-            estado: peticiones.estado,
-            notas: peticiones.notas, // Mapear notas correctamente
+            id: entregasMedicamentos.id,
+            codigoPeticion: sql<string>`CAST(${entregasMedicamentos.id} AS CHAR)`, // Convertir a string para compatibilidad si la ui aún lo necesita
+            codigoPaciente: entregasMedicamentos.codigoPaciente,
+            codigoMedicamento: entregasMedicamentos.codigoMedicamento,
+            cantidad: entregasMedicamentos.cantidad, // Mapear cantidad correctamente
+            fechaPeticion: entregasMedicamentos.fechaEntrega, // Compatibility
+            fechaEntrega: entregasMedicamentos.fechaEntrega, // Agregar fecha de entrega
+            horaEntrega: sql<string>`'00:00:00'`, // Compatibility
+            estado: entregasMedicamentos.estado,
+            notas: entregasMedicamentos.notas, // Mapear notas correctamente
             nombrePaciente: pacientes.nombrePaciente,
             apellidoPaciente: pacientes.apellidoPaciente,
             nombreMedicamento: medicamentos.nombreMedicamento,
             presentacion: medicamentos.presentacion,
             existencia: medicamentos.existencia,
-            codigoAbordaje: peticiones.codigoAbordaje,
+            codigoAbordaje: entregasMedicamentos.codigoAbordaje,
             descripcionAbordaje: abordaje.descripcion,
-            cedulaTejedor: peticiones.cedulaTejedor,
+            cedulaTejedor: entregasMedicamentos.cedulaTejedor,
             nombreTejedor: tejedores.nombreTejedor,
             apellidoTejedor: tejedores.apellidoTejedor,
         })
-            .from(peticiones)
-            .leftJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
-            .leftJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
-            .leftJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
-            .leftJoin(tejedores, eq(peticiones.cedulaTejedor, tejedores.cedulaTejedor))
-            .orderBy(desc(peticiones.fechaPeticion));
+            .from(entregasMedicamentos)
+            .leftJoin(pacientes, eq(entregasMedicamentos.codigoPaciente, pacientes.cedulaPaciente))
+            .leftJoin(medicamentos, eq(entregasMedicamentos.codigoMedicamento, medicamentos.codigoMedicamento))
+            .leftJoin(abordaje, eq(entregasMedicamentos.codigoAbordaje, abordaje.codigoAbordaje))
+            .leftJoin(tejedores, eq(entregasMedicamentos.cedulaTejedor, tejedores.cedulaTejedor))
+            .orderBy(desc(entregasMedicamentos.fechaEntrega));
 
         return { success: true, data: result as any[] };
     } catch (error) {
-        const errorMessage = getErrorMessage(error, 'las peticiones', 'obtener');
+        const errorMessage = getErrorMessage(error, 'las entregas', 'obtener');
         return { success: false, error: errorMessage };
     }
 }

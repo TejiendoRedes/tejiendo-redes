@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { SearchableSelect } from '@/components/shared/SearchableSelect';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
 import { Comunidad } from '@/db/schema/comunidades';
 import { Paciente } from '@/db/schema/pacientes';
 
@@ -34,11 +33,6 @@ export function PacienteForm({
     isLoading = false,
     submitLabel
 }: PacienteFormProps) {
-    // Estados para selectores dependientes
-    const estados = getEstados();
-    const [municipios, setMunicipios] = React.useState<any[]>([]);
-    const [parroquias, setParroquias] = React.useState<any[]>([]);
-
     const [formData, setFormData] = React.useState({
         cedulaPaciente: initialData?.cedulaPaciente || '',
         nombrePaciente: initialData?.nombrePaciente || '',
@@ -48,25 +42,10 @@ export function PacienteForm({
             ? formattedDate(initialData.fechaNacimiento)
             : '',
         codigoComunidad: initialData?.codigoComunidad || '',
-        estado: (initialData as any)?.estado || '',
-        municipio: (initialData as any)?.municipio || '',
-        parroquia: (initialData as any)?.parroquia || '',
         direccionPaciente: initialData?.direccionPaciente || '',
         telefonoPaciente: initialData?.telefonoPaciente || '',
         correoPaciente: initialData?.correoPaciente || '',
-        historialEnfermedades: initialData?.historialEnfermedades || '',
-        consultasMedicasPrevias: initialData?.consultasMedicasPrevias || '',
-        nota: initialData?.nota || '',
     });
-
-    React.useEffect(() => {
-        if (formData.estado) {
-            setMunicipios(getMunicipiosByEstado(formData.estado));
-            if (formData.municipio) {
-                setParroquias(getParroquiasByMunicipio(formData.estado, formData.municipio));
-            }
-        }
-    }, [formData.estado, formData.municipio]);
 
     // Helper to format date safely
     function formattedDate(date: Date | string | null): string {
@@ -74,33 +53,6 @@ export function PacienteForm({
         if (date instanceof Date) return date.toISOString().split('T')[0];
         return date;
     }
-
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            estado: estadoId,
-            municipio: '',
-            parroquia: ''
-        }));
-        setMunicipios(getMunicipiosByEstado(estadoId));
-        setParroquias([]);
-    };
-
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            municipio: municipioId,
-            parroquia: ''
-        }));
-        setParroquias(getParroquiasByMunicipio(formData.estado, municipioId));
-    };
-
-    const handleParroquiaChange = (parroquiaId: string) => {
-        setFormData(prev => ({
-            ...prev,
-            parroquia: parroquiaId
-        }));
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -235,66 +187,7 @@ export function PacienteForm({
                     />
                 </div>
 
-                <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
-                        <Select
-                            value={formData.estado}
-                            onValueChange={handleEstadoChange}
-                        >
-                            <SelectTrigger id="estado" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                <SelectValue placeholder="Seleccione un estado" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {estados.map(estado => (
-                                    <SelectItem key={estado.id} value={estado.id}>
-                                        {estado.nombre}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
-                        <Select
-                            value={formData.municipio}
-                            onValueChange={handleMunicipioChange}
-                            disabled={!formData.estado}
-                        >
-                            <SelectTrigger id="municipio" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                <SelectValue placeholder={formData.estado ? "Seleccione un municipio" : "Seleccione primero el estado"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {municipios.map(municipio => (
-                                    <SelectItem key={municipio.id} value={municipio.id}>
-                                        {municipio.nombre}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
-                        <Select
-                            value={formData.parroquia}
-                            onValueChange={handleParroquiaChange}
-                            disabled={!formData.municipio}
-                        >
-                            <SelectTrigger id="parroquia" className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                                <SelectValue placeholder={formData.municipio ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {parroquias.map(parroquia => (
-                                    <SelectItem key={parroquia.id} value={parroquia.id}>
-                                        {parroquia.nombre}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
 
                 <div className="col-span-1 md:col-span-2 space-y-2">
                     <Label htmlFor="direccion">Dirección <span className="text-red-500 font-bold">*</span></Label>
@@ -307,44 +200,6 @@ export function PacienteForm({
                         required
                         maxLength={150}
                         className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label htmlFor="historialEnfermedades">Historial de Enfermedades</Label>
-                    <Textarea
-                        id="historialEnfermedades"
-                        value={formData.historialEnfermedades}
-                        onChange={(e) =>
-                            setFormData({ ...formData, historialEnfermedades: e.target.value })
-                        }
-                        placeholder="Describa el historial de enfermedades del paciente..."
-                        rows={3}
-                    />
-                </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label htmlFor="consultasMedicasPrevias">Consultas Médicas Previas</Label>
-                    <Textarea
-                        id="consultasMedicasPrevias"
-                        value={formData.consultasMedicasPrevias}
-                        onChange={(e) =>
-                            setFormData({ ...formData, consultasMedicasPrevias: e.target.value })
-                        }
-                        placeholder="Describa consultas o intervenciones previas..."
-                        rows={3}
-                    />
-                </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label htmlFor="nota">Notas / Observaciones</Label>
-                    <Textarea
-                        id="nota"
-                        value={formData.nota}
-                        onChange={(e) =>
-                            setFormData({ ...formData, nota: e.target.value })
-                        }
-                        rows={3}
                     />
                 </div>
             </div>

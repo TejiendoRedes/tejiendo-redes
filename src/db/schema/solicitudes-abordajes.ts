@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, int, datetime, text, index, foreignKey, boolean } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, int, datetime, date, time, text, index, foreignKey, boolean } from 'drizzle-orm/mysql-core';
 import { comunidades } from './comunidades';
 
 /**
@@ -10,8 +10,8 @@ export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     codigoSolicitud: varchar('codigo_solicitud', { length: 10 }).notNull(), // SAB-001...
     codigoComunidad: varchar('codigo_comunidad', { length: 20 }), // Made nullable for manual entry
     comunidadSugerida: varchar('comunidad_sugerida', { length: 255 }), // If not in list
-    fechaSugerida: varchar('fecha_sugerida', { length: 20 }).notNull(), // Formato flexible para fecha sugerida
-    horaInicioSugerida: varchar('hora_inicio_sugerida', { length: 10 }).notNull(), // Formato flexible para hora
+    fechaSugerida: date('fecha_sugerida', { mode: 'string' }).notNull(), // Formato flexible para fecha sugerida
+    horaInicioSugerida: time('hora_inicio_sugerida').notNull(), // Formato flexible para hora
     descripcionActividad: text('descripcion_actividad').notNull(),
     tipoAbordaje: varchar('tipo_abordaje', { length: 150 }).notNull(), // Uno o más tipos separados por comas: Educativo,Médico,Social, etc.
     participantesEstimados: int('participantes_estimados').notNull(),

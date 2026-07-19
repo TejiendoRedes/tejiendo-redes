@@ -22,7 +22,6 @@ import {
 import { toast } from 'sonner';
 import {
     updateAbordaje,
-    addComunidadToAbordaje,
     addTejedorToAbordaje,
     registerMedicamentoEntrega
 } from '@/actions/abordajes-actions';
@@ -185,74 +184,6 @@ export function EditAbordajeModal({ open, onOpenChange, abordaje }: EditAbordaje
     );
 }
 
-// --- Add Comunidad Modal ---
-interface AddComunidadModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    abordajeId: string;
-    existingIds: string[];
-}
-
-export function AddComunidadModal({ open, onOpenChange, abordajeId, existingIds }: AddComunidadModalProps) {
-    const [comunidades, setComunidades] = useState<Comunidad[]>([]);
-    const [selectedId, setSelectedId] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        if (open) {
-            getComunidades().then(res => {
-                if (res.success && res.data) {
-                    setComunidades((res.data as Comunidad[]).filter(c => !existingIds.includes(c.codigoComunidad)));
-                }
-            });
-        }
-    }, [open, existingIds]);
-
-    const handleSubmit = async () => {
-        if (!selectedId) return;
-        setLoading(true);
-        const res = await addComunidadToAbordaje(abordajeId, selectedId);
-        if (res.success) {
-            onOpenChange(false);
-            setSelectedId('');
-        } else {
-            toast.error(res.error || 'Error al asignar comunidad');
-        }
-        setLoading(false);
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Asignar Comunidad</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <SearchableSelect
-                            label="Seleccionar Comunidad"
-                            items={comunidades}
-                            value={selectedId}
-                            onValueChange={setSelectedId}
-                            placeholder="Seleccione una comunidad"
-                            searchPlaceholder="Buscar por nombre o código..."
-                            idField="codigoComunidad"
-                            labelField="nombreComunidad"
-                            secondaryLabelField="parroquia"
-                        />
-                    </div>
-                    <div className="text-sm text-gray-500">
-                        {comunidades.length === 0 && "No hay comunidades disponibles para agregar."}
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                    <Button onClick={handleSubmit} disabled={!selectedId || loading}>Agregar</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
 
 // --- Add Tejedor Modal ---
 interface AddTejedorModalProps {
@@ -373,11 +304,10 @@ export function RegisterMedicamentoModal({ open, onOpenChange, abordajeId, fecha
 
         const res = await registerMedicamentoEntrega({
             codigoMedicamento: selectedMedicamento,
-            cedulaPaciente: selectedPaciente,
+            codigoPaciente: selectedPaciente,
             cedulaTejedor: selectedTejedor,
             codigoAbordaje: abordajeId,
-            fechaEntrega: fecha,
-            cantidadEntregada: cantidad
+            cantidad: cantidad
         });
 
         if (res.success) {

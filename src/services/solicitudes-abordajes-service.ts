@@ -3,7 +3,7 @@ import { solicitudesAbordajes } from '@/db/schema/solicitudes-abordajes';
 import { comunidades } from '@/db/schema/comunidades';
 import { eq, desc } from 'drizzle-orm';
 import { abordaje } from '@/db/schema/abordajes';
-import { abordajeComunidad } from '@/db/schema/relations';
+
 
 export class SolicitudesAbordajesService {
     /**
@@ -60,13 +60,6 @@ export class SolicitudesAbordajesService {
             // 2. Crear el abordaje
             await tx.insert(abordaje).values(abordajeData);
 
-            // 3. Asociar con la comunidad
-            if (abordajeData.codigoComunidad) {
-                await tx.insert(abordajeComunidad).values({
-                    codigoAbordaje: abordajeData.codigoAbordaje,
-                    codigoComunidad: abordajeData.codigoComunidad,
-                });
-            }
         });
     }
 

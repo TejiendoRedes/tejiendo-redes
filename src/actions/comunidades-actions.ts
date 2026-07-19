@@ -8,21 +8,28 @@ import { eq } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { requireAuth } from '@/lib/auth';
-import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 
 /**
  * Obtener prefijo mnemotécnico (ej: LAR-IRI-CON-)
  */
-function getMnemonicPrefix(estadoId: string, municipioId: string, parroquiaId: string) {
+async function getMnemonicPrefix(parroquiaId: number) {
     const normalize = (str: string) => {
         // Remove accents and special chars, uppercase, get first 3 letters
         const clean = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z]/g, "").toUpperCase();
         return clean.substring(0, 3).padEnd(3, 'X'); // Pad with X if shorter than 3
     };
 
-    const estadoNombre = getEstadoNombre(estadoId);
-    const municipioNombre = getMunicipioNombre(estadoId, municipioId);
-    const parroquiaNombre = getParroquiaNombre(estadoId, municipioId, parroquiaId);
+    const [parroquia] = await db.select().from(parroquias).where(eq(parroquias.id, parroquiaId));
+    if (!parroquia) return 'XXX-XXX-XXX-';
+    const [municipio] = await db.select().from(municipios).where(eq(municipios.id, parroquia.municipioId));
+    if (!municipio) return 'XXX-XXX-XXX-';
+    const [estado] = await db.select().from(estados).where(eq(estados.id, municipio.estadoId));
+    if (!estado) return 'XXX-XXX-XXX-';
+
+    const estadoNombre = estado.nombre;
+    const municipioNombre = municipio.nombre;
+    const parroquiaNombre = parroquia.nombre;
 
     return `${normalize(estadoNombre)}-${normalize(municipioNombre)}-${normalize(parroquiaNombre)}-`;
 }
@@ -43,7 +50,7 @@ export async function createComunidad(data: NewComunidad) {
         }
 
         // Generación automática del código de comunidad (EST-MUN-PAR-001...)
-        const prefix = getMnemonicPrefix(data.estado, data.municipio, data.parroquia);
+        const prefix = await getMnemonicPrefix(data.parroquiaId || 0);
         const newCode = await getNextCode(comunidades, comunidades.codigoComunidad, prefix);
 
         const finalData = {

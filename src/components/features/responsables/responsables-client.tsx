@@ -17,18 +17,23 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { ResponsableForm } from '@/components/forms/ResponsableForm';
 
+type ResponsableWithGeo = Responsable & {
+    estadoNombre?: string | null;
+    municipioNombre?: string | null;
+    parroquiaNombre?: string | null;
+};
+
 interface ResponsablesClientProps {
-    initialData: Responsable[];
+    initialData: ResponsableWithGeo[];
     canManage?: boolean;
 }
 
 export default function ResponsablesClient({ initialData, canManage = false }: ResponsablesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [editingResponsable, setEditingResponsable] = React.useState<Responsable | null>(null);
+    const [editingResponsable, setEditingResponsable] = React.useState<ResponsableWithGeo | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
 
     const handleAdd = () => {
@@ -36,7 +41,7 @@ export default function ResponsablesClient({ initialData, canManage = false }: R
         setIsModalOpen(true);
     };
 
-    const handleEdit = (r: Responsable) => {
+    const handleEdit = (r: ResponsableWithGeo) => {
         setEditingResponsable(r);
         setIsModalOpen(true);
     };
@@ -79,24 +84,15 @@ export default function ResponsablesClient({ initialData, canManage = false }: R
     };
 
     // Función para obtener nombres de ubicación
-    const getLocationNames = (r: Responsable) => {
-        const estado = (r as any).estado;
-        const municipio = (r as any).municipio;
-        const parroquia = (r as any).parroquia;
-
-        if (!estado || !municipio || !parroquia) return '-';
-
-        const estadoNombre = getEstadoNombre(estado);
-        const municipioNombre = getMunicipioNombre(estado, municipio);
-        const parroquiaNombre = getParroquiaNombre(estado, municipio, parroquia);
-
-        if (parroquia) {
-            return `${estadoNombre}, ${municipioNombre}, ${parroquiaNombre}`;
+    const getLocationNames = (r: ResponsableWithGeo) => {
+        if (!r.estadoNombre || !r.municipioNombre) return '-';
+        if (r.parroquiaNombre) {
+            return `${r.estadoNombre}, ${r.municipioNombre}, ${r.parroquiaNombre}`;
         }
-        return `${estadoNombre}, ${municipioNombre}`;
+        return `${r.estadoNombre}, ${r.municipioNombre}`;
     };
 
-    const columns: Column<Responsable>[] = [
+    const columns: Column<ResponsableWithGeo>[] = [
         {
             key: 'cedulaResponsable',
             header: 'Cédula',

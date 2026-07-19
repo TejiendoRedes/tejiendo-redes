@@ -5,7 +5,6 @@ import { db } from '@/db';
 import {
     abordaje,
     pacientes,
-    medicamentosPacientes,
     consultas,
     consultasEnfermedades,
     medicamentos,
@@ -71,13 +70,13 @@ export async function getExecutiveKPIs(filters: DashboardFilters) {
             )
         ));
 
-    // 3. Medicamentos Entregados (using peticiones instead of medicamentosPacientes)
-    // Dynamic import to avoid circular dependencies if any, but we can just import peticiones at the top
-    const { peticiones } = await import('@/db/schema/peticiones');
-    const totalMedicamentosQuery = await db.select({ sum: sum(peticiones.cantidad) })
-        .from(peticiones)
-        .innerJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
-        .where(and(whereCondition, eq(peticiones.estado, 'entregado')));
+    // 3. Medicamentos Entregados (using entregasMedicamentos instead of medicamentosPacientes)
+    // Dynamic import to avoid circular dependencies if any, but we can just import entregasMedicamentos at the top
+    const { entregasMedicamentos } = await import('@/db/schema/entregas_medicamentos');
+    const totalMedicamentosQuery = await db.select({ sum: sum(entregasMedicamentos.cantidad) })
+        .from(entregasMedicamentos)
+        .innerJoin(abordaje, eq(entregasMedicamentos.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(and(whereCondition, eq(entregasMedicamentos.estado, 'entregado')));
 
     // 5. Evolución (Group by Month)
     const evolutionQuery = await db.select({
@@ -142,14 +141,13 @@ export async function getEpidemiologicalData(filters: DashboardFilters) {
 
         // 2. IMC
         db.select({
-            bajo: sql<number>`SUM(CASE WHEN ${antecedentes.talla} > 0 AND (${antecedentes.peso} / (${antecedentes.talla} * ${antecedentes.talla})) < 18.5 THEN 1 ELSE 0 END)`,
-            normal: sql<number>`SUM(CASE WHEN ${antecedentes.talla} > 0 AND (${antecedentes.peso} / (${antecedentes.talla} * ${antecedentes.talla})) >= 18.5 AND (${antecedentes.peso} / (${antecedentes.talla} * ${antecedentes.talla})) < 25 THEN 1 ELSE 0 END)`,
-            sobrepeso: sql<number>`SUM(CASE WHEN ${antecedentes.talla} > 0 AND (${antecedentes.peso} / (${antecedentes.talla} * ${antecedentes.talla})) >= 25 AND (${antecedentes.peso} / (${antecedentes.talla} * ${antecedentes.talla})) < 30 THEN 1 ELSE 0 END)`,
-            obesidad: sql<number>`SUM(CASE WHEN ${antecedentes.talla} > 0 AND (${antecedentes.peso} / (${antecedentes.talla} * ${antecedentes.talla})) >= 30 THEN 1 ELSE 0 END)`,
+            bajo: sql<number>`SUM(CASE WHEN ${consultas.talla} > 0 AND (${consultas.peso} / (${consultas.talla} * ${consultas.talla})) < 18.5 THEN 1 ELSE 0 END)`,
+            normal: sql<number>`SUM(CASE WHEN ${consultas.talla} > 0 AND (${consultas.peso} / (${consultas.talla} * ${consultas.talla})) >= 18.5 AND (${consultas.peso} / (${consultas.talla} * ${consultas.talla})) < 25 THEN 1 ELSE 0 END)`,
+            sobrepeso: sql<number>`SUM(CASE WHEN ${consultas.talla} > 0 AND (${consultas.peso} / (${consultas.talla} * ${consultas.talla})) >= 25 AND (${consultas.peso} / (${consultas.talla} * ${consultas.talla})) < 30 THEN 1 ELSE 0 END)`,
+            obesidad: sql<number>`SUM(CASE WHEN ${consultas.talla} > 0 AND (${consultas.peso} / (${consultas.talla} * ${consultas.talla})) >= 30 THEN 1 ELSE 0 END)`,
         })
-            .from(antecedentes)
-            .innerJoin(pacientes, eq(antecedentes.cedulaPaciente, pacientes.cedulaPaciente))
-            .innerJoin(consultas, eq(pacientes.cedulaPaciente, consultas.cedulaPaciente))
+            .from(consultas)
+            .innerJoin(pacientes, eq(consultas.cedulaPaciente, pacientes.cedulaPaciente))
             .innerJoin(abordaje, eq(consultas.codigoAbordaje, abordaje.codigoAbordaje))
             .where(whereCondition),
 
@@ -231,19 +229,19 @@ export async function getEpidemiologicalData(filters: DashboardFilters) {
 export async function getPharmacyData(filters: DashboardFilters) {
     const whereCondition = getAbordajeConditions(filters);
 
-    const { peticiones } = await import('@/db/schema/peticiones');
+    const { entregasMedicamentos } = await import('@/db/schema/entregas_medicamentos');
 
     // 1. Top Meds
     const topMeds = await db.select({
         nombre: medicamentos.nombreMedicamento,
-        cantidad: sum(peticiones.cantidad)
+        cantidad: sum(entregasMedicamentos.cantidad)
     })
-        .from(peticiones)
-        .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
-        .innerJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
-        .where(and(whereCondition, eq(peticiones.estado, 'entregado')))
+        .from(entregasMedicamentos)
+        .innerJoin(medicamentos, eq(entregasMedicamentos.codigoMedicamento, medicamentos.codigoMedicamento))
+        .innerJoin(abordaje, eq(entregasMedicamentos.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(and(whereCondition, eq(entregasMedicamentos.estado, 'entregado')))
         .groupBy(medicamentos.nombreMedicamento)
-        .orderBy(desc(sum(peticiones.cantidad)))
+        .orderBy(desc(sum(entregasMedicamentos.cantidad)))
         .limit(10);
 
     // 2. Low Stock
@@ -259,14 +257,14 @@ export async function getPharmacyData(filters: DashboardFilters) {
 
     // 3. Consumption by Age Group
     const consumptionResult = await db.select({
-        ninos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) <= 12 THEN ${peticiones.cantidad} ELSE 0 END)`,
-        adultos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) BETWEEN 13 AND 59 THEN ${peticiones.cantidad} ELSE 0 END)`,
-        mayores: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) >= 60 THEN ${peticiones.cantidad} ELSE 0 END)`,
+        ninos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) <= 12 THEN ${entregasMedicamentos.cantidad} ELSE 0 END)`,
+        adultos: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) BETWEEN 13 AND 59 THEN ${entregasMedicamentos.cantidad} ELSE 0 END)`,
+        mayores: sql<number>`SUM(CASE WHEN TIMESTAMPDIFF(YEAR, ${pacientes.fechaNacimiento}, CURDATE()) >= 60 THEN ${entregasMedicamentos.cantidad} ELSE 0 END)`,
     })
-        .from(peticiones)
-        .innerJoin(pacientes, eq(peticiones.codigoPaciente, pacientes.cedulaPaciente))
-        .innerJoin(abordaje, eq(peticiones.codigoAbordaje, abordaje.codigoAbordaje))
-        .where(and(whereCondition, eq(peticiones.estado, 'entregado')));
+        .from(entregasMedicamentos)
+        .innerJoin(pacientes, eq(entregasMedicamentos.codigoPaciente, pacientes.cedulaPaciente))
+        .innerJoin(abordaje, eq(entregasMedicamentos.codigoAbordaje, abordaje.codigoAbordaje))
+        .where(and(whereCondition, eq(entregasMedicamentos.estado, 'entregado')));
 
     return {
         topMeds,

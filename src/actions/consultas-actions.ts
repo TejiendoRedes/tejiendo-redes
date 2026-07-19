@@ -167,6 +167,11 @@ export async function saveConsultaWizard(consultaData: any, enfermedadesIds: str
                 tratamiento: consultaData.tratamiento || '',
                 recomendaciones: consultaData.recomendaciones || '',
                 tensionArterial: antecedentesData.TA || null,
+                peso: antecedentesData.peso ? parseFloat(antecedentesData.peso) : null,
+                talla: antecedentesData.talla ? parseFloat(antecedentesData.talla) : null,
+                temperatura: antecedentesData.temperatura ? parseFloat(antecedentesData.temperatura) : null,
+                frecuenciaCardiaca: antecedentesData.FC || null,
+                horaConsulta: new Date().toTimeString().split(' ')[0], // Add time because schema requires it
                 fechaConsulta: new Date(),
             };
             
@@ -185,14 +190,7 @@ export async function saveConsultaWizard(consultaData: any, enfermedadesIds: str
                 await tx.insert(consultasEnfermedades).values(rels);
             }
             
-            // Update patient records with antecedents
-            await tx.update(pacientes)
-                .set({
-                    historialEnfermedades: antecedentesData.enfermedadesPrevias || antecedentesData.historialEnfermedades || null,
-                    consultasMedicasPrevias: antecedentesData.consultasMedicasPrevias || null,
-                    nota: antecedentesData.nota || null,
-                })
-                .where(eq(pacientes.cedulaPaciente, consultaData.cedulaPaciente));
+            // Historial is removed from pacientes table
         });
         revalidatePath('/atencion-medica');
         revalidatePath('/datos-basicos/consultas');

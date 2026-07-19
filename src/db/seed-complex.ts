@@ -23,38 +23,48 @@ const projectDir = process.cwd();
 loadEnvConfig(projectDir);
 
 async function main() {
-
     const { db } = await import('./index');
     const { connection } = await import('./client');
 
     try {
+        console.log('1. Starting Seed Process');
         // 1. Clean Database (Disable FK checks for truncation)
         await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
+        console.log('2. Disabled FK checks');
 
-        // Order matters for some updates but with FK checks off we can truncate freely
-        const tables = [
-            schema.consultasEnfermedades,
-            schema.medicamentosPacientes,
-            schema.tejedoresAbordaje,
-            schema.abordajeComunidad,
-            schema.consultas,
-            schema.pacientes,
-            schema.abordaje,
-            schema.comunidades,
-            schema.responsable,
-            schema.medicos,
-            schema.tejedores,
-            schema.medicamentos,
-            schema.enfermedades,
-            schema.especialidades,
-        ];
-
-        for (const table of tables) {
-            // @ts-ignore - Drizzle table type compatibility
-            await db.delete(table);
-        }
+        // Truncation is handled by clean-db.ts now to avoid unconstrained delete issues
 
         await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
+
+        // 1.5 Geographic Data
+        const estadosMap = new Map<string, number>();
+        const municipiosMap = new Map<string, number>();
+        const parroquiasMap = new Map<string, number>();
+        
+        let estadoCounter = 1;
+        let municipioCounter = 1;
+        let parroquiaCounter = 1;
+
+        const allParroquiasIds: number[] = [];
+
+        for (const estadoData of VENEZUELAN_STATES) {
+            await db.insert(schema.estados).values({ id: estadoCounter, nombre: estadoData.estado });
+            estadosMap.set(estadoData.estado, estadoCounter);
+            
+            for (const municipioData of estadoData.municipios) {
+                await db.insert(schema.municipios).values({ id: municipioCounter, estadoId: estadoCounter, nombre: municipioData.nombre });
+                municipiosMap.set(municipioData.nombre, municipioCounter);
+                
+                for (const parroquiaName of municipioData.parroquias) {
+                    await db.insert(schema.parroquias).values({ id: parroquiaCounter, municipioId: municipioCounter, nombre: parroquiaName });
+                    parroquiasMap.set(parroquiaName, parroquiaCounter);
+                    allParroquiasIds.push(parroquiaCounter);
+                    parroquiaCounter++;
+                }
+                municipioCounter++;
+            }
+            estadoCounter++;
+        }
 
         // 2. Catalogs
 
@@ -101,20 +111,15 @@ async function main() {
 
             const nombre = getRandomElement(NAMES);
             const apellido = getRandomElement(SURNAMES);
-            const estadoData = getRandomElement(VENEZUELAN_STATES);
-            const municipioData = getRandomElement(estadoData.municipios);
-            const parroquia = getRandomElement(municipioData.parroquias);
-            const rol = i < 15 ? 'Médico' : getRandomElement(TEJEDOR_ROLES); // Ensure some doctors
+            const rol = i < 15 ? 'Médico' : getRandomElement(TEJEDOR_ROLES);
 
             tejedoresData.push({
                 cedulaTejedor: cedula,
                 nombreTejedor: nombre,
                 apellidoTejedor: apellido,
                 fechaNacimiento: getRandomDate(new Date('1970-01-01'), new Date('2000-01-01')),
-                direccionTejedor: `${municipioData.nombre}, ${parroquia}`,
-                municipioTejedor: municipioData.nombre,
-                estadoTejedor: estadoData.estado,
-                parroquiaTejedor: parroquia,
+                direccionTejedor: 'Direccion aleatoria',
+                parroquiaId: getRandomElement(allParroquiasIds),
                 telefonoTejedor: generatePhoneNumber(),
                 correoTejedor: generateEmail(nombre, apellido),
                 profesionTejedor: rol,
@@ -146,7 +151,6 @@ async function main() {
         let comCounter = 1;
         for (const estado of VENEZUELAN_STATES) {
             for (const municipio of estado.municipios) {
-                // Create 1-2 communities per municipality
                 const numComs = getRandomInt(1, 2);
                 for (let k = 0; k < numComs; k++) {
                     let cedulaResp = generateCedula();
@@ -155,6 +159,8 @@ async function main() {
 
                     const nombreResp = getRandomElement(NAMES);
                     const apellidoResp = getRandomElement(SURNAMES);
+                    const parroquiaName = getRandomElement(municipio.parroquias);
+                    const parroquiaId = parroquiasMap.get(parroquiaName);
 
                     // Create Responsable
                     responsablesData.push({
@@ -165,25 +171,19 @@ async function main() {
                         telefonoResponsable: generatePhoneNumber(),
                         correoResponsable: generateEmail(nombreResp, apellidoResp),
                         cargo: 'Vocero Principal',
-                        estado: 'LA',
-                        municipio: 'IR',
-                        parroquia: 'CA'
+                        parroquiaId: parroquiaId
                     });
 
                     // Create Comunidad
                     const comId = `COM-${String(comCounter++).padStart(3, '0')}`;
                     comunidadesIds.push(comId);
-                    const parroquia = getRandomElement(municipio.parroquias);
 
                     comunidadesData.push({
                         codigoComunidad: comId,
-                        nombreComunidad: `Comunidad ${getRandomElement(['Esperanza', 'Bolívar', 'Paz', 'Unión', 'Progreso', 'Victoria', 'Amanecer'])} de ${parroquia}`,
+                        nombreComunidad: `Comunidad ${getRandomElement(['Esperanza', 'Bolívar', 'Paz', 'Unión', 'Progreso'])} de ${parroquiaName}`,
                         tipoComunidad: getRandomElement(['1', '2', '3', '4']),
-                        estado: estado.estado,
-                        municipio: municipio.nombre,
-                        parroquia: parroquia,
+                        parroquiaId: parroquiaId,
                         direccion: `Sector ${getRandomElement(['A', 'B', 'Centro', 'Norte', 'Sur'])}`,
-                        ubicacionFisica: 'Cerca de la plaza',
                         cedulaResponsable: cedulaResp,
                         cantidadHabitantes: getRandomInt(200, 1000),
                         cantidadFamilias: getRandomInt(50, 200),
@@ -224,19 +224,14 @@ async function main() {
                     apellidoPaciente: apellido,
                     sexo: getRandomElement(['M', 'F']),
                     fechaNacimiento: getRandomDate(new Date('1950-01-01'), new Date('2022-01-01')),
-                    estado: 'LA', // Mock codes matching schema limit 2
-                    municipio: 'IR',
-                    parroquia: 'CA',
                     direccionPaciente: 'Casa # ' + getRandomInt(1, 99),
                     telefonoPaciente: generatePhoneNumber(),
-                    correoPaciente: generateEmail(nombre, apellido),
-                    nota: 'Paciente generado automáticamente'
+                    correoPaciente: generateEmail(nombre, apellido)
                 });
                 patientsByCommunity[comId].push(cedula);
             }
         }
 
-        // Split inserts to avoid packet size issues
         const chunkSize = 100;
         for (let i = 0; i < allPatientsData.length; i += chunkSize) {
             await db.insert(schema.pacientes).values(allPatientsData.slice(i, i + chunkSize));
@@ -251,18 +246,15 @@ async function main() {
         let abordajeCounter = 1;
         let consultaCounter = 1;
 
-        // Helper arrays
         const allDoctors = medicosData.map(d => d.cedulaTejedor);
         const allTejedores = tejedoresData.map(t => t.cedulaTejedor);
         const allMedicines = MEDICINES.map((_, i) => `MED-${String(i + 1).padStart(3, '0')}`);
         const allPathologies = PATHOLOGIES.map(p => p.codigo);
 
         while (currentDate < endDate) {
-            // 2-3 Abordajes per month
             const numAbordajes = getRandomInt(2, 3);
 
             for (let i = 0; i < numAbordajes; i++) {
-                // Abordaje Date within current month
                 const abdDate = new Date(currentDate);
                 abdDate.setDate(getRandomInt(1, 28));
                 if (abdDate > endDate) continue;
@@ -270,26 +262,18 @@ async function main() {
                 const comId = getRandomElement(comunidadesIds);
                 const abdCode = `ABD-${String(abordajeCounter++).padStart(3, '0')}`;
 
-                // Create Abordaje
                 await db.insert(schema.abordaje).values({
                     codigoAbordaje: abdCode,
                     codigoComunidad: comId,
                     fechaAbordaje: abdDate,
                     horaInicio: '08:00:00',
                     horaFin: '16:00:00',
-                    descripcion: `Abordaje médico integral en la comunidad`,
+                    descripcion: 'Abordaje médico integral en la comunidad',
                     tipoAbordaje: 'Integral',
-                    estado: 'Finalizado'
+                    estado: 'Finalizado',
+                    observacionesComunidad: 'Abordaje exitoso'
                 });
 
-                // Link Community
-                await db.insert(schema.abordajeComunidad).values({
-                    codigoAbordaje: abdCode,
-                    codigoComunidad: comId,
-                    observaciones: 'Abordaje exitoso'
-                });
-
-                // Link Tejedores (8-12 participants)
                 const abordajeTejedores = getRandomElements(allTejedores, getRandomInt(8, 12));
                 await db.insert(schema.tejedoresAbordaje).values(
                     abordajeTejedores.map(cedula => ({
@@ -299,18 +283,16 @@ async function main() {
                     }))
                 );
 
-                // Consultations & Deliveries
-                // 60-80% of patients get attended
                 const communityPatients = patientsByCommunity[comId];
                 const patientsAttended = getRandomElements(communityPatients, Math.floor(communityPatients.length * getRandomInt(6, 8) / 10));
 
                 const consultasBatch: any[] = [];
                 const consultasEnfermedadesBatch: any[] = [];
-                const medicamentosPacientesBatch: any[] = [];
+                const entregasMedicamentosBatch: any[] = [];
 
                 for (const pacienteCedula of patientsAttended) {
-                    const doctorCedula = getRandomElement(allDoctors); // Ensure we have a doctor
-                    if (!doctorCedula) continue; // Should not happen if we seeded doctors
+                    const doctorCedula = getRandomElement(allDoctors);
+                    if (!doctorCedula) continue;
 
                     const consCode = `CON-${String(consultaCounter++).padStart(6, '0')}`;
 
@@ -326,7 +308,6 @@ async function main() {
                         tensionArterial: `${getRandomInt(110, 130)}/${getRandomInt(70, 90)}`
                     });
 
-                    // Pathologies (1-2)
                     const patientPathologies = getRandomElements(allPathologies, getRandomInt(1, 2));
                     for (const pathCode of patientPathologies) {
                         consultasEnfermedadesBatch.push({
@@ -336,30 +317,29 @@ async function main() {
                         });
                     }
 
-                    // Medicines (1-2)
                     const patientMedicines = getRandomElements(allMedicines, getRandomInt(1, 2));
                     for (const medCode of patientMedicines) {
-                        medicamentosPacientesBatch.push({
+                        entregasMedicamentosBatch.push({
                             codigoMedicamento: medCode,
-                            cedulaPaciente: pacienteCedula,
+                            codigoPaciente: pacienteCedula,
                             codigoAbordaje: abdCode,
                             fechaEntrega: abdDate,
-                            cantidadEntregada: getRandomInt(1, 3),
-                            cedulaTejedor: getRandomElement(abordajeTejedores) // Who delivered it
+                            cantidad: getRandomInt(1, 3),
+                            estado: 'entregado',
+                            cedulaTejedor: getRandomElement(abordajeTejedores)
                         });
                     }
                 }
 
-                // Execute batches
                 if (consultasBatch.length) await db.insert(schema.consultas).values(consultasBatch);
                 if (consultasEnfermedadesBatch.length) await db.insert(schema.consultasEnfermedades).values(consultasEnfermedadesBatch);
-                if (medicamentosPacientesBatch.length) await db.insert(schema.medicamentosPacientes).values(medicamentosPacientesBatch);
+                if (entregasMedicamentosBatch.length) await db.insert(schema.entregasMedicamentos).values(entregasMedicamentosBatch);
             }
 
-            // Advance month
             currentDate.setMonth(currentDate.getMonth() + 1);
         }
 
+        console.log('✅ Seeding completado exitosamente.');
         process.exit(0);
 
     } catch (error) {

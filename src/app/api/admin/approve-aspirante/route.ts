@@ -50,14 +50,11 @@ export async function POST(request: Request) {
                     apellidoTejedor: aspirante.apellidoAspirante,
                     fechaNacimiento: aspirante.fechaNacimiento,
                     direccionTejedor: aspirante.direccionAspirante,
-                    municipioTejedor: aspirante.municipioAspirante,
-                    estadoTejedor: aspirante.estadoDireccionAspirante,
-                    parroquiaTejedor: aspirante.parroquiaAspirante,
+                    parroquiaId: aspirante.parroquiaId,
                     telefonoTejedor: aspirante.telefonoAspirante,
                     correoTejedor: aspirante.correoAspirante,
                     profesionTejedor: aspirante.profesionAspirante,
                     fechaIngreso: new Date(),
-                    fechaPromocion: new Date(),
                     tipodeVoluntario: 'Tejedor Oficial',
                 });
 

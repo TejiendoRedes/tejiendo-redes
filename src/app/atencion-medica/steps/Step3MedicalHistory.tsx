@@ -22,11 +22,6 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
     const [isSaving, setIsSaving] = React.useState(false);
     const [history, setHistory] = React.useState<any>(null);
     const [formData, setFormData] = React.useState({
-        peso: '',
-        talla: '',
-        temperatura: '',
-        FC: '',
-        TA: '',
         enfermedadesPrevias: '',
         alergias: '',
         enfermedadesFamilia: '',
@@ -46,11 +41,6 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
             if (patientHistory) {
                 setHistory(patientHistory);
                 setFormData({
-                    peso: patientHistory.peso.toString(),
-                    talla: patientHistory.talla.toString(),
-                    temperatura: patientHistory.temperatura.toString(),
-                    FC: patientHistory.FC,
-                    TA: patientHistory.TA,
                     enfermedadesPrevias: patientHistory.enfermedadesPrevias,
                     alergias: patientHistory.alergias,
                     enfermedadesFamilia: patientHistory.enfermedadesFamilia,
@@ -71,9 +61,6 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
                 // Update existing
                 const res = await updateAntecedente(history.codigoAntecedente, {
                     ...formData,
-                    peso: formData.peso.toString(),
-                    talla: formData.talla.toString(),
-                    temperatura: formData.temperatura.toString(),
                 });
                 if (res.success) {
                     toast.success('Antecedentes actualizados');
@@ -120,67 +107,7 @@ export function Step3MedicalHistory({ patient, onBack, onNext }: Step3MedicalHis
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Vital Signs Section */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                <Plus className="w-4 h-4" />
-                                Signos Vitales
-                            </h3>
-                            <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded">Campos Requeridos *</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="peso" className="text-xs font-semibold text-gray-700">Peso (kg) <span className="text-red-500 font-bold">*</span></Label>
-                                <Input
-                                    id="peso" type="number" step="0.01" value={formData.peso}
-                                    onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
-                                    required
-                                    className="bg-gray-50/50 border-gray-100 focus:bg-white transition-colors"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="talla" className="text-xs font-semibold text-gray-700">Talla (m) <span className="text-red-500 font-bold">*</span></Label>
-                                <Input
-                                    id="talla" type="number" step="0.01" value={formData.talla}
-                                    onChange={(e) => setFormData({ ...formData, talla: e.target.value })}
-                                    required
-                                    className="bg-gray-50/50 border-gray-100 focus:bg-white transition-colors"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="temperatura" className="text-xs font-semibold text-gray-700">Temp (°C) <span className="text-red-500 font-bold">*</span></Label>
-                                <Input
-                                    id="temperatura" type="number" step="0.1" value={formData.temperatura}
-                                    onChange={(e) => setFormData({ ...formData, temperatura: e.target.value })}
-                                    required
-                                    className="bg-gray-50/50 border-gray-100 focus:bg-white transition-colors"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="fc" className="text-xs font-semibold text-gray-700">FC (lpm) <span className="text-red-500 font-bold">*</span></Label>
-                                <Input
-                                    id="fc" value={formData.FC}
-                                    onChange={(e) => setFormData({ ...formData, FC: e.target.value })}
-                                    required
-                                    placeholder="80"
-                                    className="bg-gray-50/50 border-gray-100 focus:bg-white transition-colors"
-                                />
-                            </div>
-                            <div className="sm:col-span-2">
-                                <BloodPressureInput
-                                    label="Tensión Arterial *"
-                                    value={formData.TA}
-                                    onChange={(val) => setFormData({ ...formData, TA: val })}
-                                    required
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* Vital Signs Section removed - now in TriajeStep */}
 
                 {/* Medical History Section */}
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">

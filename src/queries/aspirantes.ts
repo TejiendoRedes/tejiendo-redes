@@ -1,10 +1,10 @@
 "use server";
 
-
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { aspirantes, type NewAspirante, type Aspirante } from '@/db/schema/aspirantes';
 import { tejedores } from '@/db/schema/tejedores';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { eq } from 'drizzle-orm';
 import { getErrorMessage, isDuplicateKeyError } from '@/lib/error-handler';
 import { requireAuth } from '@/lib/auth';
@@ -15,7 +15,24 @@ import { requireAuth } from '@/lib/auth';
 export async function getAspirantes() {
     try {
         await requireAuth();
-        const data = await db.select().from(aspirantes);
+        const results = await db.select({
+            aspirante: aspirantes,
+            estadoNombre: estados.nombre,
+            municipioNombre: municipios.nombre,
+            parroquiaNombre: parroquias.nombre
+        })
+        .from(aspirantes)
+        .leftJoin(parroquias, eq(aspirantes.parroquiaId, parroquias.id))
+        .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+        .leftJoin(estados, eq(municipios.estadoId, estados.id));
+
+        const data = results.map(row => ({
+            ...row.aspirante,
+            estadoNombre: row.estadoNombre,
+            municipioNombre: row.municipioNombre,
+            parroquiaNombre: row.parroquiaNombre
+        }));
+
         return { success: true, data };
     } catch (error) {
         const errorMessage = getErrorMessage(error, 'los aspirantes', 'obtener');
@@ -40,8 +57,7 @@ export async function getAspirante(cedula: string) {
     }
 }
 
-
 /**
  * Promover Aspirante a Tejedor
  * Esta función mueve los datos de la tabla aspirantes a la tabla tejedores
- */
+ */

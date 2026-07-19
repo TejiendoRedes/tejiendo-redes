@@ -16,23 +16,28 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { getEstadoNombre, getMunicipioNombre, getParroquiaNombre } from '@/data/venezuela-location';
 import { Badge } from '@/components/ui/badge';
 import { AspiranteForm } from '@/components/forms/AspiranteForm';
 
+type AspiranteWithGeo = Aspirante & {
+    estadoNombre?: string | null;
+    municipioNombre?: string | null;
+    parroquiaNombre?: string | null;
+};
+
 interface AspirantesClientProps {
-    initialData: Aspirante[];
+    initialData: AspiranteWithGeo[];
     canManage?: boolean;
 }
 
 export default function AspirantesClient({ initialData, canManage = false }: AspirantesClientProps) {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [editingAspirante, setEditingAspirante] = React.useState<Aspirante | null>(null);
+    const [editingAspirante, setEditingAspirante] = React.useState<AspiranteWithGeo | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isPromoting, setIsPromoting] = React.useState<string | null>(null);
 
-    const handlePromote = async (aspirante: Aspirante) => {
+    const handlePromote = async (aspirante: AspiranteWithGeo) => {
         if (!confirm(`¿Deseas promover a ${aspirante.nombreAspirante} ${aspirante.apellidoAspirante} a Tejedor Oficial?`)) return;
         setIsPromoting(aspirante.cedulaAspirante);
         try {
@@ -56,7 +61,7 @@ export default function AspirantesClient({ initialData, canManage = false }: Asp
         setIsModalOpen(true);
     };
 
-    const handleEdit = (aspirante: Aspirante) => {
+    const handleEdit = (aspirante: AspiranteWithGeo) => {
         setEditingAspirante(aspirante);
         setIsModalOpen(true);
     };
@@ -101,7 +106,7 @@ export default function AspirantesClient({ initialData, canManage = false }: Asp
         }
     };
 
-    const columns: Column<Aspirante>[] = [
+    const columns: Column<AspiranteWithGeo>[] = [
         {
             key: 'nombreAspirante',
             header: 'Aspirante',
@@ -122,15 +127,11 @@ export default function AspirantesClient({ initialData, canManage = false }: Asp
             key: 'direccionCompleta',
             header: 'Dirección',
             render: (asp) => {
-                const estadoNombre = getEstadoNombre(asp.estadoDireccionAspirante);
-                const municipioNombre = getMunicipioNombre(asp.estadoDireccionAspirante, asp.municipioAspirante);
-                const parroquiaNombre = getParroquiaNombre(asp.estadoDireccionAspirante, asp.municipioAspirante, asp.parroquiaAspirante);
-
                 return (
                     <div className="text-sm text-muted-foreground">
                         <div>{asp.direccionAspirante}</div>
                         <div className="text-xs opacity-75">
-                            {parroquiaNombre}, {municipioNombre}, {estadoNombre}
+                            {asp.parroquiaNombre}, {asp.municipioNombre}, {asp.estadoNombre}
                         </div>
                     </div>
                 );
@@ -186,15 +187,11 @@ export default function AspirantesClient({ initialData, canManage = false }: Asp
 
     const handleExport = (format: 'csv' | 'pdf') => {
         const exportData = initialData.map(asp => {
-            const estadoNombre = getEstadoNombre(asp.estadoDireccionAspirante);
-            const municipioNombre = getMunicipioNombre(asp.estadoDireccionAspirante, asp.municipioAspirante);
-            const parroquiaNombre = getParroquiaNombre(asp.estadoDireccionAspirante, asp.municipioAspirante, asp.parroquiaAspirante);
-
             return {
                 cedula: asp.cedulaAspirante,
                 nombre: `${asp.nombreAspirante} ${asp.apellidoAspirante}`,
                 profesion: asp.profesionAspirante,
-                direccion: `${asp.direccionAspirante}, ${parroquiaNombre}, ${municipioNombre}, ${estadoNombre}`,
+                direccion: `${asp.direccionAspirante}, ${asp.parroquiaNombre}, ${asp.municipioNombre}, ${asp.estadoNombre}`,
                 telefono: asp.telefonoAspirante,
                 estado: asp.estadoAspirante,
             };

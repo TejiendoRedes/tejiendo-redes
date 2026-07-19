@@ -120,14 +120,6 @@ export interface Abordaje {
   estado: 'Planificado' | 'En Curso' | 'Finalizado';
 }
 
-export interface AbordajeComunidad {
-  codigo_abordaje: string;
-  codigo_comunidad: string;
-  observaciones?: string;
-  // Relaciones
-  abordaje?: Abordaje;
-  comunidad?: Comunidad;
-}
 
 export interface Medico {
   cedulaTejedor: string;

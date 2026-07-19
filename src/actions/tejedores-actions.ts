@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { tejedores, type NewTejedor, type Tejedor } from '@/db/schema/tejedores';
-import { tejedoresAbordaje, medicamentosPacientes } from '@/db/schema/relations';
+import { tejedoresAbordaje } from '@/db/schema/relations';
 import { abordaje } from '@/db/schema/abordajes';
 import { consultas } from '@/db/schema/consultas';
 import { pacientes } from '@/db/schema/pacientes';
@@ -184,8 +184,8 @@ export async function deleteTejedor(cedula: string) {
             if (errorMsg.includes('tejedores_abordaje') || errorMsg.includes('tej_ab_')) {
                 return { success: false, error: DeleteErrorMessages.tejedor.conAbordajes() };
             }
-            if (errorMsg.includes('medicamentos_pacientes') || errorMsg.includes('med_pac_')) {
-                return { success: false, error: DeleteErrorMessages.tejedor.conEntregas() };
+            if (errorMsg.includes('entregas_medicamentos') || errorMsg.includes('entregas_')) {
+                return { success: false, error: 'No se puede eliminar el tejedor porque tiene entregas de medicamentos asociadas.' };
             }
             if (errorMsg.includes('medicos')) {
                 return { success: false, error: DeleteErrorMessages.tejedor.conMedico() };

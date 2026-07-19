@@ -136,10 +136,9 @@ export function PharmacyStation({ abordaje }: PharmacyStationProps) {
                 registerMedicamentoEntrega({
                     codigoAbordaje: abordajeId,
                     codigoMedicamento: item.codigoMedicamento,
-                    cedulaPaciente: selectedPatient.cedulaPaciente,
-                    cantidadEntregada: item.cantidad,
-                    cedulaTejedor: selectedResponsible,
-                    fechaEntrega: new Date() // Will be handled by DB or actions if date string needed
+                    codigoPaciente: selectedPatient.cedulaPaciente,
+                    cantidad: item.cantidad,
+                    cedulaTejedor: selectedResponsible
                 })
             );
 

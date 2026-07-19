@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { AbordajesService } from '@/services/abordajes-service';
 import { createResponse } from '@/lib/utils';
-import { abordaje, medicamentosPacientes } from '@/db/schema'; // Import types if needed, or source from service
+import { abordaje } from '@/db/schema';
+import { createEntrega } from '@/actions/entregas-actions';
+import { entregasMedicamentos } from '@/db/schema/entregas_medicamentos';
 import { DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { MedicamentoEntregaSchema, CreateAbordajeSchema, UpdateAbordajeSchema } from '@/schemas/abordajes';
@@ -74,35 +76,6 @@ export async function updateAbordaje(id: string, data: Partial<typeof abordaje.$
     }
 }
 
-/**
- * Agregar comunidad a un abordaje
- */
-export async function addComunidadToAbordaje(codigoAbordaje: string, codigoComunidad: string) {
-    try {
-        await requireAuth();
-        await AbordajesService.addComunidad(codigoAbordaje, codigoComunidad);
-        revalidatePath(`/abordajes/${codigoAbordaje}`);
-        return createResponse(true);
-    } catch (error: any) {
-        console.error('Error adding comunidad to abordaje:', error);
-        return createResponse(false, null, error.message || 'Error al agregar la comunidad');
-    }
-}
-
-/**
- * Remover comunidad de un abordaje
- */
-export async function removeComunidadFromAbordaje(codigoAbordaje: string, codigoComunidad: string) {
-    try {
-        await requireAuth();
-        await AbordajesService.removeComunidad(codigoAbordaje, codigoComunidad);
-        revalidatePath(`/abordajes/${codigoAbordaje}`);
-        return createResponse(true);
-    } catch (error) {
-        console.error('Error removing comunidad from abordaje:', error);
-        return createResponse(false, null, 'Error al remover la comunidad');
-    }
-}
 
 /**
  * Agregar tejedor a un abordaje
@@ -152,24 +125,21 @@ export async function deleteAbordaje(id: string) {
 /**
  * Registrar entrega de medicamento
  */
-export async function registerMedicamentoEntrega(data: typeof medicamentosPacientes.$inferInsert) {
+export async function registerMedicamentoEntrega(data: { codigoPaciente: string; codigoMedicamento: string; cantidad: number; codigoAbordaje?: string | null; cedulaTejedor: string; notas?: string | null }) {
     try {
         await requireAuth();
-        const validation = MedicamentoEntregaSchema.safeParse(data);
-        if (!validation.success) {
-            return createResponse(false, null, validation.error.errors[0].message);
-        }
 
-        await AbordajesService.registerMedicamentoEntrega(data);
-        revalidatePath('/abordajes');
-        // Also revalidate the specific abordaje page
-        if (data.codigoAbordaje) {
-            revalidatePath(`/abordajes/${data.codigoAbordaje}`);
+        const res = await createEntrega(data);
+        if (res.success) {
+            revalidatePath('/abordajes');
+            if (data.codigoAbordaje) {
+                revalidatePath(`/abordajes/${data.codigoAbordaje}`);
+            }
+            return createResponse(true);
         }
-        return createResponse(true);
-    } catch (error) {
-        console.error('Error registering medicamento entrega:', error);
-        return createResponse(false, null, 'Error al registrar la entrega de medicamento');
+        return createResponse(false, null, res.error);
+    } catch (error: any) {
+        return createResponse(false, null, error.message);
     }
 }
 

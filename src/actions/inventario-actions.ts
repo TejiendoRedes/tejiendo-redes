@@ -52,13 +52,12 @@ export async function registrarMovimientoInventario({
             // 1. Insertar el registro en el Kardex
             await tx.insert(movimientosInventario).values({
                 codigoMedicamento,
-                tipo,
+                tipoMovimiento: tipo,
                 cantidad,
                 motivo,
-                referencia,
-                notas,
+                notas: referencia ? `${referencia}${notas ? ` - ${notas}` : ''}` : notas,
                 costoUnitario: medicamento.precio, // Grabamos el costo al momento del movimiento
-                cedulaUsuario: session.cedulaTejedor || null
+                cedulaTejedor: session.cedulaTejedor || null
             });
 
             // 2. Actualizar el stock del medicamento de forma atómica
@@ -76,6 +75,6 @@ export async function registrarMovimientoInventario({
         
         return { success: true, message: 'Movimiento registrado correctamente' };
     } catch (error) {
-        return { success: false, error: getErrorMessage(error, 'el movimiento de inventario', 'registrar') };
+        return { success: false, error: getErrorMessage(error, 'el movimiento de inventario', 'crear') };
     }
 }

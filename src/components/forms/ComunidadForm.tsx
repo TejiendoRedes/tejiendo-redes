@@ -12,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstadosAction, getMunicipiosByEstadoAction, getParroquiasByMunicipioAction, getLocationHierarchy } from '@/queries/geografia';
 import { Comunidad } from '@/db/schema/comunidades';
 import { Responsable } from '@/db/schema/responsable';
 import { AsyncSearchableSelect } from '@/components/shared/AsyncSearchableSelect';
@@ -39,11 +39,10 @@ export function ComunidadForm({
         codigoComunidad: initialData?.codigoComunidad || '',
         nombreComunidad: initialData?.nombreComunidad || '',
         tipoComunidad: initialData?.tipoComunidad || '',
-        estado: initialData?.estado || '',
-        municipio: initialData?.municipio || '',
-        parroquia: initialData?.parroquia || '',
+        estado: '',
+        municipio: '',
+        parroquiaId: initialData?.parroquiaId || 0,
         direccion: initialData?.direccion || '',
-        ubicacionFisica: initialData?.ubicacionFisica || '',
         cedulaResponsable: initialData?.cedulaResponsable || '',
         cantidadHabitantes: initialData?.cantidadHabitantes?.toString() || '',
         cantidadFamilias: initialData?.cantidadFamilias?.toString() || '',
@@ -55,32 +54,51 @@ export function ComunidadForm({
     };
 
     const [formData, setFormData] = React.useState(initialFormState);
-    const [estados] = React.useState(getEstados());
+    const [estados, setEstados] = React.useState<any[]>([]);
     const [municipios, setMunicipios] = React.useState<any[]>([]);
     const [parroquias, setParroquias] = React.useState<any[]>([]);
+    const [isLoadingGeografia, setIsLoadingGeografia] = React.useState(true);
 
     React.useEffect(() => {
-        if (formData.estado) {
-            setMunicipios(getMunicipiosByEstado(formData.estado));
-            if (formData.municipio) {
-                setParroquias(getParroquiasByMunicipio(formData.estado, formData.municipio));
-            }
-        }
-    }, [formData.estado, formData.municipio]);
+        const fetchInitialGeografia = async () => {
+            setIsLoadingGeografia(true);
+            const estadosRes = await getEstadosAction();
+            if (estadosRes.success) setEstados(estadosRes.data);
 
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData({ ...formData, estado: estadoId, municipio: '', parroquia: '' });
-        setMunicipios(getMunicipiosByEstado(estadoId));
+            if (formData.parroquiaId) {
+                const hierarchyRes = await getLocationHierarchy(formData.parroquiaId);
+                if (hierarchyRes.success && hierarchyRes.data) {
+                    const { estadoId, municipioId } = hierarchyRes.data;
+                    setFormData(prev => ({ ...prev, estado: estadoId.toString(), municipio: municipioId.toString() }));
+                    const munRes = await getMunicipiosByEstadoAction(estadoId);
+                    if (munRes.success) setMunicipios(munRes.data);
+                    const parrRes = await getParroquiasByMunicipioAction(municipioId);
+                    if (parrRes.success) setParroquias(parrRes.data);
+                }
+            }
+            setIsLoadingGeografia(false);
+        };
+        fetchInitialGeografia();
+    }, [formData.parroquiaId]);
+
+    const handleEstadoChange = async (estadoIdStr: string) => {
+        const estadoId = parseInt(estadoIdStr, 10);
+        setFormData({ ...formData, estado: estadoIdStr, municipio: '', parroquiaId: 0 });
+        const res = await getMunicipiosByEstadoAction(estadoId);
+        if (res.success) setMunicipios(res.data);
         setParroquias([]);
     };
 
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData({ ...formData, municipio: municipioId, parroquia: '' });
-        setParroquias(getParroquiasByMunicipio(formData.estado, municipioId));
+    const handleMunicipioChange = async (municipioIdStr: string) => {
+        const municipioId = parseInt(municipioIdStr, 10);
+        setFormData({ ...formData, municipio: municipioIdStr, parroquiaId: 0 });
+        const res = await getParroquiasByMunicipioAction(municipioId);
+        if (res.success) setParroquias(res.data);
     };
 
-    const handleParroquiaChange = (parroquiaId: string) => {
-        setFormData({ ...formData, parroquia: parroquiaId });
+    const handleParroquiaChange = (parroquiaIdStr: string) => {
+        const parroquiaId = parseInt(parroquiaIdStr, 10);
+        setFormData({ ...formData, parroquiaId: parroquiaId });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -179,30 +197,30 @@ export function ComunidadForm({
 
                 <div className="space-y-2">
                     <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
-                    <Select value={formData.estado} onValueChange={handleEstadoChange} required>
+                    <Select value={formData.estado} onValueChange={handleEstadoChange} disabled={isLoadingGeografia} required>
                         <SelectTrigger id="estado" className={inputClassName}><SelectValue placeholder="Seleccione estado" /></SelectTrigger>
                         <SelectContent>
-                            {estados.map(e => <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>)}
+                            {estados.map(e => <SelectItem key={e.id} value={e.id.toString()}>{e.nombre}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
-                    <Select value={formData.municipio} onValueChange={handleMunicipioChange} disabled={!formData.estado} required>
+                    <Select value={formData.municipio} onValueChange={handleMunicipioChange} disabled={!formData.estado || isLoadingGeografia} required>
                         <SelectTrigger id="municipio" className={inputClassName}><SelectValue placeholder="Seleccione municipio" /></SelectTrigger>
                         <SelectContent>
-                            {municipios.map(m => <SelectItem key={m.id} value={m.id}>{m.nombre}</SelectItem>)}
+                            {municipios.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.nombre}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
-                    <Select value={formData.parroquia} onValueChange={handleParroquiaChange} disabled={!formData.municipio} required>
+                    <Select value={formData.parroquiaId ? formData.parroquiaId.toString() : ''} onValueChange={handleParroquiaChange} disabled={!formData.municipio || isLoadingGeografia} required>
                         <SelectTrigger id="parroquia" className={inputClassName}><SelectValue placeholder="Seleccione parroquia" /></SelectTrigger>
                         <SelectContent>
-                            {parroquias.map(p => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}
+                            {parroquias.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.nombre}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
@@ -216,17 +234,6 @@ export function ComunidadForm({
                         required
                         maxLength={150}
                         className={inputClassName}
-                    />
-                </div>
-
-                <div className="space-y-2 col-span-full">
-                    <Label htmlFor="ubicacionFisica">Ubicación Física / Punto de Referencia <span className="text-red-500 font-bold">*</span></Label>
-                    <Textarea
-                        id="ubicacionFisica"
-                        value={formData.ubicacionFisica}
-                        onChange={(e) => setFormData({ ...formData, ubicacionFisica: e.target.value })}
-                        required
-                        className="min-h-[80px] border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                 </div>
 

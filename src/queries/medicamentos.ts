@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { medicamentos, medicamentosPacientes, peticiones, type NewMedicamento, type Medicamento } from '@/db/schema';
+import { medicamentos, entregasMedicamentos, type NewMedicamento, type Medicamento } from '@/db/schema';
 import { eq, sum } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
@@ -47,13 +47,13 @@ export async function getMedicamentosEntregados() {
         await requireAuth();
         const solicitudes = await db
             .select({
-                codigoMedicamento: peticiones.codigoMedicamento,
-                totalSolicitado: sum(peticiones.cantidad).as('totalSolicitado'),
+                codigoMedicamento: entregasMedicamentos.codigoMedicamento,
+                totalSolicitado: sum(entregasMedicamentos.cantidad).as('totalSolicitado'),
                 nombreMedicamento: medicamentos.nombreMedicamento,
             })
-            .from(peticiones)
-            .innerJoin(medicamentos, eq(peticiones.codigoMedicamento, medicamentos.codigoMedicamento))
-            .groupBy(peticiones.codigoMedicamento, medicamentos.nombreMedicamento);
+            .from(entregasMedicamentos)
+            .innerJoin(medicamentos, eq(entregasMedicamentos.codigoMedicamento, medicamentos.codigoMedicamento))
+            .groupBy(entregasMedicamentos.codigoMedicamento, medicamentos.nombreMedicamento);
 
         // Calcular totales generales
         const totalUnidades = solicitudes.reduce((sum, item) => sum + Number(item.totalSolicitado || 0), 0);

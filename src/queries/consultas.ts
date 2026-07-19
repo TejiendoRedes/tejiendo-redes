@@ -84,20 +84,20 @@ export async function getPatientMedicationHistory(cedulaPaciente: string) {
     try {
         await requireAuth();
         const { medicamentos } = await import('@/db/schema/medicamentos');
-        const { medicamentosPacientes } = await import('@/db/schema/relations');
+        const { entregasMedicamentos } = await import('@/db/schema/entregas_medicamentos');
 
         const data = await db.select({
-            entrega: medicamentosPacientes,
+            entrega: entregasMedicamentos,
             nombreMedicamento: medicamentos.nombreMedicamento,
             presentacion: medicamentos.presentacion,
             fechaAbordaje: abordaje.fechaAbordaje,
             descripcionAbordaje: abordaje.descripcion
         })
-            .from(medicamentosPacientes)
-            .innerJoin(medicamentos, eq(medicamentosPacientes.codigoMedicamento, medicamentos.codigoMedicamento))
-            .leftJoin(abordaje, eq(medicamentosPacientes.codigoAbordaje, abordaje.codigoAbordaje))
-            .where(eq(medicamentosPacientes.cedulaPaciente, cedulaPaciente))
-            .orderBy(desc(medicamentosPacientes.fechaEntrega));
+            .from(entregasMedicamentos)
+            .innerJoin(medicamentos, eq(entregasMedicamentos.codigoMedicamento, medicamentos.codigoMedicamento))
+            .leftJoin(abordaje, eq(entregasMedicamentos.codigoAbordaje, abordaje.codigoAbordaje))
+            .where(eq(entregasMedicamentos.codigoPaciente, cedulaPaciente))
+            .orderBy(desc(entregasMedicamentos.fechaEntrega));
 
         return { success: true, data };
     } catch (error) {

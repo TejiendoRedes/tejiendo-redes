@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { aspirantes, abordaje, consultas, comunidades, pacientes, peticiones, medicamentos, consultasEnfermedades, enfermedades } from '@/db/schema';
+import { aspirantes, abordaje, consultas, comunidades, pacientes, entregasMedicamentos, medicamentos, consultasEnfermedades, enfermedades } from '@/db/schema';
 import { eq, and, or, desc, asc, count, sum, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 
@@ -25,7 +25,7 @@ export async function GET() {
         const [pacientesCount] = await db.select({ value: count() }).from(pacientes);
 
         // 5. Total Medicamentos Dispensados
-        const [medicamentosSuma] = await db.select({ value: sum(peticiones.cantidad) }).from(peticiones).where(eq(peticiones.estado, 'entregado'));
+        const [medicamentosSuma] = await db.select({ value: sum(entregasMedicamentos.cantidad) }).from(entregasMedicamentos).where(eq(entregasMedicamentos.estado, 'entregado'));
 
         // 6. Abordajes Recientes
         const recent = await db.select({

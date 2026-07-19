@@ -57,47 +57,6 @@ export function AntecedentesStep({ data, updateData }: StepProps) {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label
-                        htmlFor="historialEnfermedades"
-                        className="font-semibold text-gray-700"
-                    >
-                        Historial de enfermedades
-                    </Label>
-
-                    <Textarea
-                        id="historialEnfermedades"
-                        placeholder="Describa el historial de enfermedades del paciente..."
-                        value={data.historialEnfermedades}
-                        onChange={(e) =>
-                            updateData({
-                                historialEnfermedades: e.target.value,
-                            })
-                        }
-                        className="resize-none h-24 bg-gray-50 border-gray-200"
-                    />
-                </div>
-                
-                <div className="space-y-2">
-                    <Label
-                        htmlFor="consultasMedicasPrevias"
-                        className="font-semibold text-gray-700"
-                    >
-                        Consultas médicas previas
-                    </Label>
-
-                    <Textarea
-                        id="consultasMedicasPrevias"
-                        placeholder="Describa las consultas médicas previas..."
-                        value={data.consultasMedicasPrevias}
-                        onChange={(e) =>
-                            updateData({
-                                consultasMedicasPrevias: e.target.value,
-                            })
-                        }
-                        className="resize-none h-24 bg-gray-50 border-gray-200"
-                    />
-                </div>
             </Card>
 
             {/* Right Card */}

@@ -19,10 +19,11 @@ import {
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { OrganismoForm } from '@/components/forms/OrganismoForm';
-import { getEstadoNombre, getMunicipioNombre } from '@/data/venezuela-location';
-
 interface OrganismoWithTejedor extends Organismo {
     tejedor: Tejedor | null;
+    estadoNombre?: string | null;
+    municipioNombre?: string | null;
+    parroquiaNombre?: string | null;
 }
 
 interface OrganismosClientProps {
@@ -60,7 +61,7 @@ export default function OrganismosClient({ initialData, tejedores, canManage = f
     };
 
     const handleSubmit = async (formData: any) => {
-        if (!formData.nombreOrganismo || !formData.cedulaTejedor || !formData.estadoOrganismo || !formData.correoOrganismo) {
+        if (!formData.nombreOrganismo || !formData.cedulaTejedor || !formData.parroquiaId || !formData.correoOrganismo) {
             toast.error('Por favor complete los campos obligatorios');
             return;
         }
@@ -137,13 +138,10 @@ export default function OrganismosClient({ initialData, tejedores, canManage = f
             key: 'ubicacion',
             header: 'Ubicación',
             render: (o) => {
-                const estadoNombre = getEstadoNombre(o.estadoOrganismo);
-                const municipioNombre = getMunicipioNombre(o.estadoOrganismo, o.municipioOrganismo);
-
                 return (
                     <div className="text-xs">
-                        <div className="font-medium text-gray-900">{estadoNombre || '-'}</div>
-                        <div className="text-gray-500">{municipioNombre || '-'}</div>
+                        <div className="font-medium text-gray-900">{o.estadoNombre || '-'}</div>
+                        <div className="text-gray-500">{o.municipioNombre || '-'}</div>
                     </div>
                 );
             },
@@ -179,9 +177,6 @@ export default function OrganismosClient({ initialData, tejedores, canManage = f
 
     const handleExport = (format: 'csv' | 'pdf') => {
         const exportData = initialData.map(o => {
-            const estadoNombre = getEstadoNombre(o.estadoOrganismo);
-            const municipioNombre = getMunicipioNombre(o.estadoOrganismo, o.municipioOrganismo);
-
             return {
                 codigo: o.codigoOrganismo,
                 nombre: o.nombreOrganismo,
@@ -189,7 +184,7 @@ export default function OrganismosClient({ initialData, tejedores, canManage = f
                 tejedor: o.tejedor ? `${o.tejedor.nombreTejedor} ${o.tejedor.apellidoTejedor}` : o.cedulaTejedor,
                 correo: o.correoOrganismo,
                 telefono: o.telefonoOrganismo || 'N/A',
-                ubicacion: `${estadoNombre}, ${municipioNombre}, ${o.paisOrganismo}`,
+                ubicacion: `${o.estadoNombre || ''}, ${o.municipioNombre || ''}, ${o.paisOrganismo}`,
             };
         });
 

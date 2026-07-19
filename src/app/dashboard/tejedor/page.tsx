@@ -25,6 +25,7 @@ import { tejedores } from '@/db/schema/tejedores';
 import { tejedoresAbordaje } from '@/db/schema/relations';
 import { abordaje } from '@/db/schema/abordajes';
 import { abordajeAsistencia } from '@/db/schema/abordaje-asistencia';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { eq, sql, and, gte } from 'drizzle-orm';
 
 // Convertido a Server Component
@@ -34,7 +35,25 @@ export default async function TejedorDashboard() {
     const cedula = session.cedulaTejedor;
 
     // 2. Obtener perfil
-    const [perfil] = await db.select().from(tejedores).where(eq(tejedores.cedulaTejedor, cedula)).limit(1);
+    const results = await db.select({
+        tejedor: tejedores,
+        estadoNombre: estados.nombre,
+        municipioNombre: municipios.nombre,
+        parroquiaNombre: parroquias.nombre
+    })
+    .from(tejedores)
+    .leftJoin(parroquias, eq(tejedores.parroquiaId, parroquias.id))
+    .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+    .leftJoin(estados, eq(municipios.estadoId, estados.id))
+    .where(eq(tejedores.cedulaTejedor, cedula))
+    .limit(1);
+
+    const perfil = results.length > 0 ? {
+        ...results[0].tejedor,
+        estadoNombre: results[0].estadoNombre,
+        municipioNombre: results[0].municipioNombre,
+        parroquiaNombre: results[0].parroquiaNombre
+    } : null;
 
     // 3. Mis Abordajes (count)
     const misAbordajesResult = await db.select({ count: sql<number>`count(*)` })
@@ -224,7 +243,7 @@ export default async function TejedorDashboard() {
                                     </div>
                                     <div>
                                         <p className="text-[11px] text-gray-500 font-medium uppercase tracking-wide">Ubicación</p>
-                                        <p className="text-sm font-semibold text-gray-900 line-clamp-1">{perfil?.municipioTejedor}, {perfil?.estadoTejedor}</p>
+                                        <p className="text-sm font-semibold text-gray-900 line-clamp-1">{perfil?.municipioNombre}, {perfil?.estadoNombre}</p>
                                     </div>
                                 </div>
                             </div>
@@ -286,7 +305,7 @@ export default async function TejedorDashboard() {
                                     <p className="text-sm text-orange-700/80 mb-6 relative z-10 leading-relaxed line-clamp-2">
                                         Gestiona la entrega de medicamentos para los pacientes.
                                     </p>
-                                    <Link href="/farmacia/peticiones">
+                                    <Link href="/farmacia/entregas">
                                         <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-sm transition-all group-hover:shadow-md relative z-10">
                                             Ir a Farmacia <ArrowRight className="w-4 h-4 ml-2" />
                                         </Button>

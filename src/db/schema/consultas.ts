@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { mysqlTable, varchar, text, index, datetime } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, index, datetime, time, decimal } from 'drizzle-orm/mysql-core';
 import { abordaje } from './abordajes';
 import { pacientes } from './pacientes';
 import { medicos } from './medicos';
@@ -15,7 +15,7 @@ export const consultas = mysqlTable('consultas', {
         onUpdate: 'cascade'
     }),
     fechaConsulta: datetime('fecha_consulta').notNull().default(sql`now()`),
-    horaConsulta: varchar('hora_consulta', { length: 20 }),
+    horaConsulta: time('hora_consulta'),
     cedulaPaciente: varchar('cedula_paciente', { length: 12 }).notNull().references(() => pacientes.cedulaPaciente, {
         onDelete: 'restrict',
         onUpdate: 'cascade'
@@ -28,6 +28,10 @@ export const consultas = mysqlTable('consultas', {
     diagnosticoTexto: text('diagnostico_texto').notNull(), // Diagnóstico narrativo del médico
     recomendaciones: text('recomendaciones').notNull(),
     tratamiento: text('tratamiento').notNull(),
+    peso: decimal('peso', { precision: 5, scale: 2 }),
+    talla: decimal('talla', { precision: 3, scale: 2 }),
+    temperatura: decimal('temperatura', { precision: 4, scale: 1 }),
+    frecuenciaCardiaca: varchar('frecuencia_cardiaca', { length: 10 }),
     tensionArterial: varchar('tension_arterial', { length: 20 }),
 }, (table) => ({
     codigoAbordajeIdx: index('idx_codigo_abordaje').on(table.codigoAbordaje),

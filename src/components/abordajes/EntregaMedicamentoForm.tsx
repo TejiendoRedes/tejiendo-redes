@@ -56,10 +56,10 @@ export function EntregaMedicamentoForm({
             }
 
             const data = {
-                cedulaPaciente: formData.cedulaPaciente,
+                codigoPaciente: formData.cedulaPaciente,
                 codigoMedicamento: formData.codigoMedicamento,
                 codigoAbordaje: abordajeId, // Include abordaje ID
-                cantidadEntregada: parseInt(formData.cantidadEntregada),
+                cantidad: parseInt(formData.cantidadEntregada),
                 cedulaTejedor: formData.cedulaMedico || '', // Will need a fallback or check if backend allows empty
                 fechaEntrega: new Date(formData.fechaEntrega),
             };

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
-import { medicamentos, medicamentosPacientes, peticiones, type NewMedicamento, type Medicamento } from '@/db/schema';
+import { medicamentos, type NewMedicamento, type Medicamento, entregasMedicamentos } from '@/db/schema';
 import { eq, sum } from 'drizzle-orm';
 import { getErrorMessage, DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
@@ -91,11 +91,8 @@ export async function deleteMedicamento(codigo: string) {
 
         if (errorCode === 'ER_ROW_IS_REFERENCED_2' || errorMsg.includes('foreign key constraint')) {
 
-            if (errorMsg.includes('peticiones')) {
-                return { success: false, error: DeleteErrorMessages.medicamento.conPeticiones() };
-            }
-            if (errorMsg.includes('medicamentos_pacientes') || errorMsg.includes('med_pac_')) {
-                return { success: false, error: DeleteErrorMessages.medicamento.conEntregas() };
+            if (errorMsg.includes('entregas_medicamentos')) {
+                return { success: false, error: 'No se puede eliminar el medicamento porque está asociado a entregas registradas' };
             }
 
             // Mensaje genérico

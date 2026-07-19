@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstadosAction, getMunicipiosByEstadoAction, getParroquiasByMunicipioAction, getLocationHierarchy } from '@/queries/geografia';
 import { Tejedor } from '@/db/schema/tejedores';
 
 const PROFESIONES_PREDEFINIDAS = [
@@ -61,9 +61,9 @@ export function TejedorForm({
             ? formattedDate(initialData.fechaNacimiento)
             : '',
         direccionTejedor: initialData?.direccionTejedor || '',
-        municipioTejedor: initialData?.municipioTejedor || '',
-        estadoTejedor: initialData?.estadoTejedor || '',
-        parroquiaTejedor: initialData?.parroquiaTejedor || '',
+        municipioTejedor: '',
+        estadoTejedor: '',
+        parroquiaId: initialData?.parroquiaId || 0,
         telefonoTejedor: initialData?.telefonoTejedor || '',
         correoTejedor: initialData?.correoTejedor || '',
         profesionSelect: isPredefinida ? (initialProfesion || '') : 'Otros',
@@ -81,37 +81,56 @@ export function TejedorForm({
     const [formData, setFormData] = React.useState(initialFormState);
     const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-    const [estados] = React.useState(getEstados());
+    const [estados, setEstados] = React.useState<any[]>([]);
     const [municipios, setMunicipios] = React.useState<any[]>([]);
     const [parroquias, setParroquias] = React.useState<any[]>([]);
+    const [isLoadingGeografia, setIsLoadingGeografia] = React.useState(true);
 
     React.useEffect(() => {
-        if (formData.estadoTejedor) {
-            setMunicipios(getMunicipiosByEstado(formData.estadoTejedor));
-            if (formData.municipioTejedor) {
-                setParroquias(getParroquiasByMunicipio(formData.estadoTejedor, formData.municipioTejedor));
+        const fetchInitialGeografia = async () => {
+            setIsLoadingGeografia(true);
+            const estadosRes = await getEstadosAction();
+            if (estadosRes.success) setEstados(estadosRes.data);
+
+            if (formData.parroquiaId) {
+                const hierarchyRes = await getLocationHierarchy(formData.parroquiaId);
+                if (hierarchyRes.success && hierarchyRes.data) {
+                    const { estadoId, municipioId } = hierarchyRes.data;
+                    setFormData(prev => ({ ...prev, estadoTejedor: estadoId.toString(), municipioTejedor: municipioId.toString() }));
+                    const munRes = await getMunicipiosByEstadoAction(estadoId);
+                    if (munRes.success) setMunicipios(munRes.data);
+                    const parrRes = await getParroquiasByMunicipioAction(municipioId);
+                    if (parrRes.success) setParroquias(parrRes.data);
+                }
             }
-        }
-    }, [formData.estadoTejedor, formData.municipioTejedor]);
+            setIsLoadingGeografia(false);
+        };
+        fetchInitialGeografia();
+    }, [formData.parroquiaId]);
 
     function formattedDate(date: Date | string): string {
         if (date instanceof Date) return date.toISOString().split('T')[0];
         return date;
     }
 
-    const handleEstadoChange = (estadoId: string) => {
-        setFormData({ ...formData, estadoTejedor: estadoId, municipioTejedor: '', parroquiaTejedor: '' });
-        setMunicipios(getMunicipiosByEstado(estadoId));
+    const handleEstadoChange = async (estadoIdStr: string) => {
+        const estadoId = parseInt(estadoIdStr, 10);
+        setFormData({ ...formData, estadoTejedor: estadoIdStr, municipioTejedor: '', parroquiaId: 0 });
+        const res = await getMunicipiosByEstadoAction(estadoId);
+        if (res.success) setMunicipios(res.data);
         setParroquias([]);
     };
 
-    const handleMunicipioChange = (municipioId: string) => {
-        setFormData({ ...formData, municipioTejedor: municipioId, parroquiaTejedor: '' });
-        setParroquias(getParroquiasByMunicipio(formData.estadoTejedor, municipioId));
+    const handleMunicipioChange = async (municipioIdStr: string) => {
+        const municipioId = parseInt(municipioIdStr, 10);
+        setFormData({ ...formData, municipioTejedor: municipioIdStr, parroquiaId: 0 });
+        const res = await getParroquiasByMunicipioAction(municipioId);
+        if (res.success) setParroquias(res.data);
     };
 
-    const handleParroquiaChange = (parroquiaId: string) => {
-        setFormData({ ...formData, parroquiaTejedor: parroquiaId });
+    const handleParroquiaChange = (parroquiaIdStr: string) => {
+        const parroquiaId = parseInt(parroquiaIdStr, 10);
+        setFormData({ ...formData, parroquiaId: parroquiaId });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -475,13 +494,14 @@ export function TejedorForm({
                     <Select
                         value={formData.estadoTejedor}
                         onValueChange={handleEstadoChange}
+                        disabled={isLoadingGeografia}
                     >
                         <SelectTrigger id="estado" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder="Seleccione un estado" />
                         </SelectTrigger>
                         <SelectContent>
                             {estados.map(estado => (
-                                <SelectItem key={estado.id} value={estado.id}>
+                                <SelectItem key={estado.id} value={estado.id.toString()}>
                                     {estado.nombre}
                                 </SelectItem>
                             ))}
@@ -494,14 +514,14 @@ export function TejedorForm({
                     <Select
                         value={formData.municipioTejedor}
                         onValueChange={handleMunicipioChange}
-                        disabled={!formData.estadoTejedor}
+                        disabled={!formData.estadoTejedor || isLoadingGeografia}
                     >
                         <SelectTrigger id="municipio" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder={formData.estadoTejedor ? "Seleccione un municipio" : "Seleccione primero el estado"} />
                         </SelectTrigger>
                         <SelectContent>
                             {municipios.map(municipio => (
-                                <SelectItem key={municipio.id} value={municipio.id}>
+                                <SelectItem key={municipio.id} value={municipio.id.toString()}>
                                     {municipio.nombre}
                                 </SelectItem>
                             ))}
@@ -512,16 +532,16 @@ export function TejedorForm({
                 <div className="space-y-2">
                     <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
                     <Select
-                        value={formData.parroquiaTejedor}
+                        value={formData.parroquiaId ? formData.parroquiaId.toString() : ''}
                         onValueChange={handleParroquiaChange}
-                        disabled={!formData.municipioTejedor}
+                        disabled={!formData.municipioTejedor || isLoadingGeografia}
                     >
                         <SelectTrigger id="parroquia" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                             <SelectValue placeholder={formData.municipioTejedor ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
                         </SelectTrigger>
                         <SelectContent>
                             {parroquias.map(parroquia => (
-                                <SelectItem key={parroquia.id} value={parroquia.id}>
+                                <SelectItem key={parroquia.id} value={parroquia.id.toString()}>
                                     {parroquia.nombre}
                                 </SelectItem>
                             ))}

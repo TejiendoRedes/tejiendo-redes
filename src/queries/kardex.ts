@@ -21,10 +21,9 @@ export async function getKardexMedicamento(codigoMedicamento: string) {
 
         const movimientos = await db.select({
             id: movimientosInventario.id,
-            tipo: movimientosInventario.tipo,
+            tipo: movimientosInventario.tipoMovimiento,
             cantidad: movimientosInventario.cantidad,
             motivo: movimientosInventario.motivo,
-            referencia: movimientosInventario.referencia,
             costoUnitario: movimientosInventario.costoUnitario,
             fechaMovimiento: movimientosInventario.fechaMovimiento,
             notas: movimientosInventario.notas,
@@ -34,7 +33,7 @@ export async function getKardexMedicamento(codigoMedicamento: string) {
             }
         })
         .from(movimientosInventario)
-        .leftJoin(tejedores, eq(movimientosInventario.cedulaUsuario, tejedores.cedulaTejedor))
+        .leftJoin(tejedores, eq(movimientosInventario.cedulaTejedor, tejedores.cedulaTejedor))
         .where(eq(movimientosInventario.codigoMedicamento, codigoMedicamento))
         .orderBy(desc(movimientosInventario.fechaMovimiento));
 

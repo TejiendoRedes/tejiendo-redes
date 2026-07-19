@@ -90,7 +90,7 @@ export const menuItems: MenuItem[] = [
         children: [
             { label: 'Dashboard', path: '/farmacia/dashboard', icon: <BarChart3 className="w-4 h-4" /> },
             { label: 'Medicamentos', path: '/farmacia/medicamentos', icon: <Heart className="w-4 h-4" /> },
-            { label: 'Entrega de Medicamentos', path: '/farmacia/peticiones', icon: <FileQuestion className="w-4 h-4" /> },
+            { label: 'Entrega de Medicamentos', path: '/farmacia/entregas', icon: <FileQuestion className="w-4 h-4" /> },
         ],
     },
     {

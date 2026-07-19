@@ -3,13 +3,14 @@
 
 import { db } from '@/db';
 import { abordaje } from '@/db/schema/abordajes';
-import { abordajeComunidad, consultasEnfermedades } from '@/db/schema/relations';
+import { consultasEnfermedades } from '@/db/schema/relations';
 import { comunidades } from '@/db/schema/comunidades';
 import { pacientes } from '@/db/schema/pacientes';
 import { consultas } from '@/db/schema/consultas';
 import { enfermedades } from '@/db/schema/enfermedades';
 import { medicamentos } from '@/db/schema/medicamentos';
-import { peticiones } from '@/db/schema/peticiones';
+import { entregasMedicamentos } from '@/db/schema/entregas_medicamentos';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { eq, sql, and, gte, lte, count, desc, like } from 'drizzle-orm';
 import { reportesFilterSchema } from '@/schemas/reportes';
 import { requireAuth } from '@/lib/auth';
@@ -34,16 +35,19 @@ export async function getReporteAbordajes(params: unknown) {
         // Filtros relacionados con la comunidad
         const comunidadConditions = [];
         if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
-        if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
-        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(comunidades.municipio, municipio));
-        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(comunidades.parroquia, parroquia));
+        if (estado && estado !== 'todos') comunidadConditions.push(eq(estados.nombre, estado));
+        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(municipios.nombre, municipio));
+        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(parroquias.nombre, parroquia));
         if (tipoComunidad && tipoComunidad !== 'todos') comunidadConditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         if (comunidadConditions.length > 0) {
             const abordajesEnComunidad = db
-                .select({ codigoAbordaje: abordajeComunidad.codigoAbordaje })
-                .from(abordajeComunidad)
-                .innerJoin(comunidades, eq(abordajeComunidad.codigoComunidad, comunidades.codigoComunidad))
+                .select({ codigoAbordaje: abordaje.codigoAbordaje })
+                .from(abordaje)
+                .innerJoin(comunidades, eq(abordaje.codigoComunidad, comunidades.codigoComunidad))
+                .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+                .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+                .leftJoin(estados, eq(municipios.estadoId, estados.id))
                 .where(and(...comunidadConditions));
 
             conditions.push(sql`${abordaje.codigoAbordaje} IN (${abordajesEnComunidad})`);
@@ -56,11 +60,7 @@ export async function getReporteAbordajes(params: unknown) {
                 descripcion: abordaje.descripcion,
                 hora_inicio: abordaje.horaInicio,
                 hora_fin: abordaje.horaFin,
-                comunidades: sql<number>`(
-                    SELECT COUNT(DISTINCT ac.codigo_comunidad)
-                    FROM abordaje_comunidad ac
-                    WHERE ac.codigo_abordaje = abordaje.codigo_abordaje
-                )`,
+                comunidades: sql<number>`1`,
                 pacientes_atendidos: sql<number>`(
                     SELECT COUNT(DISTINCT c.cedula_paciente)
                     FROM consultas c
@@ -94,27 +94,30 @@ export async function getReporteComunidades(params: unknown) {
 
         const conditions = [];
         if (codigoComunidad && codigoComunidad !== 'todas') conditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
-        if (estado && estado !== 'todos') conditions.push(eq(comunidades.estado, estado));
-        if (municipio && municipio !== 'todos') conditions.push(eq(comunidades.municipio, municipio));
-        if (parroquia && parroquia !== 'todas') conditions.push(eq(comunidades.parroquia, parroquia));
+        if (estado && estado !== 'todos') conditions.push(eq(estados.nombre, estado));
+        if (municipio && municipio !== 'todos') conditions.push(eq(municipios.nombre, municipio));
+        if (parroquia && parroquia !== 'todas') conditions.push(eq(parroquias.nombre, parroquia));
         if (tipoComunidad && tipoComunidad !== 'todos') conditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         const result = await db
             .select({
                 codigo_comunidad: comunidades.codigoComunidad,
                 nombre_comunidad: comunidades.nombreComunidad,
-                estado: comunidades.estado,
-                municipio: comunidades.municipio,
-                parroquia: comunidades.parroquia,
+                estado: sql<string>`COALESCE(${estados.nombre}, 'Desconocido')`,
+                municipio: sql<string>`COALESCE(${municipios.nombre}, 'Desconocido')`,
+                parroquia: sql<string>`COALESCE(${parroquias.nombre}, 'Desconocido')`,
                 tipo_comunidad: comunidades.tipoComunidad,
                 telefono_comunidad: comunidades.telefonoComunidad,
                 cantidad_habitantes: comunidades.cantidadHabitantes,
                 cantidad_familias: comunidades.cantidadFamilias,
                 pacientes_tratados: sql<number>`(SELECT COUNT(*) FROM pacientes p WHERE p.codigo_comunidad = comunidades.codigo_comunidad)`,
-                abordajes_realizados: sql<number>`(SELECT COUNT(*) FROM abordaje_comunidad ac WHERE ac.codigo_comunidad = comunidades.codigo_comunidad)`,
+                abordajes_realizados: sql<number>`(SELECT COUNT(*) FROM abordaje a WHERE a.codigo_comunidad = comunidades.codigo_comunidad)`,
                 total_consultas: sql<number>`(SELECT COUNT(*) FROM consultas c INNER JOIN pacientes p ON c.cedula_paciente = p.cedula_paciente WHERE p.codigo_comunidad = comunidades.codigo_comunidad)`,
             })
             .from(comunidades)
+            .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+            .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+            .leftJoin(estados, eq(municipios.estadoId, estados.id))
             .where(conditions.length > 0 ? and(...conditions) : undefined);
 
         return { success: true, data: result };
@@ -138,9 +141,9 @@ export async function getReportePacientes(params: unknown) {
 
         const conditions = [];
         if (codigoComunidad && codigoComunidad !== 'todas') conditions.push(eq(pacientes.codigoComunidad, codigoComunidad));
-        if (estado && estado !== 'todos') conditions.push(eq(comunidades.estado, estado));
-        if (municipio && municipio !== 'todos') conditions.push(eq(comunidades.municipio, municipio));
-        if (parroquia && parroquia !== 'todas') conditions.push(eq(comunidades.parroquia, parroquia));
+        if (estado && estado !== 'todos') conditions.push(eq(estados.nombre, estado));
+        if (municipio && municipio !== 'todos') conditions.push(eq(municipios.nombre, municipio));
+        if (parroquia && parroquia !== 'todas') conditions.push(eq(parroquias.nombre, parroquia));
         if (tipoComunidad && tipoComunidad !== 'todos') conditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         const result = await db
@@ -154,12 +157,15 @@ export async function getReportePacientes(params: unknown) {
                 direccion_paciente: pacientes.direccionPaciente,
                 telefono_paciente: pacientes.telefonoPaciente,
                 correo_paciente: pacientes.correoPaciente,
-                estado: comunidades.estado,
-                municipio: comunidades.municipio,
-                parroquia: comunidades.parroquia,
+                estado: sql<string>`COALESCE(${estados.nombre}, 'Desconocido')`,
+                municipio: sql<string>`COALESCE(${municipios.nombre}, 'Desconocido')`,
+                parroquia: sql<string>`COALESCE(${parroquias.nombre}, 'Desconocido')`,
             })
             .from(pacientes)
             .leftJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+            .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+            .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+            .leftJoin(estados, eq(municipios.estadoId, estados.id))
             .where(conditions.length > 0 ? and(...conditions) : undefined)
             .limit(500);
 
@@ -189,9 +195,9 @@ export async function getReporteMorbilidad(params: unknown) {
 
         const comunidadConditions = [];
         if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
-        if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
-        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(comunidades.municipio, municipio));
-        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(comunidades.parroquia, parroquia));
+        if (estado && estado !== 'todos') comunidadConditions.push(eq(estados.nombre, estado));
+        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(municipios.nombre, municipio));
+        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(parroquias.nombre, parroquia));
         if (tipoComunidad && tipoComunidad !== 'todos') comunidadConditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         if (comunidadConditions.length > 0) {
@@ -199,6 +205,9 @@ export async function getReporteMorbilidad(params: unknown) {
                 .select({ cedulaPaciente: pacientes.cedulaPaciente })
                 .from(pacientes)
                 .innerJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+                .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+                .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+                .leftJoin(estados, eq(municipios.estadoId, estados.id))
                 .where(and(...comunidadConditions));
 
             whereConditions.push(sql`${consultas.cedulaPaciente} IN (${pacientesEnComunidades})`);
@@ -269,17 +278,17 @@ export async function getReporteMedicamentos(params: unknown) {
         const { fechaInicio, fechaFin, codigoComunidad, estado, municipio, parroquia, tipoComunidad } = validatedParams.data;
 
         // Condiciones para las peticiones (entregas)
-        const peticionConditions = [eq(peticiones.estado, 'entregado')];
+        const peticionConditions = [eq(entregasMedicamentos.estado, 'entregado')];
 
-        if (fechaInicio) peticionConditions.push(gte(peticiones.fechaEntrega, new Date(fechaInicio)));
-        if (fechaFin) peticionConditions.push(lte(peticiones.fechaEntrega, new Date(fechaFin)));
+        if (fechaInicio) peticionConditions.push(gte(entregasMedicamentos.fechaEntrega, new Date(fechaInicio)));
+        if (fechaFin) peticionConditions.push(lte(entregasMedicamentos.fechaEntrega, new Date(fechaFin)));
 
         // Filtros de ubicación a través de pacientes -> comunidades
         const comunidadConditions = [];
         if (codigoComunidad && codigoComunidad !== 'todas') comunidadConditions.push(eq(comunidades.codigoComunidad, codigoComunidad));
-        if (estado && estado !== 'todos') comunidadConditions.push(eq(comunidades.estado, estado));
-        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(comunidades.municipio, municipio));
-        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(comunidades.parroquia, parroquia));
+        if (estado && estado !== 'todos') comunidadConditions.push(eq(estados.nombre, estado));
+        if (municipio && municipio !== 'todos') comunidadConditions.push(eq(municipios.nombre, municipio));
+        if (parroquia && parroquia !== 'todas') comunidadConditions.push(eq(parroquias.nombre, parroquia));
         if (tipoComunidad && tipoComunidad !== 'todos') comunidadConditions.push(eq(comunidades.tipoComunidad, tipoComunidad));
 
         if (comunidadConditions.length > 0) {
@@ -287,9 +296,12 @@ export async function getReporteMedicamentos(params: unknown) {
                 .select({ cedulaPaciente: pacientes.cedulaPaciente })
                 .from(pacientes)
                 .innerJoin(comunidades, eq(pacientes.codigoComunidad, comunidades.codigoComunidad))
+                .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+                .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+                .leftJoin(estados, eq(municipios.estadoId, estados.id))
                 .where(and(...comunidadConditions));
 
-            peticionConditions.push(sql`${peticiones.codigoPaciente} IN (${pacientesEnComunidades})`);
+            peticionConditions.push(sql`${entregasMedicamentos.codigoPaciente} IN (${pacientesEnComunidades})`);
         }
 
         // Construir la consulta principal partiendo de medicamentos para asegurar que todos aparezcan

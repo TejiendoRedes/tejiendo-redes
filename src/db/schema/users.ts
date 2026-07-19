@@ -7,8 +7,8 @@ import { tejedores } from './tejedores';
  */
 export const users = mysqlTable('users', {
     id: int('id').primaryKey().autoincrement(),
-    username: varchar('username', { length: 50 }).unique().notNull(),
-    password: varchar('password', { length: 255 }).notNull(),
+    username: varchar('username', { length: 30 }).unique().notNull(),
+    password: varchar('password', { length: 100 }).notNull(),
     role: mysqlEnum('role', [
         'admin',
         'superuser',

@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { AbordajesService } from '@/services/abordajes-service';
 import { createResponse } from '@/lib/utils';
-import { abordaje, medicamentosPacientes } from '@/db/schema'; // Import types if needed, or source from service
+import { abordaje } from '@/db/schema'; // Import types if needed, or source from service
 import { DeleteErrorMessages } from '@/lib/error-handler';
 import { getNextCode } from '@/lib/id-generator';
 import { MedicamentoEntregaSchema, CreateAbordajeSchema, UpdateAbordajeSchema } from '@/schemas/abordajes';

@@ -11,8 +11,8 @@ import { tejedores } from '@/db/schema/tejedores';
 import { responsable } from '@/db/schema/responsable';
 import { aspirantes } from '@/db/schema/aspirantes';
 import { consultas } from '@/db/schema/consultas';
-import { medicamentosPacientes } from '@/db/schema/relations';
-import { abordajeComunidad } from '@/db/schema/relations';
+import { entregasMedicamentos } from '@/db/schema/entregas_medicamentos';
+import { estados, municipios, parroquias } from '@/db/schema/geografia';
 import { like, or, eq, desc } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 
@@ -70,13 +70,30 @@ export async function getEntityDetails(type: string, id: string): Promise<Entity
                 };
             }
             case 'comunidad': {
-                const comunidad = await db.select().from(comunidades).where(eq(comunidades.codigoComunidad, id)).limit(1);
-                if (!comunidad.length) return null;
+                const results = await db.select({
+                    comunidad: comunidades,
+                    estado: estados.nombre,
+                    municipio: municipios.nombre,
+                    parroquia: parroquias.nombre
+                })
+                    .from(comunidades)
+                    .leftJoin(parroquias, eq(comunidades.parroquiaId, parroquias.id))
+                    .leftJoin(municipios, eq(parroquias.municipioId, municipios.id))
+                    .leftJoin(estados, eq(municipios.estadoId, estados.id))
+                    .where(eq(comunidades.codigoComunidad, id))
+                    .limit(1);
+                if (!results.length) return null;
+                const comunidadData = {
+                    ...results[0].comunidad,
+                    estado: results[0].estado,
+                    municipio: results[0].municipio,
+                    parroquia: results[0].parroquia
+                };
 
                 // Related: Responsable info
                 const responsableInfo = await db.select()
                     .from(responsable)
-                    .where(eq(responsable.cedulaResponsable, comunidad[0].cedulaResponsable))
+                    .where(eq(responsable.cedulaResponsable, comunidadData.cedulaResponsable || ''))
                     .limit(1);
 
                 // Historial: Abordajes en esta comunidad
@@ -85,14 +102,13 @@ export async function getEntityDetails(type: string, id: string): Promise<Entity
                     fecha: abordaje.fechaAbordaje,
                     descripcion: abordaje.descripcion
                 })
-                    .from(abordajeComunidad)
-                    .innerJoin(abordaje, eq(abordajeComunidad.codigoAbordaje, abordaje.codigoAbordaje))
-                    .where(eq(abordajeComunidad.codigoComunidad, id))
+                    .from(abordaje)
+                    .where(eq(abordaje.codigoComunidad, id))
                     .limit(5);
 
                 return {
                     type,
-                    data: comunidad[0],
+                    data: comunidadData,
                     related: responsableInfo[0] || null,
                     history: historialAbordajes
                 };
@@ -103,15 +119,15 @@ export async function getEntityDetails(type: string, id: string): Promise<Entity
 
                 // Historial: Entregas recientes
                 const historialEntregas = await db.select({
-                    fecha: medicamentosPacientes.fechaEntrega,
-                    cantidad: medicamentosPacientes.cantidadEntregada,
+                    fecha: entregasMedicamentos.fechaEntrega,
+                    cantidad: entregasMedicamentos.cantidad,
                     paciente: pacientes.nombrePaciente,
                     apellido: pacientes.apellidoPaciente
                 })
-                    .from(medicamentosPacientes)
-                    .innerJoin(pacientes, eq(medicamentosPacientes.cedulaPaciente, pacientes.cedulaPaciente))
-                    .where(eq(medicamentosPacientes.codigoMedicamento, id))
-                    .orderBy(desc(medicamentosPacientes.fechaEntrega))
+                    .from(entregasMedicamentos)
+                    .innerJoin(pacientes, eq(entregasMedicamentos.codigoPaciente, pacientes.cedulaPaciente))
+                    .where(eq(entregasMedicamentos.codigoMedicamento, id))
+                    .orderBy(desc(entregasMedicamentos.fechaEntrega))
                     .limit(5);
 
                 return {

@@ -1,5 +1,6 @@
-import { mysqlTable, varchar, text, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, index, int } from 'drizzle-orm/mysql-core';
 import { tejedores } from './tejedores';
+import { parroquias } from './geografia';
 
 /**
  * Tabla: organismos
@@ -14,10 +15,8 @@ export const organismos = mysqlTable('organismos', {
     nombreOrganismo: varchar('nombre_organismo', { length: 100 }).notNull(),
     tipoInstitucion: varchar('tipo_institucion', { length: 50 }).notNull(),
     paisOrganismo: varchar('pais_organismo', { length: 50 }).notNull(),
-    estadoOrganismo: varchar('estado_organismo', { length: 25 }).notNull(),
-    municipioOrganismo: varchar('municipio_organismo', { length: 50 }).notNull(),
+    parroquiaId: int('parroquia_id').notNull().references(() => parroquias.id),
     direccionOrganismo: varchar('direccion_organismo', { length: 150 }).notNull(),
-    ubicacionFisica: text('ubicacion_fisica').notNull(),
     correoOrganismo: varchar('correo_organismo', { length: 100 }).notNull(),
     telefonoOrganismo: varchar('telefono_organismo', { length: 15 }).notNull(),
 }, (table) => ({

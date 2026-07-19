@@ -16,35 +16,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { getEstados, getMunicipiosByEstado, getParroquiasByMunicipio } from '@/data/venezuela-location';
+import { getEstadosAction, getMunicipiosByEstadoAction, getParroquiasByMunicipioAction } from '@/queries/geografia';
+import { registerSchema, RegisterInput } from '@/schemas/auth';
 import { ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 
-const registrationSchema = z.object({
-    cedulaAspirante: z.string().min(6, 'Cédula debe tener al menos 6 caracteres').max(12),
-    nombreAspirante: z.string().min(2, 'Nombre es requerido').max(50),
-    apellidoAspirante: z.string().min(2, 'Apellido es requerido').max(50),
-    fechaNacimiento: z.string().refine((date) => {
-        const parsed = Date.parse(date);
-        if (isNaN(parsed)) return false;
-        const year = new Date(parsed).getFullYear();
-        return year >= 1900 && year <= new Date().getFullYear();
-    }, 'Fecha inválida o fuera de rango'),
-    direccionAspirante: z.string().min(5, 'Dirección es muy corta').max(150),
-    municipioAspirante: z.string().min(2, 'Municipio es requerido').max(100),
-    estadoDireccionAspirante: z.string().min(2, 'Estado es requerido').max(100),
-    parroquiaAspirante: z.string().min(2, 'Parroquia es requerida').max(100),
-    telefonoAspirante: z.string().min(10, 'Teléfono debe tener al menos 10 dígitos').max(15),
-    correoAspirante: z.string().email('Correo electrónico inválido').max(100),
-    profesionAspirante: z.string().min(2, 'Profesión es requerida').max(50),
-    usuario: z.string()
-        .min(2, 'El usuario debe tener al menos 2 caracteres')
-        .max(50, 'El usuario no puede exceder los 50 caracteres')
-        .trim()
-        .regex(/^[a-zA-Z0-9._-]+$/, 'El usuario solo puede contener letras, números, puntos, guiones y guiones bajos'),
-    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
-});
 
-type RegistrationData = z.infer<typeof registrationSchema>;
 
 export default function RegisterTejedorPage() {
     const [submitted, setSubmitted] = useState(false);
@@ -56,12 +32,9 @@ export default function RegisterTejedorPage() {
     const [honeypot, setHoneypot] = useState('');
     const [startTime] = useState(Date.now().toString());
 
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegistrationData>({
-        resolver: zodResolver(registrationSchema),
+    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<RegisterInput>({
+        resolver: zodResolver(registerSchema),
         defaultValues: {
-            estadoDireccionAspirante: '',
-            municipioAspirante: '',
-            parroquiaAspirante: '',
             usuario: '',
             password: '',
         }
@@ -81,42 +54,42 @@ export default function RegisterTejedorPage() {
         fetchCsrf();
     }, []);
 
-    const selectedEstado = watch('estadoDireccionAspirante');
-    const selectedMunicipio = watch('municipioAspirante');
+    const [selectedEstado, setSelectedEstado] = useState<string>('');
+    const [selectedMunicipio, setSelectedMunicipio] = useState<string>('');
 
-    const estados = getEstados();
-    const [municipios, setMunicipios] = useState<{ id: string; nombre: string }[]>([]);
-    const [parroquias, setParroquias] = useState<{ id: string; nombre: string }[]>([]);
-
-    React.useEffect(() => {
-        if (selectedEstado) {
-            const list = getMunicipiosByEstado(selectedEstado);
-            setMunicipios(list);
-            if (!list.find(m => m.id === selectedMunicipio)) {
-                setValue('municipioAspirante', '');
-                setValue('parroquiaAspirante', '');
-            }
-        } else {
-            setMunicipios([]);
-            setValue('municipioAspirante', '');
-            setValue('parroquiaAspirante', '');
-        }
-    }, [selectedEstado, setValue, selectedMunicipio]);
+    const [estados, setEstados] = useState<any[]>([]);
+    const [municipios, setMunicipios] = useState<any[]>([]);
+    const [parroquias, setParroquias] = useState<any[]>([]);
 
     React.useEffect(() => {
-        if (selectedEstado && selectedMunicipio) {
-            const list = getParroquiasByMunicipio(selectedEstado, selectedMunicipio);
-            setParroquias(list);
-            if (!list.find(p => p.id === watch('parroquiaAspirante'))) {
-                setValue('parroquiaAspirante', '');
-            }
-        } else {
-            setParroquias([]);
-            setValue('parroquiaAspirante', '');
-        }
-    }, [selectedEstado, selectedMunicipio, setValue, watch]);
+        const fetchEstados = async () => {
+            const res = await getEstadosAction();
+            if (res.success) setEstados(res.data);
+        };
+        fetchEstados();
+    }, []);
 
-    const onSubmit = async (data: RegistrationData) => {
+    const handleEstadoChange = async (estadoIdStr: string) => {
+        setSelectedEstado(estadoIdStr);
+        setSelectedMunicipio('');
+        setValue('parroquiaId', 0 as any); // Reset parroquia in form
+        
+        const estadoId = parseInt(estadoIdStr, 10);
+        const res = await getMunicipiosByEstadoAction(estadoId);
+        if (res.success) setMunicipios(res.data);
+        setParroquias([]);
+    };
+
+    const handleMunicipioChange = async (municipioIdStr: string) => {
+        setSelectedMunicipio(municipioIdStr);
+        setValue('parroquiaId', 0 as any); // Reset parroquia in form
+        
+        const municipioId = parseInt(municipioIdStr, 10);
+        const res = await getParroquiasByMunicipioAction(municipioId);
+        if (res.success) setParroquias(res.data);
+    };
+
+    const onSubmit = async (data: RegisterInput) => {
         setLoading(true);
         setError(null);
         try {
@@ -254,29 +227,28 @@ export default function RegisterTejedorPage() {
                         <div className="space-y-2">
                             <Label htmlFor="estadoDireccionAspirante" className="text-gray-700 font-medium">Estado</Label>
                             <Select
-                                onValueChange={(value) => setValue('estadoDireccionAspirante', value)}
-                                value={watch('estadoDireccionAspirante')}
+                                onValueChange={handleEstadoChange}
+                                value={selectedEstado}
                             >
                                 <SelectTrigger className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900">
                                     <SelectValue placeholder="Seleccione un estado" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {estados.map((estado) => (
-                                        <SelectItem key={estado.id} value={estado.id}>
+                                        <SelectItem key={estado.id} value={estado.id.toString()}>
                                             {estado.nombre}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.estadoDireccionAspirante && <p className="text-xs text-red-500">{errors.estadoDireccionAspirante.message}</p>}
                         </div>
 
                         {/* Municipio y Parroquia */}
                         <div className="space-y-2">
                             <Label htmlFor="municipioAspirante" className="text-gray-700 font-medium">Municipio</Label>
                             <Select
-                                onValueChange={(value) => setValue('municipioAspirante', value)}
-                                value={watch('municipioAspirante')}
+                                onValueChange={handleMunicipioChange}
+                                value={selectedMunicipio}
                                 disabled={!selectedEstado}
                             >
                                 <SelectTrigger className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900">
@@ -284,20 +256,19 @@ export default function RegisterTejedorPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {municipios.map((mun) => (
-                                        <SelectItem key={mun.id} value={mun.id}>
+                                        <SelectItem key={mun.id} value={mun.id.toString()}>
                                             {mun.nombre}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.municipioAspirante && <p className="text-xs text-red-500">{errors.municipioAspirante.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="parroquiaAspirante" className="text-gray-700 font-medium">Parroquia</Label>
+                            <Label htmlFor="parroquiaId" className="text-gray-700 font-medium">Parroquia</Label>
                             <Select
-                                onValueChange={(value) => setValue('parroquiaAspirante', value)}
-                                value={watch('parroquiaAspirante')}
+                                onValueChange={(value) => setValue('parroquiaId', parseInt(value, 10))}
+                                value={watch('parroquiaId') ? watch('parroquiaId').toString() : ''}
                                 disabled={!selectedMunicipio}
                             >
                                 <SelectTrigger className="h-12 border-gray-200 focus:border-[#1e3a8a] focus:ring-[#1e3a8a] rounded-xl bg-gray-50/50 text-gray-900">
@@ -305,13 +276,13 @@ export default function RegisterTejedorPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {parroquias.map((parr) => (
-                                        <SelectItem key={parr.id} value={parr.id}>
+                                        <SelectItem key={parr.id} value={parr.id.toString()}>
                                             {parr.nombre}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.parroquiaAspirante && <p className="text-xs text-red-500">{errors.parroquiaAspirante.message}</p>}
+                            {errors.parroquiaId && <p className="text-xs text-red-500">{errors.parroquiaId.message}</p>}
                         </div>
 
                         <div className="space-y-2">
