@@ -26,29 +26,16 @@ async function hardReset() {
             // Disable foreign key checks to allow dropping tables in any order
             await conn.execute('SET FOREIGN_KEY_CHECKS = 0;');
 
-            // Get all tables from the schema
-            const tableNames: string[] = [];
-            for (const [key, value] of Object.entries(schema)) {
-                try {
-                    // @ts-ignore
-                    const config = getTableConfig(value);
-                    if (config && config.name) {
-                        tableNames.push(config.name);
-                    }
-                } catch (e) {
-                    // Not a table, skip
+            // Get all tables dynamically from the database
+            const [rows] = await conn.execute('SHOW TABLES') as any[];
+            const tableNames = rows.map((row: any) => Object.values(row)[0] as string);
+
+            // Drop tables in sequence to avoid deadlocks
+            await withPerformanceCheck('Sequential Table Drop', async () => {
+                for (const tableName of tableNames) {
+                    await conn.execute(`DROP TABLE IF EXISTS \`${tableName}\`;`);
                 }
-            }
-
-            // Deduplicate table names
-            const uniqueTableNames = [...new Set(tableNames)];
-
-            // Drop tables in parallel using the same connection context
-            await withPerformanceCheck('Parallel Table Drop', async () => {
-                return Promise.all(uniqueTableNames.map(async (tableName) => {
-                    return conn.execute(`DROP TABLE IF EXISTS \`${tableName}\`;`);
-                }));
-            }, 10000);
+            }, 30000);
 
             // Re-enable foreign key checks
             await conn.execute('SET FOREIGN_KEY_CHECKS = 1;');

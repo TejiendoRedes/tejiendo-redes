@@ -9,7 +9,7 @@ import { tejedores } from './tejedores';
  */
 export const movimientosInventario = mysqlTable('movimientos_inventario', {
     id: int('id').autoincrement().primaryKey(),
-    codigoMedicamento: varchar('codigo_medicamento', { length: 12 }).notNull(),
+    codigoMedicamento: varchar('codigo_medicamento', { length: 10 }).notNull(),
     tipoMovimiento: varchar('tipo_movimiento', { length: 20 }).notNull(), // entrada, salida, ajuste
     cantidad: int('cantidad').notNull(),
     fechaMovimiento: timestamp('fecha_movimiento', { mode: 'date' }).notNull().defaultNow(),

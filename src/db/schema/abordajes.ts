@@ -1,4 +1,6 @@
 import { mysqlTable, varchar, date, time, text, int, boolean } from 'drizzle-orm/mysql-core';
+import { comunidades } from './comunidades';
+import { solicitudesAbordajes } from './solicitudes-abordajes';
 
 /**
  * Tabla: abordaje
@@ -6,8 +8,14 @@ import { mysqlTable, varchar, date, time, text, int, boolean } from 'drizzle-orm
  */
 export const abordaje = mysqlTable('abordaje', {
     codigoAbordaje: varchar('codigo_abordaje', { length: 10 }).primaryKey().notNull(), // ABD-001...
-    codigoComunidad: varchar('codigo_comunidad', { length: 20 }).notNull(), // EST-MUN-PAR-001...
-    codigoSolicitud: varchar('codigo_solicitud', { length: 10 }), // Opcional, si viene de una solicitud específica
+    codigoComunidad: varchar('codigo_comunidad', { length: 20 }).notNull().references(() => comunidades.codigoComunidad, {
+        onDelete: 'restrict',
+        onUpdate: 'cascade'
+    }), // EST-MUN-PAR-001...
+    codigoSolicitud: varchar('codigo_solicitud', { length: 10 }).references(() => solicitudesAbordajes.codigoSolicitud, {
+        onDelete: 'set null',
+        onUpdate: 'cascade'
+    }), // Opcional, si viene de una solicitud específica
     fechaAbordaje: date('fecha_abordaje', { mode: 'date' }).notNull(),
     horaInicio: time('hora_inicio').notNull(),
     horaFin: time('hora_fin').notNull(),

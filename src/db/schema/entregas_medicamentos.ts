@@ -12,9 +12,9 @@ import { tejedores } from './tejedores';
  */
 export const entregasMedicamentos = mysqlTable('entregas_medicamentos', {
     id: int('id').autoincrement().primaryKey(),
-    codigoMedicamento: varchar('codigo_medicamento', { length: 12 }).notNull(),
+    codigoMedicamento: varchar('codigo_medicamento', { length: 10 }).notNull(),
     codigoPaciente: varchar('codigo_paciente', { length: 12 }).notNull(),
-    codigoAbordaje: varchar('codigo_abordaje', { length: 12 }),
+    codigoAbordaje: varchar('codigo_abordaje', { length: 10 }),
     fechaEntrega: timestamp('fecha_entrega', { mode: 'date' }).notNull(),
     horaEntrega: varchar('hora_entrega', { length: 8 }),
     cantidad: int('cantidad').notNull().default(1),

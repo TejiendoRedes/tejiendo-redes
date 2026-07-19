@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { mysqlTable, varchar, datetime, serial, text, mysqlEnum, index } from 'drizzle-orm/mysql-core';
 import { abordaje } from './abordajes';
 import { pacientes } from './pacientes';
@@ -16,7 +17,7 @@ export const abordajeAsistencia = mysqlTable('abordaje_asistencia', {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }),
-    horaLlegada: datetime('hora_llegada').notNull().default(new Date()),
+    horaLlegada: datetime('hora_llegada').notNull().default(sql`now()`),
     estado: mysqlEnum('estado', ['En Espera', 'En Triaje', 'En Consulta', 'En Farmacia', 'Finalizado']).notNull().default('En Espera'),
     serviciosRequeridos: text('servicios_requeridos'), // JSON array o texto separado por comas: "Medicina,Farmacia"
     notas: text('notas'),

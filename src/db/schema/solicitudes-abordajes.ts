@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { mysqlTable, varchar, int, datetime, date, time, text, index, foreignKey, boolean } from 'drizzle-orm/mysql-core';
 import { comunidades } from './comunidades';
 
@@ -21,7 +22,7 @@ export const solicitudesAbordajes = mysqlTable('solicitudes_abordajes', {
     logisticaPersonal: boolean('logistica_personal').notNull().default(false),
     logisticaRefrigerios: boolean('logistica_refrigerios').notNull().default(false),
     logisticaTransporte: boolean('logistica_transporte').notNull().default(false),
-    fechaSolicitud: datetime('fecha_solicitud').notNull().default(new Date()),
+    fechaSolicitud: datetime('fecha_solicitud').notNull().default(sql`now()`),
     notas: text('notas'),
 }, (table) => ({
     comunidadIdx: index('idx_comunidad').on(table.codigoComunidad),
