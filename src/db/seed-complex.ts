@@ -190,7 +190,7 @@ async function main() {
 
                 const nombreResp = getRandomElement(NAMES);
                 const apellidoResp = getRandomElement(SURNAMES);
-                const parroquiaName = getRandomElement(municipio.parroquias);
+                const parroquiaName = getRandomElement(municipio.parroquias) as string;
                     const parroquiaId = parroquiasMap.get(parroquiaName) || getRandomElement(allParroquiasIds);
 
                     // Create Responsable
