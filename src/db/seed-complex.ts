@@ -47,16 +47,27 @@ async function main() {
 
         const allParroquiasIds: number[] = [];
 
-        for (const estadoData of VENEZUELAN_STATES) {
-            await db.insert(schema.estados).values({ id: estadoCounter, nombre: estadoData.estado });
+        console.log('Fetching full Venezuela geographic data...');
+        const geoResponse = await fetch('https://raw.githubusercontent.com/CodersVenezuela/Venezuela-JSON/master/venezuela.json');
+        if (!geoResponse.ok) throw new Error('Failed to fetch geographic data');
+        const VENEZUELAN_STATES_FULL = await geoResponse.json();
+        
+        console.log('Injecting geographic data (24 estados, 335 municipios, 1136 parroquias)...');
+        
+        const estadosToInsert: any[] = [];
+        const municipiosToInsert: any[] = [];
+        const parroquiasToInsert: any[] = [];
+        
+        for (const estadoData of VENEZUELAN_STATES_FULL) {
+            estadosToInsert.push({ id: estadoCounter, nombre: estadoData.estado });
             estadosMap.set(estadoData.estado, estadoCounter);
             
             for (const municipioData of estadoData.municipios) {
-                await db.insert(schema.municipios).values({ id: municipioCounter, estadoId: estadoCounter, nombre: municipioData.nombre });
-                municipiosMap.set(municipioData.nombre, municipioCounter);
+                municipiosToInsert.push({ id: municipioCounter, estadoId: estadoCounter, nombre: municipioData.municipio });
+                municipiosMap.set(municipioData.municipio, municipioCounter);
                 
                 for (const parroquiaName of municipioData.parroquias) {
-                    await db.insert(schema.parroquias).values({ id: parroquiaCounter, municipioId: municipioCounter, nombre: parroquiaName });
+                    parroquiasToInsert.push({ id: parroquiaCounter, municipioId: municipioCounter, nombre: parroquiaName });
                     parroquiasMap.set(parroquiaName, parroquiaCounter);
                     allParroquiasIds.push(parroquiaCounter);
                     parroquiaCounter++;
@@ -65,6 +76,20 @@ async function main() {
             }
             estadoCounter++;
         }
+        
+        // Batch insert to prevent ECONNRESET
+        await db.insert(schema.estados).values(estadosToInsert);
+        
+        const chunk = 100;
+        for (let i = 0; i < municipiosToInsert.length; i += chunk) {
+            await db.insert(schema.municipios).values(municipiosToInsert.slice(i, i + chunk));
+        }
+        
+        for (let i = 0; i < parroquiasToInsert.length; i += chunk) {
+            await db.insert(schema.parroquias).values(parroquiasToInsert.slice(i, i + chunk));
+        }
+        
+        console.log(`Geographic injection complete: ${estadoCounter-1} estados, ${municipioCounter-1} municipios, ${parroquiaCounter-1} parroquias.`);
 
         // 2. Catalogs
 
@@ -149,25 +174,31 @@ async function main() {
         const createdResponsableCedulas: Set<string> = new Set();
 
         let comCounter = 1;
-        for (const estado of VENEZUELAN_STATES) {
-            for (const municipio of estado.municipios) {
-                const numComs = getRandomInt(1, 2);
-                for (let k = 0; k < numComs; k++) {
-                    let cedulaResp = generateCedula();
-                    while (createdResponsableCedulas.has(cedulaResp)) cedulaResp = generateCedula();
-                    createdResponsableCedulas.add(cedulaResp);
+        // Limit dummy communities to 10 random municipalities to avoid blowing up DB size
+        const allMunicipiosArray: any[] = [];
+        for (const estado of VENEZUELAN_STATES_FULL) {
+            allMunicipiosArray.push(...estado.municipios);
+        }
+        const randomMunicipios = getRandomElements(allMunicipiosArray, 10);
 
-                    const nombreResp = getRandomElement(NAMES);
-                    const apellidoResp = getRandomElement(SURNAMES);
-                    const parroquiaName = getRandomElement(municipio.parroquias);
-                    const parroquiaId = parroquiasMap.get(parroquiaName);
+        for (const municipio of randomMunicipios) {
+            const numComs = getRandomInt(1, 2);
+            for (let k = 0; k < numComs; k++) {
+                let cedulaResp = generateCedula();
+                while (createdResponsableCedulas.has(cedulaResp)) cedulaResp = generateCedula();
+                createdResponsableCedulas.add(cedulaResp);
+
+                const nombreResp = getRandomElement(NAMES);
+                const apellidoResp = getRandomElement(SURNAMES);
+                const parroquiaName = getRandomElement(municipio.parroquias);
+                    const parroquiaId = parroquiasMap.get(parroquiaName) || getRandomElement(allParroquiasIds);
 
                     // Create Responsable
                     responsablesData.push({
                         cedulaResponsable: cedulaResp,
                         nombreResponsable: nombreResp,
                         apellidoResponsable: apellidoResp,
-                        direccionResponsable: `Calle Principal, ${municipio.nombre}`,
+                        direccionResponsable: `Calle Principal, ${municipio.municipio}`,
                         telefonoResponsable: generatePhoneNumber(),
                         correoResponsable: generateEmail(nombreResp, apellidoResp),
                         cargo: 'Vocero Principal',
@@ -193,7 +224,6 @@ async function main() {
                         cantidadMayores60: getRandomInt(10, 40),
                         telefonoComunidad: generatePhoneNumber(),
                     });
-                }
             }
         }
 
