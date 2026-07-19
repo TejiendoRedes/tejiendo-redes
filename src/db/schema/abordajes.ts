@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, date, time, text, int, boolean } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, date, time, text, int, boolean, foreignKey } from 'drizzle-orm/mysql-core';
 import { comunidades } from './comunidades';
 import { solicitudesAbordajes } from './solicitudes-abordajes';
 
@@ -12,10 +12,7 @@ export const abordaje = mysqlTable('abordaje', {
         onDelete: 'restrict',
         onUpdate: 'cascade'
     }), // EST-MUN-PAR-001...
-    codigoSolicitud: varchar('codigo_solicitud', { length: 10 }).references(() => solicitudesAbordajes.codigoSolicitud, {
-        onDelete: 'set null',
-        onUpdate: 'cascade'
-    }), // Opcional, si viene de una solicitud específica
+    codigoSolicitud: varchar('codigo_solicitud', { length: 10 }), // FK defined at table level
     fechaAbordaje: date('fecha_abordaje', { mode: 'date' }).notNull(),
     horaInicio: time('hora_inicio').notNull(),
     horaFin: time('hora_fin').notNull(),
@@ -31,7 +28,13 @@ export const abordaje = mysqlTable('abordaje', {
     estado: varchar('estado', { length: 20 }).notNull().default('Pendiente'),
     notas: text('notas'),
     observacionesComunidad: text('observaciones_comunidad'),
-});
+}, (table) => ({
+    solicitudFk: foreignKey({
+        columns: [table.codigoSolicitud],
+        foreignColumns: [solicitudesAbordajes.codigoSolicitud],
+        name: 'fk_abordaje_solicitud'
+    }).onDelete('set null').onUpdate('cascade')
+}));
 
 export type Abordaje = typeof abordaje.$inferSelect;
 export type NewAbordaje = typeof abordaje.$inferInsert;

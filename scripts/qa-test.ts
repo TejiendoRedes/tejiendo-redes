@@ -39,7 +39,7 @@ async function runQA() {
             codigoSolicitud: newCodeSAB,
             tipoAbordaje: "Médico",
             // NOTA: No le pasamos 'fechaSolicitud' a propósito para probar el default de la BD
-            fechaSugerida: new Date(),
+            fechaSugerida: new Date().toISOString().split('T')[0],
             horaInicioSugerida: "08:00:00",
             descripcionActividad: "Actividad de QA automatizada",
             participantesEstimados: 50,
