@@ -47,9 +47,16 @@ describe('EnfermedadForm', () => {
             expect(screen.getByDisplayValue('Presión arterial elevada de forma crónica')).toBeInTheDocument();
         });
 
-        it('should disable codigo field (auto-generated)', () => {
+        it('should disable codigo field when editing initial data', () => {
+            const initialData: Enfermedad = {
+                codigoEnfermedad: 'ENF-001',
+                nombreEnfermedad: 'Hipertensión',
+                tipoPatologia: 'Cardíacas',
+            };
+
             render(
                 <EnfermedadForm
+                    initialData={initialData}
                     onSubmit={mockOnSubmit}
                     onCancel={mockOnCancel}
                 />
@@ -137,9 +144,11 @@ describe('EnfermedadForm', () => {
                 />
             );
 
+            const codigoInput = screen.getByLabelText(/código/i);
             const nombreInput = screen.getByLabelText(/nombre/i);
             const descripcionTextarea = screen.getByLabelText(/descripción/i);
 
+            fireEvent.change(codigoInput, { target: { value: 'ENF-002' } });
             fireEvent.change(nombreInput, { target: { value: 'Diabetes Tipo 2' } });
             fireEvent.change(descripcionTextarea, { target: { value: 'Enfermedad metabólica' } });
 
@@ -150,6 +159,7 @@ describe('EnfermedadForm', () => {
                 expect(mockOnSubmit).toHaveBeenCalledTimes(1);
                 expect(mockOnSubmit).toHaveBeenCalledWith(
                     expect.objectContaining({
+                        codigoEnfermedad: 'ENF-002',
                         nombreEnfermedad: 'Diabetes Tipo 2',
                         descripcion: 'Enfermedad metabólica',
                     })

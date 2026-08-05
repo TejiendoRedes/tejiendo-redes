@@ -43,6 +43,7 @@ describe('Enfermedades Actions', () => {
     describe('createEnfermedad', () => {
         it('should create a new enfermedad successfully', async () => {
             const newEnfermedad = {
+                codigoEnfermedad: 'ENF-TST',
                 nombreEnfermedad: 'Enfermedad de Prueba',
                 tipoPatologia: 'Respiratorias',
                 descripcion: 'Esta es una enfermedad de prueba creada durante testing',

@@ -61,8 +61,8 @@ export function TejedorForm({
             ? formattedDate(initialData.fechaNacimiento)
             : '',
         direccionTejedor: initialData?.direccionTejedor || '',
-        municipioTejedor: '',
-        estadoTejedor: '',
+        municipioTejedor: (initialData as any)?.municipioId ? (initialData as any).municipioId.toString() : '',
+        estadoTejedor: (initialData as any)?.estadoId ? (initialData as any).estadoId.toString() : '',
         parroquiaId: initialData?.parroquiaId || 0,
         telefonoTejedor: initialData?.telefonoTejedor || '',
         correoTejedor: initialData?.correoTejedor || '',
@@ -87,26 +87,58 @@ export function TejedorForm({
     const [isLoadingGeografia, setIsLoadingGeografia] = React.useState(true);
 
     React.useEffect(() => {
+        let mounted = true;
         const fetchInitialGeografia = async () => {
             setIsLoadingGeografia(true);
+            
+            // 1. Fetch estados
             const estadosRes = await getEstadosAction();
-            if (estadosRes.success) setEstados(estadosRes.data);
-
-            if (formData.parroquiaId) {
-                const hierarchyRes = await getLocationHierarchy(formData.parroquiaId);
+            let newEstados = estadosRes.success ? estadosRes.data : [];
+            
+            let newMunicipios: any[] = [];
+            let newParroquias: any[] = [];
+            let newEstadoId = (initialData as any)?.estadoId ? (initialData as any).estadoId.toString() : '';
+            let newMunicipioId = (initialData as any)?.municipioId ? (initialData as any).municipioId.toString() : '';
+            
+            // 2. Fetch hierarchy if we don't have estadoId/municipioId directly
+            if (initialData?.parroquiaId && (!newEstadoId || !newMunicipioId)) {
+                const hierarchyRes = await getLocationHierarchy(initialData.parroquiaId);
                 if (hierarchyRes.success && hierarchyRes.data) {
-                    const { estadoId, municipioId } = hierarchyRes.data;
-                    setFormData(prev => ({ ...prev, estadoTejedor: estadoId.toString(), municipioTejedor: municipioId.toString() }));
-                    const munRes = await getMunicipiosByEstadoAction(estadoId);
-                    if (munRes.success) setMunicipios(munRes.data);
-                    const parrRes = await getParroquiasByMunicipioAction(municipioId);
-                    if (parrRes.success) setParroquias(parrRes.data);
+                    newEstadoId = hierarchyRes.data.estadoId.toString();
+                    newMunicipioId = hierarchyRes.data.municipioId.toString();
                 }
             }
-            setIsLoadingGeografia(false);
+
+            if (newEstadoId && newMunicipioId) {
+                const [munRes, parrRes] = await Promise.all([
+                    getMunicipiosByEstadoAction(parseInt(newEstadoId, 10)),
+                    getParroquiasByMunicipioAction(parseInt(newMunicipioId, 10))
+                ]);
+                if (munRes.success) newMunicipios = munRes.data;
+                if (parrRes.success) newParroquias = parrRes.data;
+            }
+            
+            // 3. Batch all state updates together
+            if (mounted) {
+                setEstados(newEstados);
+                setMunicipios(newMunicipios);
+                setParroquias(newParroquias);
+                
+                if (newEstadoId && newMunicipioId) {
+                    setFormData(prev => ({
+                        ...prev,
+                        estadoTejedor: newEstadoId,
+                        municipioTejedor: newMunicipioId,
+                        parroquiaId: initialData?.parroquiaId || 0
+                    }));
+                }
+                
+                setIsLoadingGeografia(false);
+            }
         };
         fetchInitialGeografia();
-    }, [formData.parroquiaId]);
+        return () => { mounted = false; };
+    }, [initialData?.parroquiaId, (initialData as any)?.estadoId, (initialData as any)?.municipioId]);
 
     function formattedDate(date: Date | string): string {
         if (date instanceof Date) return date.toISOString().split('T')[0];
@@ -164,6 +196,18 @@ export function TejedorForm({
             newErrors.correoTejedor = "El correo electrónico no tiene un formato válido";
         }
 
+        if (!formData.estadoTejedor) {
+            newErrors.estadoTejedor = "El estado es requerido";
+        }
+
+        if (!formData.municipioTejedor) {
+            newErrors.municipioTejedor = "El municipio es requerido";
+        }
+
+        if (!formData.parroquiaId || formData.parroquiaId === 0) {
+            newErrors.parroquiaId = "La parroquia es requerida";
+        }
+
         if (finalProfesion === 'Médico') {
             if (!formData.codigoEspecialidad) {
                 newErrors.codigoEspecialidad = "La especialidad es requerida";
@@ -180,7 +224,7 @@ export function TejedorForm({
 
         setErrors({});
 
-        const { tipoCedula, profesionSelect, profesionOtra, ...restFormData } = formData;
+        const { tipoCedula, profesionSelect, profesionOtra, estadoTejedor, municipioTejedor, ...restFormData } = formData;
 
         const dataToSave: any = {
             ...restFormData,
@@ -490,13 +534,16 @@ export function TejedorForm({
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="estado">Estado <span className="text-red-500 font-bold">*</span></Label>
+                    <Label htmlFor="estado" className={errors.estadoTejedor ? "text-red-500" : ""}>Estado <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.estadoTejedor}
-                        onValueChange={handleEstadoChange}
+                        onValueChange={(val) => {
+                            handleEstadoChange(val);
+                            if (errors.estadoTejedor) setErrors({ ...errors, estadoTejedor: '' });
+                        }}
                         disabled={isLoadingGeografia}
                     >
-                        <SelectTrigger id="estado" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="estado" className={`h-11 shadow-sm focus:ring-blue-500 ${errors.estadoTejedor ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}>
                             <SelectValue placeholder="Seleccione un estado" />
                         </SelectTrigger>
                         <SelectContent>
@@ -507,16 +554,20 @@ export function TejedorForm({
                             ))}
                         </SelectContent>
                     </Select>
+                    {errors.estadoTejedor && <p className="text-red-500 text-sm mt-1">{errors.estadoTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="municipio">Municipio <span className="text-red-500 font-bold">*</span></Label>
+                    <Label htmlFor="municipio" className={errors.municipioTejedor ? "text-red-500" : ""}>Municipio <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.municipioTejedor}
-                        onValueChange={handleMunicipioChange}
+                        onValueChange={(val) => {
+                            handleMunicipioChange(val);
+                            if (errors.municipioTejedor) setErrors({ ...errors, municipioTejedor: '' });
+                        }}
                         disabled={!formData.estadoTejedor || isLoadingGeografia}
                     >
-                        <SelectTrigger id="municipio" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="municipio" className={`h-11 shadow-sm focus:ring-blue-500 ${errors.municipioTejedor ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}>
                             <SelectValue placeholder={formData.estadoTejedor ? "Seleccione un municipio" : "Seleccione primero el estado"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -527,16 +578,20 @@ export function TejedorForm({
                             ))}
                         </SelectContent>
                     </Select>
+                    {errors.municipioTejedor && <p className="text-red-500 text-sm mt-1">{errors.municipioTejedor}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="parroquia">Parroquia <span className="text-red-500 font-bold">*</span></Label>
+                    <Label htmlFor="parroquia" className={errors.parroquiaId ? "text-red-500" : ""}>Parroquia <span className="text-red-500 font-bold">*</span></Label>
                     <Select
                         value={formData.parroquiaId ? formData.parroquiaId.toString() : ''}
-                        onValueChange={handleParroquiaChange}
+                        onValueChange={(val) => {
+                            handleParroquiaChange(val);
+                            if (errors.parroquiaId) setErrors({ ...errors, parroquiaId: '' });
+                        }}
                         disabled={!formData.municipioTejedor || isLoadingGeografia}
                     >
-                        <SelectTrigger id="parroquia" className="h-11 shadow-sm border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectTrigger id="parroquia" className={`h-11 shadow-sm focus:ring-blue-500 ${errors.parroquiaId ? 'border-red-500' : 'border-gray-200 focus:border-blue-500'}`}>
                             <SelectValue placeholder={formData.municipioTejedor ? "Seleccione una parroquia" : "Seleccione primero el municipio"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -547,6 +602,7 @@ export function TejedorForm({
                             ))}
                         </SelectContent>
                     </Select>
+                    {errors.parroquiaId && <p className="text-red-500 text-sm mt-1">{errors.parroquiaId}</p>}
                 </div>
             </div>
 

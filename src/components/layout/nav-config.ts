@@ -14,6 +14,8 @@ import {
   GraduationCap,
   UserCheck,
   Building2,
+  FolderOpen,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -56,6 +58,7 @@ export const navGroups: NavGroup[] = [
     title: "Gestión Principal",
     roles: ["admin", "superuser", "operador", "medico", "tejedor"],
     items: [
+      { label: "Datos Básicos", to: "/datos-basicos", icon: FolderOpen, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
       { label: "Pacientes", to: "/datos-basicos/pacientes", icon: Users, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
       { label: "Tejedores", to: "/datos-basicos/tejedores", icon: HeartHandshake, roles: ["admin", "superuser", "operador"] },
       { label: "Aspirantes", to: "/datos-basicos/aspirantes", icon: UserRound, roles: ["admin", "superuser", "operador"] },
@@ -63,11 +66,12 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    title: "Análisis",
+    title: "Análisis y Sistema",
     roles: ["admin", "superuser", "operador", "medico", "tejedor"],
     items: [
       { label: "Reportes", to: "/reportes", icon: FileBarChart, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
       { label: "Indicadores", to: "/estadisticas", icon: Activity, roles: ["admin", "superuser", "operador", "medico", "tejedor"] },
+      { label: "Mantenimiento", to: "/mantenimiento", icon: Wrench, roles: ["admin", "superuser"] },
     ],
   },
   {

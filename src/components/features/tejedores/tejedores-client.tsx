@@ -24,6 +24,8 @@ interface TejedorWithGeo extends Tejedor {
     estadoNombre?: string | null;
     municipioNombre?: string | null;
     parroquiaNombre?: string | null;
+    estadoId?: number | null;
+    municipioId?: number | null;
 }
 
 interface TejedoresClientProps {
@@ -313,6 +315,7 @@ export default function TejedoresClient({ initialData, especialidades = [], isAd
                         </DialogHeader>
 
                         <TejedorForm
+                            key={editingTejedor ? editingTejedor.cedulaTejedor : 'new'}
                             initialData={editingTejedor || undefined}
                             especialidades={especialidades}
                             onSubmit={handleSubmit}

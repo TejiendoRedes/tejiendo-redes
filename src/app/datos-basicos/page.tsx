@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageShell } from '@/components/layout/PageShell';
 import {
     Users,
     Stethoscope,
@@ -82,38 +83,35 @@ export default function DatosBasicosPage() {
         },
     ];
 
-
     return (
         <MainLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Datos Básicos</h1>
-                    <p className="text-muted-foreground">
-                        Gestión de catálogos y datos maestros del sistema
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <PageShell
+                title="Datos Básicos"
+                subtitle="Gestión de catálogos y datos maestros del sistema"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {dataCards.map(card => (
                         <button
                             key={card.path}
                             onClick={() => router.push(card.path)}
-                            className="bg-card rounded-lg border border-border p-5 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 text-left group"
+                            className="bg-card rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300 text-left group flex flex-col justify-between"
                         >
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="bg-primary/10 text-primary p-2.5 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                                    {card.icon}
+                            <div>
+                                <div className="flex items-center gap-3.5 mb-4">
+                                    <div className="bg-[#1e3a8a]/10 text-[#1e3a8a] p-3 rounded-xl group-hover:bg-[#1e3a8a] group-hover:text-white transition-colors duration-300">
+                                        {card.icon}
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900">{card.title}</h3>
                                 </div>
-                                <h3 className="text-base font-semibold text-foreground">{card.title}</h3>
+                                <p className="text-sm text-gray-500 mb-4">{card.description}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-3">{card.description}</p>
-                            <div className="flex items-center text-sm text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                                Ver todos <ArrowRight className="w-4 h-4 ml-1" />
+                            <div className="flex items-center text-sm text-[#1e3a8a] font-semibold group-hover:translate-x-1 transition-transform">
+                                Ver módulo <ArrowRight className="w-4 h-4 ml-1.5" />
                             </div>
                         </button>
                     ))}
                 </div>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

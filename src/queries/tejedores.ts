@@ -28,7 +28,9 @@ export async function getTejedores() {
             medico: medicos,
             estadoNombre: estados.nombre,
             municipioNombre: municipios.nombre,
-            parroquiaNombre: parroquias.nombre
+            parroquiaNombre: parroquias.nombre,
+            estadoId: estados.id,
+            municipioId: municipios.id
         })
         .from(tejedores)
         .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
@@ -45,7 +47,9 @@ export async function getTejedores() {
             matriculaSanidad: row.medico?.matriculaSanidad || null,
             estadoNombre: row.estadoNombre,
             municipioNombre: row.municipioNombre,
-            parroquiaNombre: row.parroquiaNombre
+            parroquiaNombre: row.parroquiaNombre,
+            estadoId: row.estadoId || null,
+            municipioId: row.municipioId || null
         }));
         
         return { success: true, data: mappedData };
@@ -67,7 +71,9 @@ export async function getTejedor(cedula: string) {
             medico: medicos,
             estadoNombre: estados.nombre,
             municipioNombre: municipios.nombre,
-            parroquiaNombre: parroquias.nombre
+            parroquiaNombre: parroquias.nombre,
+            estadoId: estados.id,
+            municipioId: municipios.id
         })
             .from(tejedores)
             .leftJoin(users, eq(tejedores.cedulaTejedor, users.cedulaTejedor))
@@ -90,7 +96,9 @@ export async function getTejedor(cedula: string) {
             matriculaSanidad: result[0].medico?.matriculaSanidad || null,
             estadoNombre: result[0].estadoNombre,
             municipioNombre: result[0].municipioNombre,
-            parroquiaNombre: result[0].parroquiaNombre
+            parroquiaNombre: result[0].parroquiaNombre,
+            estadoId: result[0].estadoId || null,
+            municipioId: result[0].municipioId || null
         };
 
         return { success: true, data: mappedData };

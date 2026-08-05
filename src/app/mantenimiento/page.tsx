@@ -28,6 +28,8 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+import { PageShell } from '@/components/layout/PageShell';
+
 export default function MantenimientoPage() {
     const [isBackingUp, setIsBackingUp] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -107,13 +109,10 @@ export default function MantenimientoPage() {
 
     return (
         <MainLayout>
-            <div className="container mx-auto py-8 px-4 max-w-5xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Mantenimiento del Sistema</h1>
-                    <p className="text-gray-500 mt-2">
-                        Gestión de copias de seguridad y recursos de ayuda.
-                    </p>
-                </div>
+            <PageShell
+                title="Mantenimiento del Sistema"
+                subtitle="Gestión de copias de seguridad y recursos de ayuda del sistema"
+            >
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Backup Management Card */}
@@ -233,8 +232,8 @@ export default function MantenimientoPage() {
                                     <FileText className="w-6 h-6 text-green-600" />
                                 </div>
                                 <div>
-                                    <CardTitle className="text-xl">Manual de Usuario</CardTitle>
-                                    <CardDescription>Documentación y guías de uso</CardDescription>
+                                    <CardTitle className="text-xl">Documentación del Sistema</CardTitle>
+                                    <CardDescription>Manuales oficiales de usuario y sistema</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -242,31 +241,47 @@ export default function MantenimientoPage() {
                             <div className="bg-green-50 p-4 rounded-md border border-green-100">
                                 <h4 className="font-medium text-green-900 flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4" />
-                                    Disponible
+                                    Documentos Disponibles
                                 </h4>
                                 <p className="text-sm text-green-700 mt-1">
-                                    Descargue el manual de usuario actualizado para aprender a utilizar todas las funciones del sistema.
+                                    Descargue las guías completas para comprender el funcionamiento técnico y la guía de usuario del sistema.
                                 </p>
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <Button
-                                    disabled={true}
-                                    variant="outline"
-                                    className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 h-10"
+                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                <a
+                                    href="/manual-de-usuario.pdf"
+                                    download="MANUAL DE USUARIO.pdf"
+                                    className="flex-1"
                                 >
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Descargar Manual (PDF)
-                                </Button>
-                                <p className="text-xs text-center text-gray-500">
-                                    Próximamente disponible
-                                </p>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full border-green-300 text-green-800 hover:bg-green-600 hover:text-white h-11 transition-all shadow-sm flex items-center justify-center font-medium"
+                                    >
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Manual de Usuario (PDF)
+                                    </Button>
+                                </a>
+
+                                <a
+                                    href="/manual-de-sistema.pdf"
+                                    download="MANUAL DE SISTEMA.pdf"
+                                    className="flex-1"
+                                >
+                                    <Button
+                                        variant="outline"
+                                        className="w-full border-blue-300 text-blue-800 hover:bg-blue-600 hover:text-white h-11 transition-all shadow-sm flex items-center justify-center font-medium"
+                                    >
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Manual de Sistema (PDF)
+                                    </Button>
+                                </a>
                             </div>
                         </CardContent>
                     </Card>
 
                 </div>
-            </div>
+            </PageShell>
         </MainLayout>
     );
 }

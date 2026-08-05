@@ -31,8 +31,8 @@ function NavLinks({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: 
               )}
               <ul className="flex flex-col gap-1">
                 {visibleItems.map((item) => {
-                  const active = item.to === "/dashboard" 
-                    ? (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) 
+                  const active = (item.to === "/dashboard" || item.to === "/datos-basicos")
+                    ? pathname === item.to
                     : pathname.startsWith(item.to);
                   return (
                     <li key={item.to}>
